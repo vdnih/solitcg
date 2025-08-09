@@ -1,0 +1,16 @@
+id: fld_x01
+name: 残響の講堂
+type: field
+text: "場に出た時、カードを2枚引く。破壊された時、山札からフィールドカードを1枚手札に加える。"
+version: 1
+
+field:
+  unique: true
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: draw, count: 2 }
+  - when: on_destroy
+    effect:
+      - { op: search, from: deck, to: hand, filter: { type: "field" }, max: 1 }

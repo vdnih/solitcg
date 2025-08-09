@@ -1,0 +1,11 @@
+id: spl_x07
+name: 閃考の儀
+type: spell
+text: "手札を1枚捨てる。このターンにスペルを7回以上詠唱していたなら勝利する。"
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: discard, from: hand, count: 1 }
+      - { op: win_if, expr: "spells_cast_this_turn >= 7" }

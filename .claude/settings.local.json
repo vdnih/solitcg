@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /Users/rozaki/projects/solitcg/assets/cards)",
+      "Bash(mkdir -p /Users/rozaki/projects/solitcg/test)"
+    ],
+    "deny": []
+  }
+}

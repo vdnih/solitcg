@@ -1,0 +1,16 @@
+id: fld_x02
+name: 記憶の温室
+type: field
+text: "場に出た時、山札からスペルカードを1枚手札に加える。破壊された時、カードを1枚引く。"
+version: 1
+
+field:
+  unique: true
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: search, from: deck, to: hand, filter: { type: "spell" }, max: 1 }
+  - when: on_destroy
+    effect:
+      - { op: draw, count: 1 }
