@@ -1,7 +1,7 @@
-import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart';
+import 'package:flame/components.dart' as flame;
+import 'package:flutter/material.dart' as material;
 import '../engine/types.dart';
 import '../engine/field_rule.dart';
 import '../engine/stack.dart';
@@ -114,8 +114,8 @@ class TCGGame extends FlameGame with TapDetector {
       text: 'Tap cards in your hand to play them',
       position: Vector2(20, 20),
       textRenderer: TextPaint(
-        style: const TextStyle(
-          color: Colors.white,
+        style: const material.TextStyle(
+          color: material.Colors.white,
           fontSize: 16,
         ),
       ),
@@ -126,8 +126,8 @@ class TCGGame extends FlameGame with TapDetector {
       text: _getGameStatusText(),
       position: Vector2(20, 50),
       textRenderer: TextPaint(
-        style: const TextStyle(
-          color: Colors.yellow,
+        style: const material.TextStyle(
+          color: material.Colors.yellow,
           fontSize: 14,
         ),
       ),
@@ -163,10 +163,10 @@ class TCGGame extends FlameGame with TapDetector {
         text: 'VICTORY!',
         position: Vector2(size.x / 2 - 50, size.y / 2),
         textRenderer: TextPaint(
-          style: const TextStyle(
-            color: Colors.green,
+          style: const material.TextStyle(
+            color: material.Colors.green,
             fontSize: 32,
-            fontWeight: FontWeight.bold,
+            fontWeight: material.FontWeight.bold,
           ),
         ),
       ));
@@ -242,18 +242,96 @@ class TCGGame extends FlameGame with TapDetector {
   }
 
   @override
-  void render(Canvas canvas) {
+  void render(material.Canvas canvas) {
     canvas.drawRect(
-      Rect.fromLTWH(0, 0, size.x, size.y),
-      Paint()..color = Colors.black87,
+      material.Rect.fromLTWH(0, 0, size.x, size.y),
+      material.Paint()..color = material.Colors.black87,
     );
     super.render(canvas);
   }
 }
 
-class CardComponent extends RectangleComponent with TapCallbacks {
+  // --- CardComponentクラス定義 ---
+
+    final CardInstance card;
+    final material.VoidCallback? onTap;
+    final bool isField;
+
+    CardComponent({
+      required this.card,
+      required flame.Vector2 position,
+      this.onTap,
+      this.isField = false,
+    }) : super(
+      position: position,
+      size: flame.Vector2(100, 140),
+      paint: material.Paint()..color = isField ? material.Colors.blue : material.Colors.brown,
+    );
+
+    @override
+    void render(material.Canvas canvas) {
+    super.render(canvas);
+
+      canvas.drawRRect(
+        material.RRect.fromRectAndRadius(
+          material.Rect.fromLTWH(0, 0, size.x, size.y),
+          const material.Radius.circular(8),
+        ),
+        material.Paint()
+          ..color = isField ? material.Colors.blue.shade700 : material.Colors.brown.shade700
+          ..style = material.PaintingStyle.fill,
+      );
+
+      canvas.drawRRect(
+        material.RRect.fromRectAndRadius(
+          material.Rect.fromLTWH(2, 2, size.x - 4, size.y - 4),
+          const material.Radius.circular(6),
+        ),
+        material.Paint()
+          ..color = isField ? material.Colors.blue.shade300 : material.Colors.brown.shade300
+          ..style = material.PaintingStyle.fill,
+      );
+
+      final textPainter = material.TextPainter(
+        text: material.TextSpan(
+          text: card.card.name,
+          style: const material.TextStyle(
+            color: material.Colors.white,
+            fontSize: 10,
+            fontWeight: material.FontWeight.bold,
+          ),
+        ),
+        textDirection: material.TextDirection.ltr,
+      );
+      textPainter.layout(maxWidth: size.x - 8);
+      textPainter.paint(canvas, const material.Offset(4, 4));
+
+      final typePainter = material.TextPainter(
+        text: material.TextSpan(
+          text: card.card.type.toString().split('.').last,
+          style: const material.TextStyle(
+            color: material.Colors.white70,
+            fontSize: 8,
+          ),
+        ),
+        textDirection: material.TextDirection.ltr,
+      );
+      typePainter.layout();
+      typePainter.paint(canvas, material.Offset(4, size.y - 16));
+    }
+
+    @override
+    bool onTapDown(TapDownEvent event) {
+      if (onTap != null) {
+        onTap!();
+        return true;
+      }
+      return false;
+    }
+  }
+
   final CardInstance card;
-  final VoidCallback? onTap;
+  final material.VoidCallback? onTap;
   final bool isField;
 
   CardComponent({
@@ -264,59 +342,59 @@ class CardComponent extends RectangleComponent with TapCallbacks {
   }) : super(
           position: position,
           size: Vector2(100, 140),
-          paint: Paint()..color = isField ? Colors.blue : Colors.brown,
+          paint: material.Paint()..color = isField ? material.Colors.blue : material.Colors.brown,
         );
 
   @override
-  void render(Canvas canvas) {
+  void render(material.Canvas canvas) {
     super.render(canvas);
-    
+
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.x, size.y),
-        const Radius.circular(8),
+      material.RRect.fromRectAndRadius(
+        material.Rect.fromLTWH(0, 0, this.size.x, this.size.y),
+        const material.Radius.circular(8),
       ),
-      Paint()
-        ..color = isField ? Colors.blue.shade700 : Colors.brown.shade700
-        ..style = PaintingStyle.fill,
+      material.Paint()
+        ..color = isField ? material.Colors.blue.shade700 : material.Colors.brown.shade700
+        ..style = material.PaintingStyle.fill,
     );
-    
+
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(2, 2, size.x - 4, size.y - 4),
-        const Radius.circular(6),
+      material.RRect.fromRectAndRadius(
+        material.Rect.fromLTWH(2, 2, this.size.x - 4, this.size.y - 4),
+        const material.Radius.circular(6),
       ),
-      Paint()
-        ..color = isField ? Colors.blue.shade300 : Colors.brown.shade300
-        ..style = PaintingStyle.fill,
+      material.Paint()
+        ..color = isField ? material.Colors.blue.shade300 : material.Colors.brown.shade300
+        ..style = material.PaintingStyle.fill,
     );
-    
-    final textPainter = TextPainter(
-      text: TextSpan(
+
+    final textPainter = material.TextPainter(
+      text: material.TextSpan(
         text: card.card.name,
-        style: const TextStyle(
-          color: Colors.white,
+        style: const material.TextStyle(
+          color: material.Colors.white,
           fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontWeight: material.FontWeight.bold,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: material.TextDirection.ltr,
     );
-    textPainter.layout(maxWidth: size.x - 8);
-    textPainter.paint(canvas, const Offset(4, 4));
-    
-    final typePainter = TextPainter(
-      text: TextSpan(
+    textPainter.layout(maxWidth: this.size.x - 8);
+    textPainter.paint(canvas, const material.Offset(4, 4));
+
+    final typePainter = material.TextPainter(
+      text: material.TextSpan(
         text: card.card.type.toString().split('.').last,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: const material.TextStyle(
+          color: material.Colors.white70,
           fontSize: 8,
         ),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: material.TextDirection.ltr,
     );
     typePainter.layout();
-    typePainter.paint(canvas, Offset(4, size.y - 16));
+    typePainter.paint(canvas, material.Offset(4, this.size.y - 16));
   }
 
   @override
