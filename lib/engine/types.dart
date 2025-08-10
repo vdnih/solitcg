@@ -122,7 +122,7 @@ class GameZone {
   void add(CardInstance card) => cards.add(card);
   void addAll(List<CardInstance> newCards) => cards.addAll(newCards);
   bool remove(CardInstance card) => cards.remove(card);
-  CardInstance? removeAt(int index) => index < cards.length ? cards.removeAt(index) : null;
+  CardInstance? removeAt(int index) => index >= 0 && index < cards.length ? cards.removeAt(index) : null;
   void insert(int index, CardInstance card) => cards.insert(index, card);
   void clear() => cards.clear();
 

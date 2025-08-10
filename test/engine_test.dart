@@ -12,7 +12,7 @@ void main() {
       final field1 = Card(
         id: 'field1',
         name: 'Field 1',
-        type: CardType.field,
+        type: CardType.domain,
         abilities: [
           Ability(
             when: TriggerWhen.onPlay,
@@ -28,7 +28,7 @@ void main() {
       final field2 = Card(
         id: 'field2',
         name: 'Field 2',
-        type: CardType.field,
+        type: CardType.domain,
         abilities: [
           Ability(
             when: TriggerWhen.onPlay,
@@ -54,17 +54,17 @@ void main() {
         ));
       }
 
-      FieldRule.playField(state, instance1);
+      FieldRule.playDomain(state, instance1);
       TriggerStack.resolveAll(state);
 
       expect(state.hand.count, 1);
-      expect(state.field.first?.card.id, 'field1');
+      expect(state.domain.first?.card.id, 'field1');
 
-      FieldRule.playField(state, instance2);
+      FieldRule.playDomain(state, instance2);
       final logs = TriggerStack.resolveAll(state).logs;
 
       expect(state.hand.count, 6);
-      expect(state.field.first?.card.id, 'field2');
+      expect(state.domain.first?.card.id, 'field2');
       expect(state.grave.count, 1);
       
       expect(logs.any((log) => log.contains('Field 2')), true);
