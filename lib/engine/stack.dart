@@ -2,12 +2,15 @@ import 'dart:collection';
 import 'types.dart';
 import 'ops.dart';
 
+/// トリガーキューを管理し、効果解決を行うユーティリティ。
 class TriggerStack {
+  /// トリガーをキューに追加し、ログを記録する。
   static void enqueueTrigger(GameState state, Trigger trigger) {
     state.triggerQueue.addLast(trigger);
     state.addToLog('Triggered: ${trigger.source.card.name} - ${_triggerWhenToString(trigger.ability.when)}');
   }
 
+  /// アビリティからトリガーを生成しキューに追加する。
   static void enqueueAbility(GameState state, CardInstance source, Ability ability, {Map<String, dynamic>? context}) {
     final trigger = Trigger(
       id: 'trigger_${DateTime.now().millisecondsSinceEpoch}',
@@ -19,6 +22,8 @@ class TriggerStack {
     enqueueTrigger(state, trigger);
   }
 
+  /// キュー内のトリガーを順に解決する。
+  /// ループ防止のため最大100回まで実行する。
   static GameResult resolveAll(GameState state) {
     final logs = <String>[];
     int iterations = 0;
@@ -49,6 +54,7 @@ class TriggerStack {
     return GameResult.success(logs: logs);
   }
 
+  /// 単一のトリガーを解決する。
   static GameResult _resolveTrigger(GameState state, Trigger trigger) {
     final logs = <String>[];
     
@@ -86,6 +92,7 @@ class TriggerStack {
     return GameResult.success(logs: logs);
   }
 
+  /// TriggerWhen をログ用の文字列に変換する。
   static String _triggerWhenToString(TriggerWhen when) {
     switch (when) {
       case TriggerWhen.onPlay:
@@ -104,7 +111,9 @@ class TriggerStack {
   }
 }
 
+/// 文字列表現を評価して true/false を返す簡易式評価機。
 class ExpressionEvaluator {
+  /// 与えられた式を評価する。解析に失敗した場合は false を返す。
   static bool evaluate(GameState state, String expression) {
     try {
       return _parseExpression(state, expression.trim());
@@ -113,6 +122,7 @@ class ExpressionEvaluator {
     }
   }
 
+  /// シンプルな比較式を解析して評価する。
   static bool _parseExpression(GameState state, String expr) {
     if (expr.contains('>=')) {
       final parts = expr.split('>=').map((e) => e.trim()).toList();
@@ -205,6 +215,7 @@ class ExpressionEvaluator {
     }
   }
 
+  /// 文字列の前後にあるクォートを取り除く。
   static String _removeQuotes(String text) {
     if ((text.startsWith("'") && text.endsWith("'")) || 
         (text.startsWith('"') && text.endsWith('"'))) {
@@ -213,6 +224,7 @@ class ExpressionEvaluator {
     return text;
   }
   
+  /// count(type:'artifact', zone:'board:self') のような形式の式を評価する。
   static int _evaluateCountExpression(GameState state, String expr) {
     // count(type:'artifact', zone:'board:self') のような形式を処理
     try {
