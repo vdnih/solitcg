@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flame/game.dart';
-import 'game/tcg_game.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'routes.dart';
 
 void main() {
-  runApp(const SolitaireApp());
+  runApp(const ProviderScope(child: SolitaireApp()));
 }
 
 class SolitaireApp extends StatelessWidget {
@@ -17,9 +17,8 @@ class SolitaireApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: GameWidget<TCGGame>.controlled(
-        gameFactory: TCGGame.new,
-      ),
+      routes: AppRoutes.getRoutes(),
+      initialRoute: '/',
     );
   }
 }

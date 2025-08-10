@@ -1,4 +1,8 @@
 cards:
-  - fld_x01.yaml
-  - fld_x02.yaml
+  - simple_draw.yaml
+  - artifact_crystal.yaml
+  - monster_basic.yaml
+  - domain_library.yaml
+  - van001.yaml
+  - spl_typhoon.yaml
   - spl_x07.yaml

@@ -1,19 +1,24 @@
 import 'dart:collection';
 
-enum CardType { monster, spell, equip, artifact, field }
+enum CardType { monster, ritual, spell, arcane, artifact, relic, equip, domain }
 
-enum TriggerWhen { onPlay, onEnter, onDestroy, static, activated, onDraw, onDiscard, onFieldSet }
+enum TriggerWhen { onPlay, onDestroy, activated, static, onDraw, onDiscard }
 
-enum Zone { hand, deck, field, grave, banish }
+enum Zone { hand, deck, board, domain, grave, extra }
 
 class Stats {
   final int atk;
+  final int def;
   final int hp;
 
-  const Stats({required this.atk, required this.hp});
+  const Stats({required this.atk, required this.def, required this.hp});
 
-  Stats copyWith({int? atk, int? hp}) {
-    return Stats(atk: atk ?? this.atk, hp: hp ?? this.hp);
+  Stats copyWith({int? atk, int? def, int? hp}) {
+    return Stats(
+      atk: atk ?? this.atk,
+      def: def ?? this.def,
+      hp: hp ?? this.hp,
+    );
   }
 }
 
@@ -23,10 +28,10 @@ class EquipConfig {
   const EquipConfig({required this.validTargets});
 }
 
-class FieldConfig {
+class DomainConfig {
   final bool unique;
 
-  const FieldConfig({this.unique = true});
+  const DomainConfig({this.unique = true});
 }
 
 class EffectStep {
@@ -38,13 +43,13 @@ class EffectStep {
 
 class Ability {
   final TriggerWhen when;
-  final String? condition;
+  final List<String>? pre;
   final int priority;
   final List<EffectStep> effects;
 
   const Ability({
     required this.when,
-    this.condition,
+    this.pre,
     this.priority = 0,
     required this.effects,
   });
@@ -59,7 +64,7 @@ class Card {
   final int version;
   final Stats? stats;
   final EquipConfig? equip;
-  final FieldConfig? field;
+  final DomainConfig? domain;
   final List<Ability> abilities;
 
   const Card({
@@ -71,7 +76,7 @@ class Card {
     this.version = 1,
     this.stats,
     this.equip,
-    this.field,
+    this.domain,
     this.abilities = const [],
   });
 }
@@ -89,7 +94,7 @@ class CardInstance {
     Map<String, dynamic>? metadata,
   }) : metadata = metadata ?? {};
 
-  Stats get stats => currentStats ?? card.stats ?? const Stats(atk: 0, hp: 0);
+  Stats get stats => currentStats ?? card.stats ?? const Stats(atk: 0, def: 0, hp: 0);
 }
 
 class Trigger {
@@ -141,11 +146,14 @@ class GameZone {
 class GameState {
   final GameZone hand;
   final GameZone deck;
-  final GameZone field;
+  final GameZone board;
+  final GameZone domain;
   final GameZone grave;
-  final GameZone banish;
+  final GameZone extra;
   
   int spellsCastThisTurn = 0;
+  int playerLife = 8000;
+  int opponentLife = 8000;
   bool gameWon = false;
   bool gameLost = false;
   
@@ -158,9 +166,10 @@ class GameState {
   GameState()
       : hand = GameZone(type: Zone.hand),
         deck = GameZone(type: Zone.deck),
-        field = GameZone(type: Zone.field),
+        board = GameZone(type: Zone.board),
+        domain = GameZone(type: Zone.domain),
         grave = GameZone(type: Zone.grave),
-        banish = GameZone(type: Zone.banish);
+        extra = GameZone(type: Zone.extra);
 
   GameZone getZone(Zone zone) {
     switch (zone) {
@@ -168,12 +177,14 @@ class GameState {
         return hand;
       case Zone.deck:
         return deck;
-      case Zone.field:
-        return field;
+      case Zone.board:
+        return board;
+      case Zone.domain:
+        return domain;
       case Zone.grave:
         return grave;
-      case Zone.banish:
-        return banish;
+      case Zone.extra:
+        return extra;
     }
   }
 
@@ -187,8 +198,8 @@ class GameState {
 
   bool get isGameOver => gameWon || gameLost;
 
-  CardInstance? get currentField => field.first;
-  bool get hasField => field.isNotEmpty;
+  CardInstance? get currentDomain => domain.first;
+  bool get hasDomain => domain.isNotEmpty;
 }
 
 class GameResult {

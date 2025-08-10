@@ -1,0 +1,11 @@
+id: spl_typhoon
+name: タイフーン
+type: spell
+tags: [draw, discard]
+text: カードを2枚引く、その後、手札を2枚選んで捨てる。
+version: 1
+abilities:
+  - when: on_play
+    effect:
+      - { op: draw, count: 2 }
+      - { op: discard, from: hand, count: 2, selection: choose }

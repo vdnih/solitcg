@@ -9,14 +9,20 @@ class CardLoader {
     switch (value.toLowerCase()) {
       case 'monster':
         return CardType.monster;
+      case 'ritual':
+        return CardType.ritual;
       case 'spell':
         return CardType.spell;
+      case 'arcane':
+        return CardType.arcane;
       case 'equip':
         return CardType.equip;
       case 'artifact':
         return CardType.artifact;
-      case 'field':
-        return CardType.field;
+      case 'relic':
+        return CardType.relic;
+      case 'domain':
+        return CardType.domain;
       default:
         return null;
     }
@@ -27,8 +33,6 @@ class CardLoader {
     switch (value.toLowerCase()) {
       case 'on_play':
         return TriggerWhen.onPlay;
-      case 'on_enter':
-        return TriggerWhen.onEnter;
       case 'on_destroy':
         return TriggerWhen.onDestroy;
       case 'static':
@@ -39,8 +43,6 @@ class CardLoader {
         return TriggerWhen.onDraw;
       case 'on_discard':
         return TriggerWhen.onDiscard;
-      case 'on_field_set':
-        return TriggerWhen.onFieldSet;
       default:
         return null;
     }
@@ -51,8 +53,9 @@ class CardLoader {
     if (statsData is! Map) return null;
     
     final atk = statsData['atk'] as int? ?? 0;
+    final def = statsData['def'] as int? ?? 0;
     final hp = statsData['hp'] as int? ?? 0;
-    return Stats(atk: atk, hp: hp);
+    return Stats(atk: atk, def: def, hp: hp);
   }
 
   static EquipConfig? _parseEquipConfig(dynamic equipData) {
@@ -66,12 +69,12 @@ class CardLoader {
     return null;
   }
 
-  static FieldConfig? _parseFieldConfig(dynamic fieldData) {
-    if (fieldData == null) return null;
-    if (fieldData is! Map) return null;
+  static DomainConfig? _parseDomainConfig(dynamic domainData) {
+    if (domainData == null) return null;
+    if (domainData is! Map) return null;
     
-    final unique = fieldData['unique'] as bool? ?? true;
-    return FieldConfig(unique: unique);
+    final unique = domainData['unique'] as bool? ?? true;
+    return DomainConfig(unique: unique);
   }
 
   static List<EffectStep> _parseEffects(dynamic effectsData) {
@@ -102,13 +105,18 @@ class CardLoader {
         final whenStr = abilityData['when'] as String?;
         final when = _parseTriggerWhen(whenStr);
         if (when != null) {
-          final condition = abilityData['condition'] as String?;
+          final preData = abilityData['pre'];
+          List<String>? pre;
+          if (preData is List) {
+            pre = preData.cast<String>();
+          }
+          
           final priority = abilityData['priority'] as int? ?? 0;
           final effects = _parseEffects(abilityData['effect']);
           
           abilities.add(Ability(
             when: when,
-            condition: condition,
+            pre: pre,
             priority: priority,
             effects: effects,
           ));
@@ -140,7 +148,7 @@ class CardLoader {
       
       final stats = _parseStats(doc['stats']);
       final equip = _parseEquipConfig(doc['equip']);
-      final field = _parseFieldConfig(doc['field']);
+      final domain = _parseDomainConfig(doc['domain']);
       final abilities = _parseAbilities(doc['abilities']);
 
       return Card(
@@ -152,7 +160,7 @@ class CardLoader {
         version: version,
         stats: stats,
         equip: equip,
-        field: field,
+        domain: domain,
         abilities: abilities,
       );
     } catch (e) {
@@ -201,12 +209,13 @@ class CardLoader {
     
     switch (card.type) {
       case CardType.monster:
+      case CardType.ritual:
         if (card.stats == null) return false;
         break;
       case CardType.equip:
         if (card.equip == null) return false;
         break;
-      case CardType.field:
+      case CardType.domain:
         break;
       default:
         break;

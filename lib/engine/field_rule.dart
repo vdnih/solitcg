@@ -2,34 +2,34 @@ import 'types.dart';
 import 'stack.dart';
 
 class FieldRule {
-  static GameResult playField(GameState state, CardInstance fieldCard) {
-    if (fieldCard.card.type != CardType.field) {
-      return GameResult.failure('Card is not a field card');
+  static GameResult playDomain(GameState state, CardInstance domainCard) {
+    if (domainCard.card.type != CardType.domain) {
+      return GameResult.failure('Card is not a domain card');
     }
 
     final logs = <String>[];
     
-    final oldField = state.currentField;
+    final oldDomain = state.currentDomain;
     
-    state.field.clear();
-    state.field.add(fieldCard);
-    logs.add('Set field: ${fieldCard.card.name}');
+    state.domain.clear();
+    state.domain.add(domainCard);
+    logs.add('Set domain: ${domainCard.card.name}');
     
-    for (final ability in fieldCard.card.abilities) {
+    for (final ability in domainCard.card.abilities) {
       if (ability.when == TriggerWhen.onPlay) {
-        TriggerStack.enqueueAbility(state, fieldCard, ability);
-        logs.add('Queued on_play trigger for ${fieldCard.card.name}');
+        TriggerStack.enqueueAbility(state, domainCard, ability);
+        logs.add('Queued onPlay trigger for ${domainCard.card.name}');
       }
     }
     
-    if (oldField != null) {
-      state.grave.add(oldField);
-      logs.add('Old field ${oldField.card.name} destroyed and sent to grave');
+    if (oldDomain != null) {
+      state.grave.add(oldDomain);
+      logs.add('Old domain ${oldDomain.card.name} destroyed and sent to grave');
       
-      for (final ability in oldField.card.abilities) {
+      for (final ability in oldDomain.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
-          TriggerStack.enqueueAbility(state, oldField, ability);
-          logs.add('Queued on_destroy trigger for ${oldField.card.name}');
+          TriggerStack.enqueueAbility(state, oldDomain, ability);
+          logs.add('Queued onDestroy trigger for ${oldDomain.card.name}');
         }
       }
     }
@@ -41,10 +41,11 @@ class FieldRule {
     final logs = <String>[];
     
     switch (card.card.type) {
-      case CardType.field:
-        return playField(state, card);
+      case CardType.domain:
+        return playDomain(state, card);
         
       case CardType.spell:
+      case CardType.arcane:
         state.spellsCastThisTurn++;
         logs.add('Cast spell: ${card.card.name}');
         state.grave.add(card);
@@ -57,23 +58,21 @@ class FieldRule {
         break;
         
       case CardType.monster:
-        if (state.hasField) {
-          return GameResult.failure('Cannot summon monster: field occupied');
-        }
-        
-        state.field.add(card);
-        logs.add('Summoned monster: ${card.card.name}');
+      case CardType.ritual:
+        state.board.add(card);
+        logs.add('Summoned ${card.card.type.toString().split('.').last}: ${card.card.name}');
         
         for (final ability in card.card.abilities) {
-          if (ability.when == TriggerWhen.onPlay || ability.when == TriggerWhen.onEnter) {
+          if (ability.when == TriggerWhen.onPlay) {
             TriggerStack.enqueueAbility(state, card, ability);
           }
         }
         break;
         
       case CardType.artifact:
-        state.field.add(card);
-        logs.add('Played artifact: ${card.card.name}');
+      case CardType.relic:
+        state.board.add(card);
+        logs.add('Played ${card.card.type.toString().split('.').last}: ${card.card.name}');
         
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onPlay) {

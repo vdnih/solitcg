@@ -7,7 +7,9 @@
       "Bash(flutter create:*)",
       "Bash(flutter logs:*)",
       "Bash(flutter test:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(test:*)",
+      "Bash(flutter pub add:*)"
     ],
     "deny": []
   }
