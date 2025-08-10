@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(mkdir -p /Users/rozaki/projects/solitcg/assets/cards)",
-      "Bash(mkdir -p /Users/rozaki/projects/solitcg/test)"
+      "Bash(mkdir -p /Users/rozaki/projects/solitcg/test)",
+      "Bash(flutter run:*)",
+      "Bash(flutter create:*)",
+      "Bash(flutter logs:*)",
+      "Bash(flutter test:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

@@ -1,10 +1,11 @@
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
-import 'package:flame/components.dart' as flame;
+import 'package:flame/components.dart';
 import 'package:flutter/material.dart' as material;
 import '../engine/types.dart';
 import '../engine/field_rule.dart';
 import '../engine/stack.dart';
+import '../engine/loader.dart';
 import 'dart:math';
 
 class TCGGame extends FlameGame with TapDetector {
@@ -24,9 +25,14 @@ class TCGGame extends FlameGame with TapDetector {
   }
 
   Future<void> _initializeGame() async {
-    final sampleCards = _createSampleCards();
+    final cards = await CardLoader.loadAllCards();
     
-    for (final card in sampleCards) {
+    if (cards.isEmpty) {
+      gameState.addToLog('Failed to load cards from YAML files');
+      return;
+    }
+    
+    for (final card in cards) {
       gameState.deck.add(CardInstance(
         card: card,
         instanceId: gameState.generateInstanceId(),
@@ -47,57 +53,6 @@ class TCGGame extends FlameGame with TapDetector {
     gameState.addToLog('Game initialized with ${gameState.hand.count} cards in hand');
   }
 
-  List<Card> _createSampleCards() {
-    return [
-      Card(
-        id: 'fld_x01',
-        name: '残響の講堂',
-        type: CardType.field,
-        text: '場に出た時、カードを2枚引く。',
-        abilities: [
-          Ability(
-            when: TriggerWhen.onPlay,
-            effects: [EffectStep(op: 'draw', params: {'count': 2})],
-          ),
-          Ability(
-            when: TriggerWhen.onDestroy,
-            effects: [EffectStep(op: 'search', params: {'from': 'deck', 'to': 'hand', 'filter': {'type': 'field'}, 'max': 1})],
-          ),
-        ],
-      ),
-      Card(
-        id: 'fld_x02',
-        name: '記憶の温室',
-        type: CardType.field,
-        text: '場に出た時、スペルカードを1枚手札に加える。',
-        abilities: [
-          Ability(
-            when: TriggerWhen.onPlay,
-            effects: [EffectStep(op: 'search', params: {'from': 'deck', 'to': 'hand', 'filter': {'type': 'spell'}, 'max': 1})],
-          ),
-          Ability(
-            when: TriggerWhen.onDestroy,
-            effects: [EffectStep(op: 'draw', params: {'count': 1})],
-          ),
-        ],
-      ),
-      Card(
-        id: 'spl_x07',
-        name: '閃考の儀',
-        type: CardType.spell,
-        text: '手札を1枚捨てる。スペルを7回詠唱していたなら勝利。',
-        abilities: [
-          Ability(
-            when: TriggerWhen.onPlay,
-            effects: [
-              EffectStep(op: 'discard', params: {'from': 'hand', 'count': 1}),
-              EffectStep(op: 'win_if', params: {'expr': 'spells_cast_this_turn >= 7'}),
-            ],
-          ),
-        ],
-      ),
-    ];
-  }
 
   void _shuffleDeck() {
     final random = Random();
@@ -206,8 +161,8 @@ class TCGGame extends FlameGame with TapDetector {
         text: recentLogs[i],
         position: Vector2(20, size.y - 200 + i * 18),
         textRenderer: TextPaint(
-          style: const TextStyle(
-            color: Colors.white,
+          style: const material.TextStyle(
+            color: material.Colors.white,
             fontSize: 12,
           ),
         ),
@@ -252,83 +207,7 @@ class TCGGame extends FlameGame with TapDetector {
 }
 
   // --- CardComponentクラス定義 ---
-
-    final CardInstance card;
-    final material.VoidCallback? onTap;
-    final bool isField;
-
-    CardComponent({
-      required this.card,
-      required flame.Vector2 position,
-      this.onTap,
-      this.isField = false,
-    }) : super(
-      position: position,
-      size: flame.Vector2(100, 140),
-      paint: material.Paint()..color = isField ? material.Colors.blue : material.Colors.brown,
-    );
-
-    @override
-    void render(material.Canvas canvas) {
-    super.render(canvas);
-
-      canvas.drawRRect(
-        material.RRect.fromRectAndRadius(
-          material.Rect.fromLTWH(0, 0, size.x, size.y),
-          const material.Radius.circular(8),
-        ),
-        material.Paint()
-          ..color = isField ? material.Colors.blue.shade700 : material.Colors.brown.shade700
-          ..style = material.PaintingStyle.fill,
-      );
-
-      canvas.drawRRect(
-        material.RRect.fromRectAndRadius(
-          material.Rect.fromLTWH(2, 2, size.x - 4, size.y - 4),
-          const material.Radius.circular(6),
-        ),
-        material.Paint()
-          ..color = isField ? material.Colors.blue.shade300 : material.Colors.brown.shade300
-          ..style = material.PaintingStyle.fill,
-      );
-
-      final textPainter = material.TextPainter(
-        text: material.TextSpan(
-          text: card.card.name,
-          style: const material.TextStyle(
-            color: material.Colors.white,
-            fontSize: 10,
-            fontWeight: material.FontWeight.bold,
-          ),
-        ),
-        textDirection: material.TextDirection.ltr,
-      );
-      textPainter.layout(maxWidth: size.x - 8);
-      textPainter.paint(canvas, const material.Offset(4, 4));
-
-      final typePainter = material.TextPainter(
-        text: material.TextSpan(
-          text: card.card.type.toString().split('.').last,
-          style: const material.TextStyle(
-            color: material.Colors.white70,
-            fontSize: 8,
-          ),
-        ),
-        textDirection: material.TextDirection.ltr,
-      );
-      typePainter.layout();
-      typePainter.paint(canvas, material.Offset(4, size.y - 16));
-    }
-
-    @override
-    bool onTapDown(TapDownEvent event) {
-      if (onTap != null) {
-        onTap!();
-        return true;
-      }
-      return false;
-    }
-  }
+class CardComponent extends PositionComponent with TapCallbacks {
 
   final CardInstance card;
   final material.VoidCallback? onTap;
@@ -342,7 +221,6 @@ class TCGGame extends FlameGame with TapDetector {
   }) : super(
           position: position,
           size: Vector2(100, 140),
-          paint: material.Paint()..color = isField ? material.Colors.blue : material.Colors.brown,
         );
 
   @override
@@ -351,7 +229,7 @@ class TCGGame extends FlameGame with TapDetector {
 
     canvas.drawRRect(
       material.RRect.fromRectAndRadius(
-        material.Rect.fromLTWH(0, 0, this.size.x, this.size.y),
+        material.Rect.fromLTWH(0, 0, size.x, size.y),
         const material.Radius.circular(8),
       ),
       material.Paint()
@@ -361,7 +239,7 @@ class TCGGame extends FlameGame with TapDetector {
 
     canvas.drawRRect(
       material.RRect.fromRectAndRadius(
-        material.Rect.fromLTWH(2, 2, this.size.x - 4, this.size.y - 4),
+        material.Rect.fromLTWH(2, 2, size.x - 4, size.y - 4),
         const material.Radius.circular(6),
       ),
       material.Paint()
@@ -380,7 +258,7 @@ class TCGGame extends FlameGame with TapDetector {
       ),
       textDirection: material.TextDirection.ltr,
     );
-    textPainter.layout(maxWidth: this.size.x - 8);
+    textPainter.layout(maxWidth: size.x - 8);
     textPainter.paint(canvas, const material.Offset(4, 4));
 
     final typePainter = material.TextPainter(
@@ -394,7 +272,7 @@ class TCGGame extends FlameGame with TapDetector {
       textDirection: material.TextDirection.ltr,
     );
     typePainter.layout();
-    typePainter.paint(canvas, material.Offset(4, this.size.y - 16));
+    typePainter.paint(canvas, material.Offset(4, size.y - 16));
   }
 
   @override
