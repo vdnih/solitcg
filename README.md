@@ -33,3 +33,18 @@ dart test
 
 - `CARD_YAML_SPEC.md` — カード定義の YAML 仕様
 - `GAME_RULES.md` — 基本的なルール概要
+
+
+## Directory Structure
+
+```
+.
+├── engine/  # core game engine
+├── cards/   # card data and definitions
+├── docs/    # documentation
+```
+
+## License
+
+- Engine code is licensed under the [MIT License](./LICENSE).
+- Card data is licensed under [CC BY 4.0](./CARD_LICENSE).
