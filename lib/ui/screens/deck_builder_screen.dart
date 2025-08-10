@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/deck.dart';
 import '../../engine/types.dart';
 import '../../services/card_loader.dart';
+import '../../providers/deck_provider.dart';
 import '../widgets/tag_selector_dialog.dart';
 import '../widgets/card_detail_dialog.dart';
 
@@ -45,10 +46,28 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
 
   // デッキの読み込み
   Future<void> _loadDecks() async {
-    final decks = await DeckStorage.loadDecks();
-    if (decks.decks.isNotEmpty) {
+    final collection = await DeckStorage.loadDecks();
+    final selectedId = ref.read(selectedDeckIdProvider);
+
+    if (selectedId != null) {
+      final deck = collection.getDeck(selectedId);
+      if (deck != null) {
+        setState(() {
+          _currentDeck = deck;
+        });
+        _validateCurrentDeck();
+        return;
+      }
+    }
+
+    if (selectedId == null) {
+      _createNewDeck();
+      return;
+    }
+
+    if (collection.decks.isNotEmpty) {
       setState(() {
-        _currentDeck = decks.decks.first;
+        _currentDeck = collection.decks.first;
       });
       _validateCurrentDeck();
     } else {
@@ -58,13 +77,15 @@ class _DeckBuilderScreenState extends ConsumerState<DeckBuilderScreen> {
 
   // 新規デッキの作成
   void _createNewDeck() {
+    final newDeck = Deck(
+      id: 'deck_${DateTime.now().millisecondsSinceEpoch}',
+      name: '新しいデッキ',
+      type: DeckType.main,
+    );
     setState(() {
-      _currentDeck = Deck(
-        id: 'deck_${DateTime.now().millisecondsSinceEpoch}',
-        name: '新しいデッキ',
-        type: DeckType.main,
-      );
+      _currentDeck = newDeck;
     });
+    ref.read(selectedDeckIdProvider.notifier).state = newDeck.id;
     _validateCurrentDeck();
   }
 
