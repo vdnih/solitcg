@@ -28,10 +28,7 @@ class MainScreen extends ConsumerWidget {
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {
-                // TODO: ゲーム画面への遷移
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ゲーム機能は実装中です')),
-                );
+                AppRoutes.navigateTo(context, AppRoutes.game);
               },
               child: const Text('ゲームを開始', style: TextStyle(fontSize: 18)),
             ),

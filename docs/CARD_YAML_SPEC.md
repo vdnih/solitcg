@@ -36,10 +36,6 @@ stats:
   def: integer (>=0)
   hp:  integer (>=0)          # hp <= 0 で即破壊 → on_destroy 発動
 
-# domain専用（省略可）
-domain:
-  unique: boolean             # デフォルト true（場に常に1枚制限）
-
 abilities:                    # 任意。0個以上
   - when: on_play | on_destroy | on_discard | activated | static
     pre: [ "expr", ... ]      # 発動前提（すべてtrue時のみ実行）
@@ -206,14 +202,3 @@ abilities:
       - { op: destroy, target: "choose:self:artifact", count: 2 }
       - { op: draw, count: 5 }
 ```
-
----
-
-この形にすれば、**banish系の処理が完全に削除**され、
-ゾーンもシンプルに `hand|deck|grave|board|domain|extra` のみになります。
-エンジン側の分岐もかなり軽量化できます。
-
----
-
-もしよければ、次にこの仕様に沿った**サンプルカード集**を作って、テストプレイ用データセットにできますが、作りますか？
-そうすると実装の初期検証が一気に楽になります。
