@@ -3,6 +3,7 @@ import 'package:yaml/yaml.dart';
 import 'package:flutter/services.dart';
 import 'types.dart';
 
+/// YAML 形式のカードデータを読み込むヘルパークラス。
 class CardLoader {
   static CardType? _parseCardType(String? value) {
     if (value == null) return null;
@@ -126,6 +127,7 @@ class CardLoader {
     return abilities;
   }
 
+  /// YAML 文字列から [Card] を生成する。
   static Card? parseCard(String yamlContent) {
     try {
       final doc = loadYaml(yamlContent);
@@ -168,6 +170,7 @@ class CardLoader {
     }
   }
 
+  /// アセットからカード YAML を読み込み [Card] に変換する。
   static Future<Card?> loadCardFromAsset(String assetPath) async {
     try {
       final yamlContent = await rootBundle.loadString(assetPath);
@@ -177,6 +180,7 @@ class CardLoader {
     }
   }
 
+  /// index.yaml からカードファイル一覧を取得する。
   static Future<List<String>> loadCardIndex() async {
     try {
       final yamlContent = await rootBundle.loadString('assets/cards/index.yaml');
@@ -190,23 +194,25 @@ class CardLoader {
     }
   }
 
+  /// すべてのカードファイルを読み込み [Card] のリストを返す。
   static Future<List<Card>> loadAllCards() async {
     final cardFiles = await loadCardIndex();
     final cards = <Card>[];
-    
+
     for (final cardFile in cardFiles) {
       final card = await loadCardFromAsset('assets/cards/$cardFile');
       if (card != null) {
         cards.add(card);
       }
     }
-    
+
     return cards;
   }
 
+  /// カードデータが基本的な要件を満たしているか検証する。
   static bool validateCard(Card card) {
     if (card.id.isEmpty || card.name.isEmpty) return false;
-    
+
     switch (card.type) {
       case CardType.monster:
       case CardType.ritual:
@@ -220,13 +226,13 @@ class CardLoader {
       default:
         break;
     }
-    
+
     for (final ability in card.abilities) {
       for (final effect in ability.effects) {
         if (effect.op.isEmpty) return false;
       }
     }
-    
+
     return true;
   }
 }

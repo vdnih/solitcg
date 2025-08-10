@@ -1,11 +1,15 @@
 import 'dart:collection';
 
+/// カードの種類。
 enum CardType { monster, ritual, spell, arcane, artifact, relic, equip, domain }
 
+/// アビリティの発動タイミング。
 enum TriggerWhen { onPlay, onDestroy, activated, static, onDraw, onDiscard }
 
+/// ゲーム内でカードが存在する領域。
 enum Zone { hand, deck, board, domain, grave, extra }
 
+/// 攻撃力・防御力・HP を保持するステータス。
 class Stats {
   final int atk;
   final int def;
@@ -22,18 +26,21 @@ class Stats {
   }
 }
 
+/// 装備カードの設定。
 class EquipConfig {
   final List<String> validTargets;
 
   const EquipConfig({required this.validTargets});
 }
 
+/// ドメインカードの設定。
 class DomainConfig {
   final bool unique;
 
   const DomainConfig({this.unique = true});
 }
 
+/// 効果の1ステップを表すデータ。
 class EffectStep {
   final String op;
   final Map<String, dynamic> params;
@@ -41,6 +48,7 @@ class EffectStep {
   const EffectStep({required this.op, required this.params});
 }
 
+/// カードが持つアビリティ。
 class Ability {
   final TriggerWhen when;
   final List<String>? pre;
@@ -55,6 +63,7 @@ class Ability {
   });
 }
 
+/// YAML から読み込まれるカードデータ。
 class Card {
   final String id;
   final String name;
@@ -81,6 +90,7 @@ class Card {
   });
 }
 
+/// フィールド上に存在するカードのインスタンス。
 class CardInstance {
   final Card card;
   final String instanceId;
@@ -97,6 +107,7 @@ class CardInstance {
   Stats get stats => currentStats ?? card.stats ?? const Stats(atk: 0, def: 0, hp: 0);
 }
 
+/// キューに積まれるトリガー情報。
 class Trigger {
   final String id;
   final CardInstance source;
@@ -113,6 +124,7 @@ class Trigger {
   });
 }
 
+/// 各ゾーン（手札・デッキ等）を表すコンテナ。
 class GameZone {
   final Zone type;
   final List<CardInstance> cards;
@@ -143,6 +155,7 @@ class GameZone {
   }
 }
 
+/// ゲーム全体の状態を保持する。
 class GameState {
   final GameZone hand;
   final GameZone deck;
@@ -202,6 +215,7 @@ class GameState {
   bool get hasDomain => domain.isNotEmpty;
 }
 
+/// 効果解決や処理の結果を表す。
 class GameResult {
   final bool success;
   final String? error;
