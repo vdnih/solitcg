@@ -23,8 +23,9 @@ class TriggerStack {
   }
 
   /// キュー内のトリガーを順に解決する。
+  /// UI更新コールバックを挟みながら非同期で処理する。
   /// ループ防止のため最大100回まで実行する。
-  static GameResult resolveAll(GameState state) {
+  static Future<GameResult> resolveAll(GameState state, Function onUpdate) async {
     final logs = <String>[];
     int iterations = 0;
     const maxIterations = 100;
@@ -36,6 +37,10 @@ class TriggerStack {
         break;
       }
 
+      // 解決前にUIを更新して待機
+      onUpdate();
+      await Future.delayed(const Duration(seconds: 1));
+
       final trigger = state.triggerQueue.removeFirst();
       logs.add('Resolving: ${trigger.source.card.name}');
       
@@ -45,6 +50,9 @@ class TriggerStack {
       if (!result.success) {
         logs.add('Effect failed: ${result.error}');
       }
+
+      // 解決後にもUIを更新
+      onUpdate();
     }
 
     if (iterations >= maxIterations) {

@@ -15,6 +15,7 @@ class TCGGame extends FlameGame with TapDetector {
   late TextComponent gameStatusComponent;
   late TextComponent instructionComponent;
   late TextComponent lifeComponent;
+  final List<TextComponent> triggerQueueComponents = [];
 
   @override
   Future<void> onLoad() async {
@@ -124,6 +125,7 @@ class TCGGame extends FlameGame with TapDetector {
     _updateHand();
     _updateField();
     _updateLog();
+    _updateTriggerQueue();
     
     gameStatusComponent.text = _getGameStatusText();
     lifeComponent.text = 'Player Life: ${gameState.playerLife} | Opponent Life: ${gameState.opponentLife}';
@@ -200,7 +202,46 @@ class TCGGame extends FlameGame with TapDetector {
     }
   }
 
-  void _playCard(int handIndex) {
+  void _updateTriggerQueue() {
+    for (final component in triggerQueueComponents) {
+      remove(component);
+    }
+    triggerQueueComponents.clear();
+
+    final queueTitle = TextComponent(
+      text: 'Trigger Queue:',
+      position: Vector2(size.x - 220, 50),
+      textRenderer: TextPaint(
+        style: const material.TextStyle(
+          color: material.Colors.orange,
+          fontSize: 14,
+          fontWeight: material.FontWeight.bold,
+        ),
+      ),
+    );
+    triggerQueueComponents.add(queueTitle);
+    add(queueTitle);
+
+    final queue = gameState.triggerQueue.toList();
+    for (int i = 0; i < queue.length; i++) {
+      final trigger = queue[i];
+      final text = '${i + 1}: ${trigger.source.card.name}';
+      final component = TextComponent(
+        text: text,
+        position: Vector2(size.x - 220, 70 + i * 18),
+        textRenderer: TextPaint(
+          style: const material.TextStyle(
+            color: material.Colors.white,
+            fontSize: 12,
+          ),
+        ),
+      );
+      triggerQueueComponents.add(component);
+      add(component);
+    }
+  }
+
+  void _playCard(int handIndex) async {
     if (gameState.isGameOver) return;
     
     gameState.addToLog('Playing card at index $handIndex');
@@ -213,8 +254,9 @@ class TCGGame extends FlameGame with TapDetector {
     }
     
     gameState.actionLog.addAll(result.logs);
-    
-    final resolveResult = TriggerStack.resolveAll(gameState);
+    _updateDisplay();
+
+    final resolveResult = await TriggerStack.resolveAll(gameState, _updateDisplay);
     gameState.actionLog.addAll(resolveResult.logs);
     
     if (!resolveResult.success) {

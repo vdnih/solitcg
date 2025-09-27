@@ -6,7 +6,7 @@ import '../lib/engine/ops.dart';
 
 void main() {
   group('Field Replacement Tests', () {
-    test('Field replacement triggers new on_play then old on_destroy', () {
+    test('Field replacement triggers new on_play then old on_destroy', () async {
       final state = GameState();
       
       final field1 = Card(
@@ -55,13 +55,14 @@ void main() {
       }
 
       FieldRule.playDomain(state, instance1);
-      TriggerStack.resolveAll(state);
+      await TriggerStack.resolveAll(state, () {});
 
       expect(state.hand.count, 1);
       expect(state.domain.first?.card.id, 'field1');
 
       FieldRule.playDomain(state, instance2);
-      final logs = TriggerStack.resolveAll(state).logs;
+      final resolveResult = await TriggerStack.resolveAll(state, () {});
+      final logs = resolveResult.logs;
 
       expect(state.hand.count, 6);
       expect(state.domain.first?.card.id, 'field2');
@@ -73,9 +74,8 @@ void main() {
   });
 
   group('FIFO Queue Tests', () {
-    test('Triggers resolve in FIFO order', () {
+    test('Triggers resolve in FIFO order', () async {
       final state = GameState();
-      final logs = <String>[];
       
       final card1 = CardInstance(
         card: Card(
@@ -117,7 +117,7 @@ void main() {
       TriggerStack.enqueueAbility(state, card1, card1.card.abilities[0]);
       TriggerStack.enqueueAbility(state, card2, card2.card.abilities[0]);
       
-      final result = TriggerStack.resolveAll(state);
+      final result = await TriggerStack.resolveAll(state, () {});
       
       final triggerLogs = result.logs.where((log) => log.startsWith('Resolving:')).toList();
       expect(triggerLogs[0], contains('Card 1'));
@@ -127,7 +127,7 @@ void main() {
   });
 
   group('Require Failure Tests', () {
-    test('Require failure stops execution', () {
+    test('Require failure stops execution', () async {
       final state = GameState();
       
       final card = CardInstance(
@@ -150,7 +150,7 @@ void main() {
       );
 
       TriggerStack.enqueueAbility(state, card, card.card.abilities[0]);
-      final result = TriggerStack.resolveAll(state);
+      final result = await TriggerStack.resolveAll(state, () {});
       
       expect(result.success, false);
       expect(result.logs.any((log) => log.contains('Requirement not met')), true);
@@ -158,7 +158,7 @@ void main() {
       expect(state.grave.count, 0);
     });
 
-    test('Require success allows execution', () {
+    test('Require success allows execution', () async {
       final state = GameState();
       
       state.hand.add(CardInstance(
@@ -193,7 +193,7 @@ void main() {
       );
 
       TriggerStack.enqueueAbility(state, card, card.card.abilities[0]);
-      final result = TriggerStack.resolveAll(state);
+      final result = await TriggerStack.resolveAll(state, () {});
       
       expect(result.success, true);
       expect(state.hand.count, 2);
