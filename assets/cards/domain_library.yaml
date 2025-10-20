@@ -1,0 +1,13 @@
+id: dom_library_001
+name: 知識の図書館
+type: domain
+tags: [library, draw]
+text: このカードが場にある限り、各ターンの最初のドローで1枚ではなく2枚引く。
+version: 1
+domain:
+  unique: true
+
+abilities:
+  - when: static
+    effect:
+      - { op: modify_draw, add: 1 }

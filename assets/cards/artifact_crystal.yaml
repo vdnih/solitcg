@@ -1,0 +1,14 @@
+id: atf_crystal_001
+name: クリスタルコア
+type: artifact
+tags: [crystal, core]
+text: 手札が3枚以上の場合、1ターンに1度このカードを選択して手札を2枚捨てることで、カードを3枚ドローできる。
+version: 1
+
+abilities:
+  - when: activated
+    pre:
+      - "hand.count >= 3"
+    effect:
+      - { op: discard, from: hand, count: 2, selection: choose }
+      - { op: draw, count: 3 }

@@ -2,12 +2,15 @@ import 'dart:collection';
 import 'types.dart';
 import 'ops.dart';
 
+/// トリガーキューを管理し、効果解決を行うユーティリティ。
 class TriggerStack {
+  /// トリガーをキューに追加し、ログを記録する。
   static void enqueueTrigger(GameState state, Trigger trigger) {
     state.triggerQueue.addLast(trigger);
     state.addToLog('Triggered: ${trigger.source.card.name} - ${_triggerWhenToString(trigger.ability.when)}');
   }
 
+  /// アビリティからトリガーを生成しキューに追加する。
   static void enqueueAbility(GameState state, CardInstance source, Ability ability, {Map<String, dynamic>? context}) {
     final trigger = Trigger(
       id: 'trigger_${DateTime.now().millisecondsSinceEpoch}',
@@ -19,7 +22,10 @@ class TriggerStack {
     enqueueTrigger(state, trigger);
   }
 
-  static GameResult resolveAll(GameState state) {
+  /// キュー内のトリガーを順に解決する。
+  /// UI更新コールバックを挟みながら非同期で処理する。
+  /// ループ防止のため最大100回まで実行する。
+  static Future<GameResult> resolveAll(GameState state, Function onUpdate) async {
     final logs = <String>[];
     int iterations = 0;
     const maxIterations = 100;
@@ -31,6 +37,10 @@ class TriggerStack {
         break;
       }
 
+      // 解決前にUIを更新して待機
+      onUpdate();
+      await Future.delayed(const Duration(seconds: 1));
+
       final trigger = state.triggerQueue.removeFirst();
       logs.add('Resolving: ${trigger.source.card.name}');
       
@@ -40,6 +50,9 @@ class TriggerStack {
       if (!result.success) {
         logs.add('Effect failed: ${result.error}');
       }
+
+      // 解決後にもUIを更新
+      onUpdate();
     }
 
     if (iterations >= maxIterations) {
@@ -49,13 +62,23 @@ class TriggerStack {
     return GameResult.success(logs: logs);
   }
 
+  /// 単一のトリガーを解決する。
   static GameResult _resolveTrigger(GameState state, Trigger trigger) {
     final logs = <String>[];
     
-    if (trigger.ability.condition != null) {
-      final conditionResult = ExpressionEvaluator.evaluate(state, trigger.ability.condition!);
-      if (!conditionResult) {
-        logs.add('Condition failed, skipping effect');
+    if (trigger.ability.pre != null && trigger.ability.pre!.isNotEmpty) {
+      // すべての事前条件をチェック
+      bool allPreConditionsMet = true;
+      for (final condition in trigger.ability.pre!) {
+        final conditionResult = ExpressionEvaluator.evaluate(state, condition);
+        if (!conditionResult) {
+          allPreConditionsMet = false;
+          break;
+        }
+      }
+      
+      if (!allPreConditionsMet) {
+        logs.add('Pre-condition failed, skipping effect');
         return GameResult.success(logs: logs);
       }
     }
@@ -77,12 +100,11 @@ class TriggerStack {
     return GameResult.success(logs: logs);
   }
 
+  /// TriggerWhen をログ用の文字列に変換する。
   static String _triggerWhenToString(TriggerWhen when) {
     switch (when) {
       case TriggerWhen.onPlay:
         return 'on_play';
-      case TriggerWhen.onEnter:
-        return 'on_enter';
       case TriggerWhen.onDestroy:
         return 'on_destroy';
       case TriggerWhen.static:
@@ -93,13 +115,13 @@ class TriggerStack {
         return 'on_draw';
       case TriggerWhen.onDiscard:
         return 'on_discard';
-      case TriggerWhen.onFieldSet:
-        return 'on_field_set';
     }
   }
 }
 
+/// 文字列表現を評価して true/false を返す簡易式評価機。
 class ExpressionEvaluator {
+  /// 与えられた式を評価する。解析に失敗した場合は false を返す。
   static bool evaluate(GameState state, String expression) {
     try {
       return _parseExpression(state, expression.trim());
@@ -108,6 +130,7 @@ class ExpressionEvaluator {
     }
   }
 
+  /// シンプルな比較式を解析して評価する。
   static bool _parseExpression(GameState state, String expr) {
     if (expr.contains('>=')) {
       final parts = expr.split('>=').map((e) => e.trim()).toList();
@@ -172,12 +195,23 @@ class ExpressionEvaluator {
         return state.hand.count;
       case 'deck.count':
         return state.deck.count;
+      case 'board.count':
+        return state.board.count;
       case 'grave.count':
         return state.grave.count;
-      case 'field.exists':
-        return state.hasField ? 1 : 0;
+      case 'domain.exists':
+        return state.hasDomain ? 1 : 0;
+      case 'player.life':
+        return state.playerLife;
+      case 'opponent.life':
+        return state.opponentLife;
       case 'spells_cast_this_turn':
         return state.spellsCastThisTurn;
+      // Legacy support
+      case 'field.exists':
+        return state.board.isNotEmpty ? 1 : 0;
+      case 'field.count':
+        return state.board.count;
       default:
         if (int.tryParse(expr) != null) {
           return int.parse(expr);
@@ -189,7 +223,121 @@ class ExpressionEvaluator {
     }
   }
 
+  /// 文字列の前後にあるクォートを取り除く。
+  static String _removeQuotes(String text) {
+    if ((text.startsWith("'") && text.endsWith("'")) || 
+        (text.startsWith('"') && text.endsWith('"'))) {
+      return text.substring(1, text.length - 1);
+    }
+    return text;
+  }
+  
+  /// count(type:'artifact', zone:'board:self') のような形式の式を評価する。
   static int _evaluateCountExpression(GameState state, String expr) {
-    return 0;
+    // count(type:'artifact', zone:'board:self') のような形式を処理
+    try {
+      // 正規表現よりも単純に文字列解析で処理する
+      if (!expr.startsWith('count(') || !expr.endsWith(')')) {
+        return 0;
+      }
+      
+      final content = expr.substring(6, expr.length - 1).trim();
+      final params = content.split(',').map((p) => p.trim()).toList();
+      
+      String? param1Type;
+      String? param1Value;
+      String? param2Type;
+      String? param2Value;
+      
+      if (params.isNotEmpty) {
+        final parts1 = params[0].split(':');
+        if (parts1.length == 2) {
+          param1Type = parts1[0].trim();
+          // クォーテーション除去
+          param1Value = _removeQuotes(parts1[1].trim());
+        }
+      }
+      
+      if (params.length > 1) {
+        final parts2 = params[1].split(':');
+        if (parts2.length == 2) {
+          param2Type = parts2[0].trim();
+          // クォーテーション除去
+          param2Value = _removeQuotes(parts2[1].trim());
+        }
+      }
+      
+      // ゾーンとタイプ・タグをもとにカード数をカウント
+      String? zoneStr;
+      String? filterType;
+      String? filterTag;
+      
+      if (param1Type == 'zone') {
+        zoneStr = param1Value;
+      } else if (param1Type == 'type') {
+        filterType = param1Value;
+      } else if (param1Type == 'tag') {
+        filterTag = param1Value;
+      }
+      
+      if (param2Type == 'zone') {
+        zoneStr = param2Value;
+      } else if (param2Type == 'type') {
+        filterType = param2Value;
+      } else if (param2Type == 'tag') {
+        filterTag = param2Value;
+      }
+      
+      // ゾーン指定がない場合はボードをデフォルトにする
+      zoneStr ??= 'board:self';
+      
+      // ゾーン解析: 'board:self' のようにコロンで区切られている
+      final zoneParts = zoneStr.split(':');
+      final zoneName = zoneParts[0];
+      // TODO: 将来的に相手のゾーンを参照する処理を実装する場合に使用
+      // final zoneOwner = zoneParts.length > 1 ? zoneParts[1] : 'self';
+      
+      GameZone? zone;
+      switch (zoneName) {
+        case 'hand': zone = state.hand; break;
+        case 'board': zone = state.board; break;
+        case 'deck': zone = state.deck; break;
+        case 'grave': zone = state.grave; break;
+        case 'domain': zone = state.domain; break;
+        case 'extra': zone = state.extra; break;
+        case 'field': zone = state.board; break; // 後方互換性
+      }
+      
+      if (zone == null) {
+        return 0;
+      }
+      
+      // フィルターを適用してカウント
+      int count = 0;
+      for (final card in zone.cards) {
+        bool matches = true;
+        
+        if (filterType != null) {
+          final cardType = card.card.type.toString().split('.').last;
+          if (cardType != filterType) {
+            matches = false;
+          }
+        }
+        
+        if (matches && filterTag != null) {
+          if (!card.card.tags.contains(filterTag)) {
+            matches = false;
+          }
+        }
+        
+        if (matches) {
+          count++;
+        }
+      }
+      
+      return count;
+    } catch (e) {
+      return 0;
+    }
   }
 }

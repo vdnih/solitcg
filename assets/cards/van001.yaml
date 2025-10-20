@@ -1,0 +1,11 @@
+- id: VAN001
+  name: ブレイブ・ソルジャー
+  type: monster
+  tags: [warrior]
+  text: 効果を持たないシンプルな戦士。
+  version: 1
+  stats:
+    atk: 0
+    def: 0
+    hp: 1000
+  abilities: []

@@ -1,0 +1,11 @@
+id: simple_draw_001
+name: シンプルドロー
+type: spell
+tags: [draw, simple]
+text: カードを1枚ドローする。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: draw, count: 1 }

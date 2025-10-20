@@ -1,34 +1,46 @@
 import 'dart:collection';
 
-enum CardType { monster, spell, equip, artifact, field }
+/// カードの種類。
+enum CardType { monster, ritual, spell, arcane, artifact, relic, equip, domain }
 
-enum TriggerWhen { onPlay, onEnter, onDestroy, static, activated, onDraw, onDiscard, onFieldSet }
+/// アビリティの発動タイミング。
+enum TriggerWhen { onPlay, onDestroy, activated, static, onDraw, onDiscard }
 
-enum Zone { hand, deck, field, grave, banish }
+/// ゲーム内でカードが存在する領域。
+enum Zone { hand, deck, board, domain, grave, extra }
 
+/// 攻撃力・防御力・HP を保持するステータス。
 class Stats {
   final int atk;
+  final int def;
   final int hp;
 
-  const Stats({required this.atk, required this.hp});
+  const Stats({required this.atk, required this.def, required this.hp});
 
-  Stats copyWith({int? atk, int? hp}) {
-    return Stats(atk: atk ?? this.atk, hp: hp ?? this.hp);
+  Stats copyWith({int? atk, int? def, int? hp}) {
+    return Stats(
+      atk: atk ?? this.atk,
+      def: def ?? this.def,
+      hp: hp ?? this.hp,
+    );
   }
 }
 
+/// 装備カードの設定。
 class EquipConfig {
   final List<String> validTargets;
 
   const EquipConfig({required this.validTargets});
 }
 
-class FieldConfig {
+/// ドメインカードの設定。
+class DomainConfig {
   final bool unique;
 
-  const FieldConfig({this.unique = true});
+  const DomainConfig({this.unique = true});
 }
 
+/// 効果の1ステップを表すデータ。
 class EffectStep {
   final String op;
   final Map<String, dynamic> params;
@@ -36,20 +48,22 @@ class EffectStep {
   const EffectStep({required this.op, required this.params});
 }
 
+/// カードが持つアビリティ。
 class Ability {
   final TriggerWhen when;
-  final String? condition;
+  final List<String>? pre;
   final int priority;
   final List<EffectStep> effects;
 
   const Ability({
     required this.when,
-    this.condition,
+    this.pre,
     this.priority = 0,
     required this.effects,
   });
 }
 
+/// YAML から読み込まれるカードデータ。
 class Card {
   final String id;
   final String name;
@@ -59,7 +73,7 @@ class Card {
   final int version;
   final Stats? stats;
   final EquipConfig? equip;
-  final FieldConfig? field;
+  final DomainConfig? domain;
   final List<Ability> abilities;
 
   const Card({
@@ -71,11 +85,12 @@ class Card {
     this.version = 1,
     this.stats,
     this.equip,
-    this.field,
+    this.domain,
     this.abilities = const [],
   });
 }
 
+/// フィールド上に存在するカードのインスタンス。
 class CardInstance {
   final Card card;
   final String instanceId;
@@ -89,9 +104,10 @@ class CardInstance {
     Map<String, dynamic>? metadata,
   }) : metadata = metadata ?? {};
 
-  Stats get stats => currentStats ?? card.stats ?? const Stats(atk: 0, hp: 0);
+  Stats get stats => currentStats ?? card.stats ?? const Stats(atk: 0, def: 0, hp: 0);
 }
 
+/// キューに積まれるトリガー情報。
 class Trigger {
   final String id;
   final CardInstance source;
@@ -108,6 +124,7 @@ class Trigger {
   });
 }
 
+/// 各ゾーン（手札・デッキ等）を表すコンテナ。
 class GameZone {
   final Zone type;
   final List<CardInstance> cards;
@@ -117,7 +134,7 @@ class GameZone {
   void add(CardInstance card) => cards.add(card);
   void addAll(List<CardInstance> newCards) => cards.addAll(newCards);
   bool remove(CardInstance card) => cards.remove(card);
-  CardInstance? removeAt(int index) => index < cards.length ? cards.removeAt(index) : null;
+  CardInstance? removeAt(int index) => index >= 0 && index < cards.length ? cards.removeAt(index) : null;
   void insert(int index, CardInstance card) => cards.insert(index, card);
   void clear() => cards.clear();
 
@@ -138,14 +155,18 @@ class GameZone {
   }
 }
 
+/// ゲーム全体の状態を保持する。
 class GameState {
   final GameZone hand;
   final GameZone deck;
-  final GameZone field;
+  final GameZone board;
+  final GameZone domain;
   final GameZone grave;
-  final GameZone banish;
+  final GameZone extra;
   
   int spellsCastThisTurn = 0;
+  int playerLife = 8000;
+  int opponentLife = 8000;
   bool gameWon = false;
   bool gameLost = false;
   
@@ -158,9 +179,10 @@ class GameState {
   GameState()
       : hand = GameZone(type: Zone.hand),
         deck = GameZone(type: Zone.deck),
-        field = GameZone(type: Zone.field),
+        board = GameZone(type: Zone.board),
+        domain = GameZone(type: Zone.domain),
         grave = GameZone(type: Zone.grave),
-        banish = GameZone(type: Zone.banish);
+        extra = GameZone(type: Zone.extra);
 
   GameZone getZone(Zone zone) {
     switch (zone) {
@@ -168,12 +190,14 @@ class GameState {
         return hand;
       case Zone.deck:
         return deck;
-      case Zone.field:
-        return field;
+      case Zone.board:
+        return board;
+      case Zone.domain:
+        return domain;
       case Zone.grave:
         return grave;
-      case Zone.banish:
-        return banish;
+      case Zone.extra:
+        return extra;
     }
   }
 
@@ -187,10 +211,11 @@ class GameState {
 
   bool get isGameOver => gameWon || gameLost;
 
-  CardInstance? get currentField => field.first;
-  bool get hasField => field.isNotEmpty;
+  CardInstance? get currentDomain => domain.first;
+  bool get hasDomain => domain.isNotEmpty;
 }
 
+/// 効果解決や処理の結果を表す。
 class GameResult {
   final bool success;
   final String? error;

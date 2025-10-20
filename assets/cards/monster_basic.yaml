@@ -1,0 +1,15 @@
+id: mon_warrior_001
+name: ウォリアー
+type: monster
+tags: [warrior, basic]
+text: 基本的な戦士。
+version: 1
+stats:
+  atk: 1500
+  def: 1200
+  hp: 1000
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: draw, count: 1 }

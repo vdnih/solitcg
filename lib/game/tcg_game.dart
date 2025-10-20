@@ -14,6 +14,8 @@ class TCGGame extends FlameGame with TapDetector {
   final List<CardComponent> handComponents = [];
   late TextComponent gameStatusComponent;
   late TextComponent instructionComponent;
+  late TextComponent lifeComponent;
+  final List<TextComponent> triggerQueueComponents = [];
 
   @override
   Future<void> onLoad() async {
@@ -89,11 +91,24 @@ class TCGGame extends FlameGame with TapDetector {
     );
     add(gameStatusComponent);
     
+    lifeComponent = TextComponent(
+      text: 'Player Life: ${gameState.playerLife} | Opponent Life: ${gameState.opponentLife}',
+      position: Vector2(size.x / 2 - 100, 20),
+      textRenderer: TextPaint(
+        style: const material.TextStyle(
+          color: material.Colors.green,
+          fontSize: 18,
+          fontWeight: material.FontWeight.bold,
+        ),
+      ),
+    );
+    add(lifeComponent);
+    
     _updateDisplay();
   }
 
   String _getGameStatusText() {
-    return 'Hand: ${gameState.hand.count} | Deck: ${gameState.deck.count} | Grave: ${gameState.grave.count} | Spells: ${gameState.spellsCastThisTurn}';
+    return 'Hand: ${gameState.hand.count} | Deck: ${gameState.deck.count} | Grave: ${gameState.grave.count} | Life: ${gameState.playerLife} | Spells: ${gameState.spellsCastThisTurn}';
   }
 
   void _updateDisplay() {
@@ -110,8 +125,10 @@ class TCGGame extends FlameGame with TapDetector {
     _updateHand();
     _updateField();
     _updateLog();
+    _updateTriggerQueue();
     
     gameStatusComponent.text = _getGameStatusText();
+    lifeComponent.text = 'Player Life: ${gameState.playerLife} | Opponent Life: ${gameState.opponentLife}';
     
     if (gameState.gameWon) {
       add(TextComponent(
@@ -142,13 +159,26 @@ class TCGGame extends FlameGame with TapDetector {
   }
 
   void _updateField() {
-    if (gameState.hasField) {
-      final fieldCard = gameState.currentField!;
+    // Update domain (if exists)
+    if (gameState.hasDomain) {
+      final domainCard = gameState.currentDomain!;
       final component = CardComponent(
-        card: fieldCard,
-        position: Vector2(size.x / 2 - 60, 250),
+        card: domainCard,
+        position: Vector2(size.x / 2 - 150, 250),
         onTap: null,
         isField: true,
+      );
+      add(component);
+    }
+    
+    // Update board cards
+    for (int i = 0; i < gameState.board.count; i++) {
+      final boardCard = gameState.board.cards[i];
+      final component = CardComponent(
+        card: boardCard,
+        position: Vector2(size.x / 2 - 50 + i * 70, 350),
+        onTap: null,
+        isField: false,
       );
       add(component);
     }
@@ -172,7 +202,46 @@ class TCGGame extends FlameGame with TapDetector {
     }
   }
 
-  void _playCard(int handIndex) {
+  void _updateTriggerQueue() {
+    for (final component in triggerQueueComponents) {
+      remove(component);
+    }
+    triggerQueueComponents.clear();
+
+    final queueTitle = TextComponent(
+      text: 'Trigger Queue:',
+      position: Vector2(size.x - 220, 50),
+      textRenderer: TextPaint(
+        style: const material.TextStyle(
+          color: material.Colors.orange,
+          fontSize: 14,
+          fontWeight: material.FontWeight.bold,
+        ),
+      ),
+    );
+    triggerQueueComponents.add(queueTitle);
+    add(queueTitle);
+
+    final queue = gameState.triggerQueue.toList();
+    for (int i = 0; i < queue.length; i++) {
+      final trigger = queue[i];
+      final text = '${i + 1}: ${trigger.source.card.name}';
+      final component = TextComponent(
+        text: text,
+        position: Vector2(size.x - 220, 70 + i * 18),
+        textRenderer: TextPaint(
+          style: const material.TextStyle(
+            color: material.Colors.white,
+            fontSize: 12,
+          ),
+        ),
+      );
+      triggerQueueComponents.add(component);
+      add(component);
+    }
+  }
+
+  void _playCard(int handIndex) async {
     if (gameState.isGameOver) return;
     
     gameState.addToLog('Playing card at index $handIndex');
@@ -185,8 +254,9 @@ class TCGGame extends FlameGame with TapDetector {
     }
     
     gameState.actionLog.addAll(result.logs);
-    
-    final resolveResult = TriggerStack.resolveAll(gameState);
+    _updateDisplay();
+
+    final resolveResult = await TriggerStack.resolveAll(gameState, _updateDisplay);
     gameState.actionLog.addAll(resolveResult.logs);
     
     if (!resolveResult.success) {
@@ -223,6 +293,52 @@ class CardComponent extends PositionComponent with TapCallbacks {
           size: Vector2(100, 140),
         );
 
+  material.Color _getCardBaseColor() {
+    switch (card.card.type) {
+      case CardType.monster:
+        return material.Colors.brown.shade700;
+      case CardType.ritual:
+        return material.Colors.purple.shade700;
+      case CardType.spell:
+        return material.Colors.green.shade700;
+      case CardType.arcane:
+        return material.Colors.teal.shade700;
+      case CardType.artifact:
+        return material.Colors.orange.shade700;
+      case CardType.relic:
+        return material.Colors.deepOrange.shade700;
+      case CardType.equip:
+        return material.Colors.yellow.shade700;
+      case CardType.domain:
+        return material.Colors.blue.shade700;
+      default:
+        return material.Colors.grey.shade700;
+    }
+  }
+
+  material.Color _getCardInnerColor() {
+    switch (card.card.type) {
+      case CardType.monster:
+        return material.Colors.brown.shade300;
+      case CardType.ritual:
+        return material.Colors.purple.shade300;
+      case CardType.spell:
+        return material.Colors.green.shade300;
+      case CardType.arcane:
+        return material.Colors.teal.shade300;
+      case CardType.artifact:
+        return material.Colors.orange.shade300;
+      case CardType.relic:
+        return material.Colors.deepOrange.shade300;
+      case CardType.equip:
+        return material.Colors.yellow.shade300;
+      case CardType.domain:
+        return material.Colors.blue.shade300;
+      default:
+        return material.Colors.grey.shade300;
+    }
+  }
+
   @override
   void render(material.Canvas canvas) {
     super.render(canvas);
@@ -233,7 +349,7 @@ class CardComponent extends PositionComponent with TapCallbacks {
         const material.Radius.circular(8),
       ),
       material.Paint()
-        ..color = isField ? material.Colors.blue.shade700 : material.Colors.brown.shade700
+        ..color = _getCardBaseColor()
         ..style = material.PaintingStyle.fill,
     );
 
@@ -243,7 +359,7 @@ class CardComponent extends PositionComponent with TapCallbacks {
         const material.Radius.circular(6),
       ),
       material.Paint()
-        ..color = isField ? material.Colors.blue.shade300 : material.Colors.brown.shade300
+        ..color = _getCardInnerColor()
         ..style = material.PaintingStyle.fill,
     );
 
@@ -273,6 +389,24 @@ class CardComponent extends PositionComponent with TapCallbacks {
     );
     typePainter.layout();
     typePainter.paint(canvas, material.Offset(4, size.y - 16));
+    
+    // Display stats for monsters and rituals
+    if (card.card.type == CardType.monster || card.card.type == CardType.ritual) {
+      if (card.stats != null) {
+        final statsPainter = material.TextPainter(
+          text: material.TextSpan(
+            text: 'ATK: ${card.stats.atk} | DEF: ${card.stats.def} | HP: ${card.stats.hp}',
+            style: const material.TextStyle(
+              color: material.Colors.white,
+              fontSize: 8,
+            ),
+          ),
+          textDirection: material.TextDirection.ltr,
+        );
+        statsPainter.layout(maxWidth: size.x - 8);
+        statsPainter.paint(canvas, material.Offset(4, size.y - 28));
+      }
+    }
   }
 
   @override

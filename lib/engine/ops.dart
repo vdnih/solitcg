@@ -26,8 +26,8 @@ class OperationExecutor {
           return _executeMill(state, effect.params);
         case 'summon':
           return _executeSummon(state, effect.params);
-        case 'set_field':
-          return _executeSetField(state, effect.params);
+        case 'set_domain':
+          return _executeSetDomain(state, effect.params);
         default:
           return GameResult.failure('Unknown operation: ${effect.op}');
       }
@@ -179,20 +179,33 @@ class OperationExecutor {
   }
 
   static GameResult _executeDestroy(GameState state, Map<String, dynamic> params) {
-    final target = params['target'] as String? ?? 'field';
+    final target = params['target'] as String? ?? 'board';
     final logs = <String>[];
 
-    if (target == 'field' && state.hasField) {
-      final fieldCard = state.field.removeAt(0)!;
-      state.grave.add(fieldCard);
+    if (target == 'domain' && state.hasDomain) {
+      final domainCard = state.domain.removeAt(0)!;
+      state.grave.add(domainCard);
       
-      for (final ability in fieldCard.card.abilities) {
+      for (final ability in domainCard.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
-          TriggerStack.enqueueAbility(state, fieldCard, ability);
+          TriggerStack.enqueueAbility(state, domainCard, ability);
         }
       }
       
-      logs.add('Destroyed field card: ${fieldCard.card.name}');
+      logs.add('Destroyed domain card: ${domainCard.card.name}');
+      return GameResult.success(logs: logs);
+    } else if (target == 'board' && state.board.isNotEmpty) {
+      // For now just destroy the first card on the board
+      final boardCard = state.board.removeAt(0)!;
+      state.grave.add(boardCard);
+      
+      for (final ability in boardCard.card.abilities) {
+        if (ability.when == TriggerWhen.onDestroy) {
+          TriggerStack.enqueueAbility(state, boardCard, ability);
+        }
+      }
+      
+      logs.add('Destroyed board card: ${boardCard.card.name}');
       return GameResult.success(logs: logs);
     }
 
@@ -250,8 +263,14 @@ class OperationExecutor {
     return GameResult.failure('summon: not implemented yet');
   }
 
-  static GameResult _executeSetField(GameState state, Map<String, dynamic> params) {
-    return GameResult.failure('set_field: not implemented yet');
+  static GameResult _executeSetDomain(GameState state, Map<String, dynamic> params) {
+    final cardId = params['card'] as String?;
+    if (cardId == null) {
+      return GameResult.failure('set_domain: missing card parameter');
+    }
+    
+    // この部分は実際にはカードDBから該当カードを探す実装を行う
+    return GameResult.failure('set_domain: implementation requires card database lookup');
   }
 
   static GameZone? _getZoneByName(GameState state, String zoneName) {
@@ -260,12 +279,17 @@ class OperationExecutor {
         return state.hand;
       case 'deck':
         return state.deck;
-      case 'field':
-        return state.field;
+      case 'board':
+        return state.board;
+      case 'domain':
+        return state.domain;
       case 'grave':
         return state.grave;
-      case 'banish':
-        return state.banish;
+      case 'extra':
+        return state.extra;
+      // Handle legacy zone name for backward compatibility
+      case 'field':
+        return state.board;
       default:
         return null;
     }

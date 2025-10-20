@@ -1,0 +1,14 @@
+id: spl_chun
+name: 中の魔法
+type: spell
+tags: [spl_chun]
+text: 発動条件：手札に「中の魔法」がこのカード以外にもう2枚以上あること。効果：手札の「中の魔法」を2枚捨て、3枚ドローする。
+version: 1
+
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'spl_chun', zone:'hand:self') >= 2"
+    effect:
+      - { op: discard, from: hand, count: 2, selection: choose , target: "chose:random:tag=spl_chun"}
+      - { op: draw, count: 3 }

@@ -9,21 +9,22 @@ void main() {
   test('CardLoader loads cards from YAML files', () async {
     // Force load assets from bundle
     await _loadAssets();
-    
+
     // Load all cards
     final cards = await CardLoader.loadAllCards();
-    
+
     // Verify cards were loaded
     expect(cards, isNotEmpty);
-    
+
     // Check specific card content
     final fieldCard = cards.firstWhere((c) => c.id == 'fld_x01');
     expect(fieldCard.name, '残響の講堂');
-    expect(fieldCard.type, CardType.field);
+    expect(fieldCard.type, CardType.domain);
     expect(fieldCard.abilities.length, 2);
-    
+
     // Check ability details
-    final playAbility = fieldCard.abilities.firstWhere((a) => a.when == TriggerWhen.onPlay);
+    final playAbility =
+        fieldCard.abilities.firstWhere((a) => a.when == TriggerWhen.onPlay);
     expect(playAbility.effects.length, 1);
     expect(playAbility.effects.first.op, 'draw');
     expect(playAbility.effects.first.params['count'], 2);
@@ -32,7 +33,7 @@ void main() {
 
 Future<void> _loadAssets() async {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
+
   // This is a hack to preload assets in a test environment
   try {
     await rootBundle.loadString('assets/cards/index.yaml');
