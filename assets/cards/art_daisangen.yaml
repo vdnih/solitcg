@@ -1,0 +1,15 @@
+id: spl_daisangen
+name: 大三元の魔法
+type: spell
+tags: [spl_daisangen]
+text: 発動条件：手札に「白の魔法」「發の魔法」「中の魔法」がそれぞれ3枚以上あること。効果：ゲームに勝利する。
+version: 1
+
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'spl_haku', zone:'hand:self') >= 3"
+      - "count(tag:'spl_hatsu', zone:'hand:self') >= 3"
+      - "count(tag:'spl_chun', zone:'hand:self') >= 3"
+    effect:
+      - { op: win }
