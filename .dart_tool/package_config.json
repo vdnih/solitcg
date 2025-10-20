@@ -45,7 +45,7 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///Users/rozaki/tools/flutter/packages/flutter",
+      "rootUri": "file:///Users/rozaki/projects/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -63,7 +63,7 @@
     },
     {
       "name": "flutter_test",
-      "rootUri": "file:///Users/rozaki/tools/flutter/packages/flutter_test",
+      "rootUri": "file:///Users/rozaki/projects/flutter/packages/flutter_test",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -129,7 +129,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///Users/rozaki/tools/flutter/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///Users/rozaki/projects/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.7"
     },
@@ -200,10 +200,10 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-08-09T08:58:00.104902Z",
+  "generated": "2025-10-20T12:45:39.711643Z",
   "generator": "pub",
   "generatorVersion": "3.7.2",
-  "flutterRoot": "file:///Users/rozaki/tools/flutter",
-  "flutterVersion": "3.29.2",
+  "flutterRoot": "file:///Users/rozaki/projects/flutter",
+  "flutterVersion": "3.29.3",
   "pubCache": "file:///Users/rozaki/.pub-cache"
 }

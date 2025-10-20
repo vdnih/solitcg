@@ -1,134 +1,135 @@
-# ソリティアTCG - ゲームルール
+わかりました。
+現時点までの内容を反映し、ソリティアTCG ルール仕様 v0.4.2として整理して書き出します。
+カードスキーマ、ゲームの進行、勝利条件、タイプ別仕様、発動条件効果やstatsの扱いまで含めます。
 
-> **概要**：カード連鎖（ソリティア）の気持ちよさを体験できるカードゲーム。
-> コストを廃止し、誘発の自動解決、フィールド裁定などを特徴とする。
+⸻
 
-## 1. カード種別
+ソリティアTCG ルール仕様 v0.4.2
 
-* `monster` - モンスターカード
-* `spell` - スペルカード
-* `equip` - 装備カード
-* `artifact` - アーティファクト
-* `field` - フィールドカード
+1. ゲーム概要
+	•	1対1で対戦するソリティア形式のTCG。
+	•	相手ターンに割り込む効果は存在せず、処理は自分のターン内で完結する。
+	•	バトル（戦闘）は未導入。カード効果のみで勝敗や盤面進行が決まる。
+	•	デッキを削る・リソースを循環させる・コンボを構築することが主目的。
 
-## 2. 基本ルール
+⸻
 
-### 2.1 コスト廃止
+2. 勝利条件
 
-* すべて"効果"として消費。支払いが無理なら**require**でガード、失敗時**不発**。
+2.1 基本勝利条件
+	•	ライフ勝利：相手のライフ（初期8000）を0以下にする。
+	•	デッキ勝利：ターン終了時、相手のデッキが0枚であれば勝利。
+	•	※「次のターンにドローできない」ことが確定した時点で敗北扱いとする。
+	•	効果勝利：カードの効果により明示的に勝利条件を満たす。
 
-### 2.2 誘発スタック（オート解決）
+⸻
 
-* **FIFO**（First In, First Out）で自動解決。処理中に発生した誘発は**末尾に追加**。
-* 優先度を付けたいカードだけ `priority`（同tickに限る）を使用。
+3. デッキ構築
+	•	メインデッキ：40枚、同名カードは最大4枚。
+	•	エクストラデッキ：最大10枚、同名カードは最大1枚。
+	•	エクストラデッキには以下を含められる：
+	•	儀式モンスター（ritual）
+	•	秘術（arcane）
+	•	レリック（relic）
+	•	いずれも通常のモンスター・魔法・アーティファクトと同じカテゴリ扱い（サポートカードの対象になる）。
 
-**誘発処理の仕組み:**
+⸻
 
-```dart
-int tick = 0;
-final Queue<Trigger> q = Queue();
+4. ゲームの流れ
 
-void enqueue(Trigger t) { t.order = ++tick; q.addLast(t); }
-void resolveAll() {
-  while (q.isNotEmpty) {
-    final t = q.removeFirst();
-    resolveEffects(t.effects); // 実行中に発生した誘発は enqueue される
-  }
-}
-```
+4.1 初期設定
+	1.	先攻・後攻をランダムに決定。
+	2.	各プレイヤーは自分のデッキをシャッフル。
+	3.	初期手札を5枚引く。
 
-### 2.3 フィールド上書き裁定（本作のキモ）
+4.2 ターン構成
+	1.	ドロー：1枚引く。
+	2.	メインフェイズ：カードのプレイ、能力発動など自由に行う。
+	•	場（board）には出せるカード数の上限なし。
+	•	フィールド全体に影響するカードは**ドメイン（domain）**として同時に1枚まで設置可。
+	3.	ターン終了判定：
+	•	相手デッキが0枚 → 自分の勝利。
+	•	勝利条件が満たされていない場合、相手ターンへ。
 
-1. 新フィールドを**場に置く**
-2. **新フィールドの on_play を即時実行**（発生誘発は通常どおりキューへ）
-3. 旧フィールドを破壊 → **旧 on_destroy** を**キュー末尾**へ
-4. `resolveAll()` で順次自動解決
+⸻
 
-## 3. 効果操作（ops）の挙動
+5. カードタイプ
 
-* `draw{count}` - デッキ→手札。枯渇時は**可能な分だけ**
-* `discard{from: hand, count}` - 不足時は**不発**（以降のステップ停止）
-* `search{from,to,filter,max}` - filter＝`type|tag|name`（AND想定）。見つからなければ0件
-* `move{from,to,target,count}` - ゾーン間移動（`target: "self"|"top"|"any"` など最小）
-* `win_if{expr}` - exprが真なら**勝利**
-* `require{expr}` - 偽なら**以降不発**
-* `destroy{target}` - 対象を墓地へ。フィールドなら破壊誘発を**enqueue**
+type	説明
+monster	通常モンスター。stats 必須。
+ritual	儀式モンスター。stats 必須。エクストラに編入可。
+spell	通常魔法。
+arcane	秘術。エクストラに編入可。
+artifact	アーティファクト。
+relic	レリック。artifact としても扱う。エクストラに編入可。
+equip	装備カード。
+domain	フィールド全体に影響。1枚制限。
 
-## 4. カードDSL（YAML）スキーマ
 
-```yaml
-id: string
-name: string
-type: monster | spell | equip | artifact | field
-tags: [string, ...]
-text: string
-version: 1
+⸻
 
-stats: { atk: 0, hp: 0 }                 # monster任意
-equip: { valid_targets: ["monster"] }     # equip任意
-field: { unique: true }                   # field任意（省略時true）
+6. カードスキーマ
+
+id: string         # 一意なID
+name: string       # カード名
+type: monster | ritual | spell | arcane | equip | artifact | relic | domain
+tags: [string]     # 任意の分類タグ
+text: string       # 説明文
+version: integer   # カードデータバージョン
+
+stats:             # monster / ritual のみ必須。他タイプは未定義。
+  atk: integer     # 攻撃力（0以上、将来拡張用）
+  def: integer     # 防御力（0以上、将来拡張用）
+  hp:  integer     # ヒットポイント（0以上、hp <= 0 で破壊）
+
+equip:  { valid_targets: [...] }   # equip専用パラメータ
+domain: { unique: boolean }        # domain専用パラメータ（省略時true）
 
 abilities:
-  - when: on_play | on_enter | on_destroy | static | activated | on_draw | on_discard | on_field_set
-    condition: "expr" | null
-    priority: 0                           # 基本未使用。同tick内の順序ヒント
-    effect:
-      - { op: require, expr: "hand.count >= 1" }
-      - { op: discard, from: hand, count: 1 }
-      - { op: draw, count: 2 }
-      # ops: draw/mill/discard/move/destroy/summon/equip_to/unequip
-      #      search{from,to,filter,max}/counter/modify_stat
-      #      win_if{expr}/lose_if{expr}/set_field/require{expr}
-```
+  - when: on_play | on_enter | on_destroy | activated | static | on_draw | on_discard | on_domain_set
+    pre: [ "条件式", ... ]         # 発動前提：状態チェックのみ
+    priority: integer              # 効果解決の優先度
+    effect:                        # 実際の効果（効果0が消費アクション）
+      - { op: ..., ... }
 
-**expr参照子例**：`hand.count`, `deck.count`, `grave.count`, `field.exists`,
-`spells_cast_this_turn`, `unique_fields_in_grave`, `count(tag:"field", zone:"grave")`
 
-**演算**：`> >= < <= == != && || !`
+⸻
 
-## 5. 例カード
+7. 発動条件効果（pre と効果0）
+	•	pre：フィールドや状態のチェックのみを行う。動作は禁止。
+	•	効果0：effect の先頭に記載し、pre に対応したリソース消費を行う。
+	•	例：
 
-```yaml
-# 残響の講堂
-id: fld_x01
-name: 残響の講堂
-type: field
-abilities:
-  - when: on_play
-    effect:
-      - { op: draw, count: 2 }
-  - when: on_destroy
-    effect:
-      - { op: search, from: deck, to: hand, filter: { type: "field" }, max: 1 }
-```
+pre:
+  - "count(type:'artifact', zone:'board:self') >= 2"
+effect:
+  - { op: destroy, target: "choose:self:artifact", count: 2 } # 効果0
+  - { op: draw, count: 3 }
 
-```yaml
-# 記憶の温室
-id: fld_x02
-name: 記憶の温室
-type: field
-abilities:
-  - when: on_play
-    effect:
-      - { op: search, from: deck, to: hand, filter: { type: "spell" }, max: 1 }
-  - when: on_destroy
-    effect:
-      - { op: draw, count: 1 }
-```
 
-```yaml
-# 閃考の儀（支払いは効果の先頭）
-id: spl_x07
-name: 閃考の儀
-type: spell
-abilities:
-  - when: on_play
-    effect:
-      - { op: discard, from: hand, count: 1 }
-      - { op: win_if, expr: "spells_cast_this_turn >= 7" }
-```
+⸻
 
-## 6. ゲームモード
+8. HPと破壊ルール
+	•	monster / ritual のみ hp を持つ。
+	•	hp <= 0 になった瞬間、そのカードは破壊される。
+	•	破壊時には on_destroy 能力が誘発。
+	•	hpの変動は効果（例：modify_stat）でのみ発生する。
 
-* **パズル**（運排除）：初期手札/盤面固定で挑戦
-* **ランダム**（運あり）：シャッフル、N回試行で成功率表示
+⸻
+
+9. フィールド構造
+	•	場（board）：制限なくカードを出せる。
+	•	ドメイン（domain）：場全体に影響するカード。常に1枚まで。
+	•	墓地（grave）：破壊・使用済みカードが送られる。
+	•	除外（banish）：ゲームから取り除かれる領域。
+	•	エクストラ（extra）：儀式・秘術・レリック専用の別山札。
+
+⸻
+
+10. 補足ルール
+	•	割り込み処理は存在しない。
+	•	同名制限はメインとエクストラで別カウント。
+	•	ドロー不能になっても即敗北せず、ターン終了時に判定。
+
+⸻
+
