@@ -1,0 +1,9 @@
+id: activated_artifact
+name: Activated Artifact
+type: artifact
+text: Tap this artifact to draw a card.
+version: 1
+abilities:
+  - when: activated
+    effect:
+      - { op: draw, count: 1 }

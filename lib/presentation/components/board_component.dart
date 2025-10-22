@@ -161,8 +161,8 @@ class BoardComponent extends PositionComponent with HasGameRef<TCGGame> {
       final component = CardComponent(
         card: boardCard,
         position: Vector2(size.x / 2 - 50 + i * 70, 350),
-        onTap: null, // ボード上のカードはタップ不可（将来的には変更）
-        isField: false,
+        onTap: () => gameRef.activateCardOnBoard(boardCard),
+        isField: true,
       );
       _fieldComponents.add(component);
       add(component);
