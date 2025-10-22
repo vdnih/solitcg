@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../engine/types.dart' as game_types;
+import '../../domain/models/card_data.dart';
 
 /// タグ選択ダイアログウィジェット
 class TagSelectorDialog extends StatefulWidget {
@@ -123,7 +123,7 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
 }
 
 /// カードリストからユニークなタグを抽出する
-List<String> extractUniqueTagsFromCards(List<game_types.Card> cards) {
+List<String> extractUniqueTagsFromCards(List<CardData> cards) {
   final tagSet = <String>{};
   
   for (final card in cards) {

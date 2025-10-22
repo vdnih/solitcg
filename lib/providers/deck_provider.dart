@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/deck.dart';
-import '../engine/types.dart' as game_types;
-import '../services/card_loader.dart';
+
+import '../../domain/models/card_data.dart';
+import '../../domain/models/deck.dart';
+import '../../domain/models/deck_validation_result.dart';
+import '../../data/repositories/card_repository.dart';
+import '../../data/repositories/deck_repository.dart';
+import '../../domain/services/deck_validator.dart';
 
 // デッキコレクション用のプロバイダー
 final deckCollectionProvider = StateNotifierProvider<DeckCollectionNotifier, DeckCollection>(
@@ -9,8 +13,8 @@ final deckCollectionProvider = StateNotifierProvider<DeckCollectionNotifier, Dec
 );
 
 // 全カードリスト用のプロバイダー
-final allCardsProvider = FutureProvider<List<game_types.Card>>(
-  (ref) => CardLoaderService.loadAllCards(),
+final allCardsProvider = FutureProvider<List<CardData>>(
+  (ref) => CardRepository.loadAllCards(),
 );
 
 // 現在選択中のデッキID用のプロバイダー
@@ -46,67 +50,74 @@ final deckValidationProvider = FutureProvider<DeckValidationResult?>(
 // デッキコレクションのNotifier
 class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   DeckCollectionNotifier() : super(DeckCollection()) {
-    _loadDecks();
+    loadDecks();
   }
   
   // デッキコレクションの読み込み
-  Future<void> _loadDecks() async {
-    final collection = await DeckStorage.loadDecks();
-    state = collection;
+  Future<void> loadDecks() async {
+    state = await DeckRepository.loadDecks();
   }
   
   // デッキの追加
   void addDeck(Deck deck) {
-    state.addDeck(deck);
+    final newDecks = [...state.decks, deck];
+    state = DeckCollection()..decks = newDecks;
     _saveDecks();
   }
   
   // デッキの更新
   void updateDeck(Deck deck) {
-    final index = state.decks.indexWhere((d) => d.id == deck.id);
-    if (index >= 0) {
-      final newDecks = [...state.decks];
-      newDecks[index] = deck;
-      state = DeckCollection()..decks = newDecks;
-      _saveDecks();
-    }
+    final newDecks = state.decks.map((d) => d.id == deck.id ? deck : d).toList();
+    state = DeckCollection()..decks = newDecks;
+    _saveDecks();
   }
   
   // デッキの削除
   void removeDeck(String deckId) {
-    if (state.removeDeck(deckId)) {
-      state = DeckCollection()..decks = [...state.decks];
-      _saveDecks();
-    }
+    final newDecks = state.decks.where((d) => d.id != deckId).toList();
+    state = DeckCollection()..decks = newDecks;
+    _saveDecks();
   }
   
   // デッキのカードを追加
   void addCardToDeck(String deckId, String cardId) {
-    final deck = state.getDeck(deckId);
-    if (deck != null) {
-      deck.addCard(cardId);
-      state = DeckCollection()..decks = [...state.decks];
-      _saveDecks();
-    }
+    final newDecks = state.decks.map((deck) {
+      if (deck.id == deckId) {
+        final newCardIds = [...deck.cardIds, cardId];
+        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds);
+      }
+      return deck;
+    }).toList();
+    state = DeckCollection()..decks = newDecks;
+    _saveDecks();
   }
   
   // デッキのカードを削除
   void removeCardFromDeck(String deckId, String cardId) {
-    final deck = state.getDeck(deckId);
-    if (deck != null && deck.removeCard(cardId)) {
-      state = DeckCollection()..decks = [...state.decks];
-      _saveDecks();
-    }
+    final newDecks = state.decks.map((deck) {
+      if (deck.id == deckId) {
+        final newCardIds = [...deck.cardIds];
+        // 最初に見つかったカードIDのみを削除
+        final index = newCardIds.indexOf(cardId);
+        if (index != -1) {
+          newCardIds.removeAt(index);
+        }
+        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds);
+      }
+      return deck;
+    }).toList();
+    state = DeckCollection()..decks = newDecks;
+    _saveDecks();
   }
   
   // デッキの保存
   Future<void> _saveDecks() async {
-    await DeckStorage.saveDecks(state);
+    await DeckRepository.saveDecks(state);
   }
   
   // デフォルトデッキの作成
-  Future<void> createDefaultDecks(List<game_types.Card> allCards) async {
-    final defaultCollection = await DeckStorage.createDefaultDecks(allCards);
+  Future<void> createDefaultDecks(List<CardData> allCards) async {
+    final defaultCollection = await DeckRepository.createDefaultDecks(allCards);
     state = defaultCollection;
     _saveDecks();
   }

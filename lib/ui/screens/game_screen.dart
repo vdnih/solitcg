@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import '../../game/tcg_game.dart';
+import 'package:flutter/material.dart';
+
+import '../../presentation/game/tcg_game.dart';
 
 /// ゲームプレイ画面
 class GameScreen extends StatelessWidget {
@@ -35,15 +36,15 @@ class GameScreen extends StatelessWidget {
           ),
         ),
         overlayBuilderMap: {
-          'pause': (context, game) => Center(
-                child: Container(
-                  color: Colors.black54,
-                  child: const Text(
-                    '一時停止中',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
-                ),
+          'pause': (context, TCGGame game) => Center(
+            child: Container(
+              color: Colors.black54,
+              child: const Text(
+                '一時停止中',
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
+            ),
+          ),
         },
       ),
     );

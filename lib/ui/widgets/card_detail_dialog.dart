@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart' hide Card;
-import '../../engine/types.dart';
+import 'package:flutter/material.dart';
+import '../../domain/models/card_data.dart';
 
 /// カード詳細ダイアログウィジェット
 class CardDetailDialog extends StatelessWidget {
-  final Card card;
+  final CardData card;
   
   const CardDetailDialog({
     super.key,
@@ -16,116 +16,118 @@ class CardDetailDialog extends StatelessWidget {
       child: Container(
         width: MediaQuery.of(context).size.width * 0.8 > 500 ? 500 : MediaQuery.of(context).size.width * 0.8,
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // カードヘッダー（名前とタイプ）
-            Container(
-              color: _getCardTypeColor(card.type),
-              width: double.infinity,
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    card.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getCardTypeText(card.type),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // カードタグ
-            if (card.tags.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Wrap(
-                  spacing: 6.0,
-                  runSpacing: 6.0,
-                  children: card.tags.map((tag) => Chip(
-                    label: Text(tag),
-                    backgroundColor: Colors.grey[200],
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 6.0),
-                  )).toList(),
-                ),
-              ),
-            
-            // カードステータス（モンスターの場合）
-            if (card.stats != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatLabel('ATK', card.stats!.atk.toString(), Colors.red),
-                    _buildStatLabel('DEF', card.stats!.def.toString(), Colors.blue),
-                    _buildStatLabel('HP', card.stats!.hp.toString(), Colors.green),
-                  ],
-                ),
-              ),
-            
-            // カード説明テキスト
-            const Padding(
-              padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
-              child: Text(
-                '効果:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Text(
-              card.text,
-              style: const TextStyle(fontSize: 14),
-            ),
-            
-            // カード能力詳細
-            if (card.abilities.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // カードヘッダー（名前とタイプ）
+              Container(
+                color: _getCardTypeColor(card.type),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      '能力:',
-                      style: TextStyle(
-                        fontSize: 16,
+                    Text(
+                      card.name,
+                      style: const TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    ...card.abilities.map((ability) => _buildAbilityInfo(ability)),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getCardTypeText(card.type),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            
-            // 閉じるボタン
-            Padding(
-              padding: const EdgeInsets.only(top: 24.0),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('閉じる'),
+              
+              // カードタグ
+              if (card.tags.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Wrap(
+                    spacing: 6.0,
+                    runSpacing: 6.0,
+                    children: card.tags.map((tag) => Chip(
+                      label: Text(tag),
+                      backgroundColor: Colors.grey[200],
+                      padding: EdgeInsets.zero,
+                      labelPadding: const EdgeInsets.symmetric(horizontal: 6.0),
+                    )).toList(),
+                  ),
+                ),
+              
+              // カードステータス（モンスターの場合）
+              if (card.stats != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatLabel('ATK', card.stats!.atk.toString(), Colors.red),
+                      _buildStatLabel('DEF', card.stats!.def.toString(), Colors.blue),
+                      _buildStatLabel('HP', card.stats!.hp.toString(), Colors.green),
+                    ],
+                  ),
+                ),
+              
+              // カード説明テキスト
+              const Padding(
+                padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
+                child: Text(
+                  '効果:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-          ],
+              Text(
+                card.text,
+                style: const TextStyle(fontSize: 14),
+              ),
+              
+              // カード能力詳細
+              if (card.abilities.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '能力:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...card.abilities.map((ability) => _buildAbilityInfo(ability)),
+                    ],
+                  ),
+                ),
+              
+              // 閉じるボタン
+              Padding(
+                padding: const EdgeInsets.only(top: 24.0),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('閉じる'),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

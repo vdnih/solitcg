@@ -1,6 +1,12 @@
 import 'dart:math';
-import 'types.dart';
-import 'stack.dart';
+import '../../core/game_state.dart';
+import '../models/card_data.dart';
+import '../models/card_instance.dart';
+import '../models/game_result.dart';
+import '../models/game_zone.dart';
+import '../services/expression_evaluator.dart';
+import '../services/trigger_service.dart';
+import './draw_card_command.dart';
 
 class OperationExecutor {
   static GameResult executeOperation(GameState state, EffectStep effect) {
@@ -9,7 +15,8 @@ class OperationExecutor {
         case 'require':
           return _executeRequire(state, effect.params);
         case 'draw':
-          return _executeDraw(state, effect.params);
+          final count = effect.params['count'] as int? ?? 1;
+          return DrawCardCommand(count: count).execute(state);
         case 'discard':
           return _executeDiscard(state, effect.params);
         case 'search':
@@ -50,29 +57,6 @@ class OperationExecutor {
     return GameResult.success(logs: ['Require passed: $expr']);
   }
 
-  static GameResult _executeDraw(GameState state, Map<String, dynamic> params) {
-    final count = params['count'] as int? ?? 1;
-    final logs = <String>[];
-    
-    int drawn = 0;
-    for (int i = 0; i < count && state.deck.isNotEmpty; i++) {
-      final card = state.deck.removeAt(0);
-      if (card != null) {
-        state.hand.add(card);
-        drawn++;
-        
-        for (final ability in card.card.abilities) {
-          if (ability.when == TriggerWhen.onDraw) {
-            TriggerStack.enqueueAbility(state, card, ability);
-          }
-        }
-      }
-    }
-
-    logs.add('Drew $drawn cards');
-    return GameResult.success(logs: logs);
-  }
-
   static GameResult _executeDiscard(GameState state, Map<String, dynamic> params) {
     final from = params['from'] as String? ?? 'hand';
     final count = params['count'] as int? ?? 1;
@@ -93,7 +77,7 @@ class OperationExecutor {
         
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onDiscard) {
-            TriggerStack.enqueueAbility(state, card, ability);
+            TriggerService.enqueueAbility(state, card, ability);
           }
         }
       }
@@ -188,7 +172,7 @@ class OperationExecutor {
       
       for (final ability in domainCard.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
-          TriggerStack.enqueueAbility(state, domainCard, ability);
+          TriggerService.enqueueAbility(state, domainCard, ability);
         }
       }
       
@@ -201,7 +185,7 @@ class OperationExecutor {
       
       for (final ability in boardCard.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
-          TriggerStack.enqueueAbility(state, boardCard, ability);
+          TriggerService.enqueueAbility(state, boardCard, ability);
         }
       }
       

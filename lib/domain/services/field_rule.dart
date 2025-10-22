@@ -1,5 +1,8 @@
-import 'types.dart';
-import 'stack.dart';
+import '../../core/game_state.dart';
+import '../models/card_data.dart';
+import '../models/card_instance.dart';
+import '../models/game_result.dart';
+import './trigger_service.dart';
 
 class FieldRule {
   static GameResult playDomain(GameState state, CardInstance domainCard) {
@@ -17,7 +20,7 @@ class FieldRule {
     
     for (final ability in domainCard.card.abilities) {
       if (ability.when == TriggerWhen.onPlay) {
-        TriggerStack.enqueueAbility(state, domainCard, ability);
+        TriggerService.enqueueAbility(state, domainCard, ability);
         logs.add('Queued onPlay trigger for ${domainCard.card.name}');
       }
     }
@@ -28,7 +31,7 @@ class FieldRule {
       
       for (final ability in oldDomain.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
-          TriggerStack.enqueueAbility(state, oldDomain, ability);
+          TriggerService.enqueueAbility(state, oldDomain, ability);
           logs.add('Queued onDestroy trigger for ${oldDomain.card.name}');
         }
       }
@@ -52,7 +55,7 @@ class FieldRule {
         
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onPlay) {
-            TriggerStack.enqueueAbility(state, card, ability);
+            TriggerService.enqueueAbility(state, card, ability);
           }
         }
         break;
@@ -64,7 +67,7 @@ class FieldRule {
         
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onPlay) {
-            TriggerStack.enqueueAbility(state, card, ability);
+            TriggerService.enqueueAbility(state, card, ability);
           }
         }
         break;
@@ -76,7 +79,7 @@ class FieldRule {
         
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onPlay) {
-            TriggerStack.enqueueAbility(state, card, ability);
+            TriggerService.enqueueAbility(state, card, ability);
           }
         }
         break;

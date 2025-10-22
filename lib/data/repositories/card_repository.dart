@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'package:yaml/yaml.dart';
 import 'package:flutter/services.dart';
-import 'types.dart';
+import '../../domain/models/card_data.dart';
 
-/// YAML 形式のカードデータを読み込むヘルパークラス。
-class CardLoader {
+/// YAML 形式のカードデータを読み込むリポジトリクラス。
+class CardRepository {
   static CardType? _parseCardType(String? value) {
     if (value == null) return null;
     switch (value.toLowerCase()) {
@@ -127,8 +126,8 @@ class CardLoader {
     return abilities;
   }
 
-  /// YAML 文字列から [Card] を生成する。
-  static Card? parseCard(String yamlContent) {
+  /// YAML 文字列から [CardData] を生成する。
+  static CardData? parseCard(String yamlContent) {
     try {
       final doc = loadYaml(yamlContent);
       if (doc is! Map) return null;
@@ -153,7 +152,7 @@ class CardLoader {
       final domain = _parseDomainConfig(doc['domain']);
       final abilities = _parseAbilities(doc['abilities']);
 
-      return Card(
+      return CardData(
         id: id,
         name: name,
         type: type,
@@ -170,8 +169,8 @@ class CardLoader {
     }
   }
 
-  /// アセットからカード YAML を読み込み [Card] に変換する。
-  static Future<Card?> loadCardFromAsset(String assetPath) async {
+  /// アセットからカード YAML を読み込み [CardData] に変換する。
+  static Future<CardData?> loadCardFromAsset(String assetPath) async {
     try {
       final yamlContent = await rootBundle.loadString(assetPath);
       return parseCard(yamlContent);
@@ -194,10 +193,10 @@ class CardLoader {
     }
   }
 
-  /// すべてのカードファイルを読み込み [Card] のリストを返す。
-  static Future<List<Card>> loadAllCards() async {
+  /// すべてのカードファイルを読み込み [CardData] のリストを返す。
+  static Future<List<CardData>> loadAllCards() async {
     final cardFiles = await loadCardIndex();
-    final cards = <Card>[];
+    final cards = <CardData>[];
 
     for (final cardFile in cardFiles) {
       final card = await loadCardFromAsset('assets/cards/$cardFile');
@@ -210,7 +209,7 @@ class CardLoader {
   }
 
   /// カードデータが基本的な要件を満たしているか検証する。
-  static bool validateCard(Card card) {
+  static bool validateCard(CardData card) {
     if (card.id.isEmpty || card.name.isEmpty) return false;
 
     switch (card.type) {
