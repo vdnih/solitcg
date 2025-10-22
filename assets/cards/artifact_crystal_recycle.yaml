@@ -1,0 +1,12 @@
+id: atf_crystal_002
+name: リサイクルクリスタル
+type: artifact
+tags: [crystal]
+text: 1ターンに1度、手札のカードを1枚捨てることで、墓地のカードを1枚手札に加える。
+version: 1
+
+abilities:
+  - when: activated
+    effect:
+      - { op: discard, from: hand, count: 1, selection: choose }
+      - { op: move, from: grave, to: hand, count: 1, selection: choose }
