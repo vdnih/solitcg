@@ -118,10 +118,11 @@ pre:
 
 ```yaml
 - { op: draw, count: 2 }
-- { op: discard, from: hand, count: 1, selection: choose }
+- { op: discard, from: hand, count: 1, selection: choose, filter: { tag: "spl_haku" } }
 ```
 
 * `selection`: `choose`（選択）または`random`。
+* `filter`: `search` 同様、対象を絞るための条件。省略時はフィルタなし。
 
 ### 6.3 ステータス操作
 

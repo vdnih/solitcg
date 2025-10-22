@@ -60,25 +60,36 @@ class OperationExecutor {
   static GameResult _executeDiscard(GameState state, Map<String, dynamic> params) {
     final from = params['from'] as String? ?? 'hand';
     final count = params['count'] as int? ?? 1;
+    final filter = params['filter'] as Map<String, dynamic>?;
     final logs = <String>[];
 
     if (from != 'hand') {
       return GameResult.failure('discard: only supports from="hand" currently');
     }
 
-    if (state.hand.count < count) {
-      return GameResult.failure('Not enough cards to discard (need $count, have ${state.hand.count})');
+    List<CardInstance> cardsToDiscard;
+
+    if (filter != null && filter.isNotEmpty) {
+      final matchingCards = state.hand.where((card) => _matchesFilter(card, filter)).toList();
+      if (matchingCards.length < count) {
+        return GameResult.failure('Not enough matching cards to discard (need $count, have ${matchingCards.length})');
+      }
+      cardsToDiscard = matchingCards.take(count).toList();
+    } else {
+      if (state.hand.count < count) {
+        return GameResult.failure('Not enough cards to discard (need $count, have ${state.hand.count})');
+      }
+      cardsToDiscard = state.hand.cards.take(count).toList();
     }
 
-    for (int i = 0; i < count; i++) {
-      final card = state.hand.removeAt(0);
-      if (card != null) {
-        state.grave.add(card);
-        
-        for (final ability in card.card.abilities) {
-          if (ability.when == TriggerWhen.onDiscard) {
-            TriggerService.enqueueAbility(state, card, ability);
-          }
+    // Remove from hand, add to grave, trigger effects
+    for (final card in cardsToDiscard) {
+      state.hand.remove(card);
+      state.grave.add(card);
+
+      for (final ability in card.card.abilities) {
+        if (ability.when == TriggerWhen.onDiscard) {
+          TriggerService.enqueueAbility(state, card, ability);
         }
       }
     }

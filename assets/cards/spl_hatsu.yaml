@@ -2,13 +2,19 @@ id: spl_hatsu
 name: 發の魔法
 type: spell
 tags: [spl_hatsu]
-text: 発動条件：手札に「發の魔法」がこのカード以外にもう2枚以上あること。効果：手札の「發の魔法」を2枚捨て、3枚ドローする。
-version: 1
+text: 1枚ドローする。手札に「發の魔法」がこのカード以外にもう2枚以上ある場合、手札の「發の魔法」を2枚捨て、3枚ドローする。
+version: 2
 
 abilities:
   - when: on_play
+    priority: 0
+    effect:
+      - { op: draw, count: 1 }
+
+  - when: on_play
+    priority: 1
     pre:
       - "count(tag:'spl_hatsu', zone:'hand:self') >= 2"
     effect:
-      - { op: discard, from: hand, count: 2, selection: choose , target: "chose:random:tag=spl_hatsu"}
+      - { op: discard, from: hand, count: 2, filter: { tag: "spl_hatsu" } }
       - { op: draw, count: 3 }
