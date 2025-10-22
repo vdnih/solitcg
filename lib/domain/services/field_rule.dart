@@ -99,19 +99,6 @@ class FieldRule {
 
     final card = state.hand.cards[handIndex];
 
-    // Check preconditions for onPlay abilities
-    for (final ability in card.card.abilities) {
-      if (ability.when == TriggerWhen.onPlay || ability.when == TriggerWhen.activated) {
-        if (ability.pre != null) {
-          for (final condition in ability.pre!) {
-            if (!ExpressionEvaluator.evaluate(state, condition)) {
-              return GameResult.failure('前提条件を満たしていないため発動できません');
-            }
-          }
-        }
-      }
-    }
-
     final removedCard = state.hand.removeAt(handIndex);
     if (removedCard == null) {
       // This should not happen if the index is valid
