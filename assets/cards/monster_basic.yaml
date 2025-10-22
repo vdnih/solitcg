@@ -8,8 +8,3 @@ stats:
   atk: 1500
   def: 1200
   hp: 1000
-
-abilities:
-  - when: on_play
-    effect:
-      - { op: draw, count: 1 }

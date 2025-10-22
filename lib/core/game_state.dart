@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:flutter/foundation.dart';
+import '../domain/models/choice_request.dart';
 import '../domain/models/trigger.dart';
 import '../domain/models/game_zone.dart';
 import '../domain/models/card_instance.dart';
@@ -12,16 +14,18 @@ class GameState {
   final GameZone domain;
   final GameZone grave;
   final GameZone extra;
-  
+
   int spellsCastThisTurn = 0;
   int playerLife = 8000;
   int opponentLife = 8000;
   bool gameWon = false;
   bool gameLost = false;
-  
+
   final Queue<Trigger> triggerQueue = Queue<Trigger>();
   final List<String> actionLog = [];
-  
+
+  final ValueNotifier<ChoiceRequest?> choiceRequest = ValueNotifier(null);
+
   int _nextInstanceId = 1;
   int _triggerOrder = 0;
 
@@ -51,7 +55,7 @@ class GameState {
   }
 
   String generateInstanceId() => 'inst_${_nextInstanceId++}';
-  
+
   int getNextTriggerOrder() => ++_triggerOrder;
 
   void addToLog(String message) {

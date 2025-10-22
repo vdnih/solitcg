@@ -1,0 +1,15 @@
+id: mon_akuma_001
+name: 悪魔
+type: monster
+tags: []
+text: このモンスターが手札から捨てられた時、カードを一枚引く。
+version: 1
+stats:
+  atk: 100
+  def: 100
+  hp: 100
+
+abilities:
+  - when: on_discard
+    effect:
+      - { op: draw, count: 1 }
