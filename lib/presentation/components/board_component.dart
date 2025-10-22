@@ -1,9 +1,8 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flame/components.dart';
-import 'package:flame/game.dart';
-import 'package:flame/text.dart';
 import 'package:flutter/material.dart' as material;
 
-import '../../core/game_state.dart';
 import '../game/tcg_game.dart';
 import './card_component.dart';
 
@@ -176,8 +175,11 @@ class BoardComponent extends PositionComponent with HasGameRef<TCGGame> {
     _logComponents.clear();
 
     // 最新10件のログを表示
-    final recentLogs =
-        gameRef.gameState.actionLog.reversed.take(10).toList().reversed.toList();
+    final recentLogs = gameRef.gameState.actionLog.reversed
+        .take(10)
+        .toList()
+        .reversed
+        .toList();
     for (int i = 0; i < recentLogs.length; i++) {
       final logComponent = TextComponent(
         text: recentLogs[i],
