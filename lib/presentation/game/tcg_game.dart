@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 
 import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
+import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
@@ -117,5 +118,46 @@ class TCGGame extends FlameGame {
     }
 
     // ゲーム状態の変更は、リアクティブにUIコンポーネントに通知される
+  }
+
+  /// 指定されたフィールドのカードの効果を発動させます。
+  ///
+  /// このメソッドはユーザー入力の起点となり、実際のゲームロジックは
+  /// `TriggerService` に委譲します。
+  void activateCardOnBoard(CardInstance card) async {
+    if (gameState.isGameOver) return;
+
+    // `activated` 効果を持つアビリティを探す
+    final activatedAbilities = card.card.abilities
+        .where((ability) => ability.when == TriggerWhen.activated)
+        .toList();
+
+    if (activatedAbilities.isEmpty) {
+      gameState.addToLog(
+          '${card.card.name} has no activated abilities.');
+      return;
+    }
+
+    gameState
+        .addToLog('Activating ${card.card.name}...');
+
+    // TODO: 複数の起動効果がある場合の選択肢をプレイヤーに提示する
+    // MVPでは最初に見つかった効果のみを発動
+    final abilityToActivate = activatedAbilities.first;
+
+    // トリガーサービスにアビリティをエンキュー
+    TriggerService.enqueueAbility(gameState, card, abilityToActivate);
+
+    // UI更新のためのダミーコールバック
+    final dummyUpdate = () => {};
+
+    // トリガーサービスを呼び出して、発生したすべてのトリガーを解決
+    final resolveResult =
+        await TriggerService.resolveAll(gameState, dummyUpdate);
+    gameState.actionLog.addAll(resolveResult.logs);
+
+    if (!resolveResult.success) {
+      gameState.addToLog('Trigger resolution failed: ${resolveResult.error}');
+    }
   }
 }
