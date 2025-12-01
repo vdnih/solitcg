@@ -28,7 +28,12 @@ class MainScreen extends ConsumerWidget {
                 minimumSize: const Size(200, 50),
               ),
               onPressed: () {
-                AppRoutes.navigateTo(context, AppRoutes.game);
+                // デッキ選択画面へ遷移（ゲーム開始モード）
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.deckSelector,
+                  arguments: true, // isSelectionMode = true
+                );
               },
               child: const Text('ゲームを開始', style: TextStyle(fontSize: 18)),
             ),

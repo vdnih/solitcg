@@ -3,6 +3,7 @@ import 'ui/screens/main_screen.dart';
 import 'ui/screens/deck_builder_screen.dart';
 import 'ui/screens/deck_selector_screen.dart';
 import 'ui/screens/game_screen.dart';
+import 'domain/models/deck.dart';
 
 /// ルート定義クラス
 class AppRoutes {
@@ -16,8 +17,16 @@ class AppRoutes {
     return {
       home: (context) => const MainScreen(),
       deckBuilder: (context) => const DeckBuilderScreen(),
-      deckSelector: (context) => const DeckSelectorScreen(),
-      game: (context) => const GameScreen(),
+      deckSelector: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final isSelectionMode = args is bool ? args : false;
+        return DeckSelectorScreen(isSelectionMode: isSelectionMode);
+      },
+      game: (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        final deck = args is Deck ? args : null;
+        return GameScreen(deck: deck);
+      },
     };
   }
   

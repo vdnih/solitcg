@@ -193,8 +193,27 @@ class CardRepository {
     }
   }
 
+  static final Map<String, CardData> _cache = {};
+
+  /// 指定されたIDのカードを読み込む。
+  static Future<CardData?> loadCard(String id) async {
+    if (_cache.containsKey(id)) {
+      return _cache[id];
+    }
+    
+    // キャッシュにない場合は全カードを読み込んでキャッシュを構築
+    await loadAllCards();
+    
+    return _cache[id];
+  }
+
   /// すべてのカードファイルを読み込み [CardData] のリストを返す。
   static Future<List<CardData>> loadAllCards() async {
+    // キャッシュがあればそれを使用
+    if (_cache.isNotEmpty) {
+      return _cache.values.toList();
+    }
+
     final cardFiles = await loadCardIndex();
     final cards = <CardData>[];
 
@@ -202,6 +221,7 @@ class CardRepository {
       final card = await loadCardFromAsset('assets/cards/$cardFile');
       if (card != null) {
         cards.add(card);
+        _cache[card.id] = card; // キャッシュに保存
       }
     }
 

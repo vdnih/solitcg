@@ -1,11 +1,14 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../../domain/models/deck.dart';
 import '../../presentation/game/tcg_game.dart';
 
 /// ゲームプレイ画面
 class GameScreen extends StatelessWidget {
-  const GameScreen({super.key});
+  final Deck? deck;
+
+  const GameScreen({super.key, this.deck});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +28,7 @@ class GameScreen extends StatelessWidget {
         ],
       ),
       body: GameWidget(
-        game: TCGGame(),
+        game: TCGGame(initialDeck: deck),
         loadingBuilder: (context) => const Center(
           child: CircularProgressIndicator(),
         ),

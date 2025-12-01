@@ -7,12 +7,27 @@ import '../../routes.dart';
 
 /// デッキ選択画面
 class DeckSelectorScreen extends ConsumerWidget {
-  const DeckSelectorScreen({super.key});
+  final bool isSelectionMode;
+
+  const DeckSelectorScreen({
+    super.key,
+    this.isSelectionMode = false,
+  });
 
   // デッキの選択処理
   void _selectDeck(BuildContext context, WidgetRef ref, Deck deck) {
-    ref.read(selectedDeckIdProvider.notifier).state = deck.id;
-    AppRoutes.navigateTo(context, AppRoutes.deckBuilder);
+    if (isSelectionMode) {
+      // ゲーム開始モードの場合、ゲーム画面へ遷移
+      Navigator.pushNamed(
+        context,
+        AppRoutes.game,
+        arguments: deck,
+      );
+    } else {
+      // 編集モードの場合、デッキビルダーへ遷移
+      ref.read(selectedDeckIdProvider.notifier).state = deck.id;
+      AppRoutes.navigateTo(context, AppRoutes.deckBuilder);
+    }
   }
 
   // デッキの削除処理

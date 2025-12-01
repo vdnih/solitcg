@@ -6,6 +6,7 @@ import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
+import '../../domain/models/deck.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
 import '../components/board_component.dart';
@@ -24,6 +25,11 @@ class TCGGame extends FlameGame {
   /// ゲーム全体の共有状態。信頼できる唯一の情報源 (Single Source of Truth)。
   late final GameState gameState;
 
+  /// ゲームで使用するデッキ
+  final Deck? initialDeck;
+
+  TCGGame({this.initialDeck});
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
@@ -40,8 +46,20 @@ class TCGGame extends FlameGame {
 
   /// ゲームの初期設定（デッキのロード、シャッフル、ドロー）を行います。
   Future<void> _initializeGame() async {
-    // カードリポジトリからすべてのカード定義を非同期で読み込む
-    final cards = await CardRepository.loadAllCards();
+    List<CardData> cards = [];
+
+    if (initialDeck != null) {
+      // 指定されたデッキからカードを読み込む
+      for (final cardId in initialDeck!.cardIds) {
+        final card = await CardRepository.loadCard(cardId);
+        if (card != null) {
+          cards.add(card);
+        }
+      }
+    } else {
+      // デッキが指定されていない場合は全カードを読み込む（デバッグ用など）
+      cards = await CardRepository.loadAllCards();
+    }
 
     if (cards.isEmpty) {
       gameState.addToLog('Error: Failed to load cards from repository.');

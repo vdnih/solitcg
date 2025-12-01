@@ -1,0 +1,15 @@
+id: mon_robot_001
+name: ロボット
+type: monster
+tags: []
+text: このモンスターが場に出た時、カードを一枚引く。
+version: 1
+stats:
+  atk: 100
+  def: 100
+  hp: 100
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: draw, count: 1 }
