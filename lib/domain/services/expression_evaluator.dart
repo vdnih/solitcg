@@ -133,19 +133,17 @@ class ExpressionEvaluator {
 
       if (params.isNotEmpty) {
         final parts1 = params[0].split(':');
-        if (parts1.length == 2) {
+        if (parts1.length >= 2) {
           param1Type = parts1[0].trim();
-          // クォーテーション除去
-          param1Value = _removeQuotes(parts1[1].trim());
+          param1Value = _removeQuotes(parts1.sublist(1).join(':').trim());
         }
       }
 
       if (params.length > 1) {
         final parts2 = params[1].split(':');
-        if (parts2.length == 2) {
+        if (parts2.length >= 2) {
           param2Type = parts2[0].trim();
-          // クォーテーション除去
-          param2Value = _removeQuotes(parts2[1].trim());
+          param2Value = _removeQuotes(parts2.sublist(1).join(':').trim());
         }
       }
 

@@ -2,15 +2,18 @@
 enum CardType { monster, ritual, spell, arcane, artifact, relic, equip, domain }
 
 /// アビリティの発動タイミング。
-enum TriggerWhen { onPlay, onDestroy, activated, static, onDraw, onDiscard }
+/// MVP スコープ: on_play / on_destroy / on_discard / activated の4種のみ。
+enum TriggerWhen { onPlay, onDestroy, activated, onDiscard }
 
 /// 攻撃力・防御力・HP を保持するステータス。
+/// atk / def は効果参照用の任意フィールド（省略時は 0）。
+/// hp のみ monster / ritual の必須フィールド。
 class Stats {
   final int atk;
   final int def;
   final int hp;
 
-  const Stats({required this.atk, required this.def, required this.hp});
+  const Stats({this.atk = 0, this.def = 0, required this.hp});
 
   Stats copyWith({int? atk, int? def, int? hp}) {
     return Stats(
@@ -47,13 +50,11 @@ class EffectStep {
 class Ability {
   final TriggerWhen when;
   final List<String>? pre;
-  final int priority;
   final List<EffectStep> effects;
 
   const Ability({
     required this.when,
     this.pre,
-    this.priority = 0,
     required this.effects,
   });
 }

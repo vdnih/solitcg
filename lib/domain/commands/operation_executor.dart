@@ -25,6 +25,8 @@ class OperationExecutor {
           return _executeMove(state, effect.params);
         case 'destroy':
           return _executeDestroy(state, effect.params);
+        case 'win':
+          return _executeWin(state);
         case 'win_if':
           return _executeWinIf(state, effect.params);
         case 'lose_if':
@@ -194,6 +196,11 @@ class OperationExecutor {
     }
 
     return GameResult.failure('No valid target to destroy');
+  }
+
+  static GameResult _executeWin(GameState state) {
+    state.gameWon = true;
+    return GameResult.success(logs: ['VICTORY']);
   }
 
   static GameResult _executeWinIf(GameState state, Map<String, dynamic> params) {

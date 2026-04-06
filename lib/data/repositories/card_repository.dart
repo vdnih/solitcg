@@ -35,14 +35,11 @@ class CardRepository {
         return TriggerWhen.onPlay;
       case 'on_destroy':
         return TriggerWhen.onDestroy;
-      case 'static':
-        return TriggerWhen.static;
       case 'activated':
         return TriggerWhen.activated;
-      case 'on_draw':
-        return TriggerWhen.onDraw;
       case 'on_discard':
         return TriggerWhen.onDiscard;
+      // MVP スコープ外: static / on_draw / on_enter / on_domain_set は無視
       default:
         return null;
     }
@@ -111,13 +108,11 @@ class CardRepository {
             pre = preData.cast<String>();
           }
           
-          final priority = abilityData['priority'] as int? ?? 0;
           final effects = _parseEffects(abilityData['effect']);
-          
+
           abilities.add(Ability(
             when: when,
             pre: pre,
-            priority: priority,
             effects: effects,
           ));
         }

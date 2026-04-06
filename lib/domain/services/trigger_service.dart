@@ -117,12 +117,8 @@ class TriggerService {
         return 'on_play';
       case TriggerWhen.onDestroy:
         return 'on_destroy';
-      case TriggerWhen.static:
-        return 'static';
       case TriggerWhen.activated:
         return 'activated';
-      case TriggerWhen.onDraw:
-        return 'on_draw';
       case TriggerWhen.onDiscard:
         return 'on_discard';
     }

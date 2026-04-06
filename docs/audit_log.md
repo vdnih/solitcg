@@ -52,6 +52,24 @@
 - **影響範囲**: `assets/cards/`、`lib/data/repositories/card_repository.dart`
 - **ADR**: `docs/adr/005-yaml-card-data.md`
 
+## 2026-04-06 12:00 - [Docs] ゲームルール総点検・ドキュメント簡素化
+
+- **判断内容**: GAME_RULES.md / SPEC.md / CARD_YAML_SPEC.md の不整合を一括解消し、MVP ルールセットを簡素化した
+- **理由**: 継ぎ足しメンテナンスにより3ドキュメント間で `when` 一覧・`banish` ゾーンの扱い・`op` 定義が食い違っていたため。また、`static` 効果など実装負荷の高い機能をスコープ外と明確化することで、実装がシンプルになるよう設計を見直した
+- **影響範囲**: `docs/GAME_RULES.md`（v0.5.0）、`docs/SPEC.md`（v1.1）、`docs/CARD_YAML_SPEC.md`（v0.6.0）、`assets/cards/`（カード YAML 修正・削除）
+- **変更サマリー**:
+  - `when` を4種に統一（`on_play` / `on_destroy` / `on_discard` / `activated`）。`on_enter` / `static` / `on_draw` / `on_domain_set` は MVP スコープ外と明記
+  - `banish` ゾーンを MVP スコープ外として3ドキュメントから削除
+  - `priority` フィールドを廃止。同時トリガーはプレイヤーが投入順を選択する方式に変更
+  - `op: win`（無条件勝利）を仕様に追加
+  - `activated` 能力の1ターン1度制限をエンジン強制と明記
+  - `stats.atk` / `stats.def` を optional（効果参照用）に変更。`hp` のみ必須
+  - `domain_library.yaml` を削除（`static` + `modify_draw` を使用しており再設計不能）
+  - `van001.yaml` のフォーマット不正（リスト形式）を修正
+  - `spl_haku` / `spl_hatsu` / `spl_chun` のタイポ（`chose` → `choose`）と `target` の矛盾を修正
+  - `activated_artifact.yaml` を日本語化
+- **ADR**: なし
+
 ## 2026-04-06 00:00 - [Docs] ドキュメント体系整備
 
 - **判断内容**: `my_career_app` / `travel_log_app` に倣いドキュメント構成を整備。PRODUCT_VISION.md・PRD.md・SPEC.md・feature_registry.md・audit_log.md・adr/ を新設。CLAUDE.md を全面改訂。

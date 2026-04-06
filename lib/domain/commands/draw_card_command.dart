@@ -23,12 +23,7 @@ class DrawCardCommand extends CardEffectCommand {
         state.hand.add(card);
         drawnCount++;
 
-        // ドロー時に発動するトリガーをチェックし、キューに追加
-        for (final ability in card.card.abilities) {
-          if (ability.when == TriggerWhen.onDraw) {
-            TriggerService.enqueueAbility(state, card, ability);
-          }
-        }
+        // on_draw は MVP スコープ外のため、ここではトリガーを発火しない
       }
     }
 

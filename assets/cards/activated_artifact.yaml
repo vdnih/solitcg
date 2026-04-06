@@ -1,8 +1,8 @@
 id: activated_artifact
-name: Activated Artifact
+name: 起動アーティファクト
 type: artifact
-text: Tap this artifact to draw a card.
-version: 1
+text: 1ターンに1度、このカードを起動してカードを1枚引く。
+version: 2
 abilities:
   - when: activated
     effect:
