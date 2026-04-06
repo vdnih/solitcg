@@ -138,6 +138,28 @@ class TCGGame extends FlameGame {
     // ゲーム状態の変更は、リアクティブにUIコンポーネントに通知される
   }
 
+  /// ドローフェイズを実行します。
+  ///
+  /// activated 使用済みフラグをリセットし、デッキから1枚引きます。
+  void drawPhase() {
+    if (gameState.isGameOver) return;
+
+    // activated の1ターン1度制限をリセット
+    gameState.activatedThisTurn.clear();
+    gameState.spellsCastThisTurn = 0;
+
+    if (gameState.deck.isEmpty) {
+      gameState.addToLog('デッキが0枚です。ターン終了時に勝利判定を行います。');
+      return;
+    }
+
+    final card = gameState.deck.removeAt(0);
+    if (card != null) {
+      gameState.hand.add(card);
+      gameState.addToLog('ドロー: ${card.card.name}');
+    }
+  }
+
   /// 指定されたフィールドのカードの効果を発動させます。
   ///
   /// このメソッドはユーザー入力の起点となり、実際のゲームロジックは
@@ -151,15 +173,23 @@ class TCGGame extends FlameGame {
         .toList();
 
     if (activatedAbilities.isEmpty) {
-      gameState.addToLog('${card.card.name} has no activated abilities.');
+      gameState.addToLog('${card.card.name} には activated 能力がありません。');
       return;
     }
 
-    gameState.addToLog('Activating ${card.card.name}...');
+    // 1ターン1度制限チェック
+    if (gameState.activatedThisTurn.contains(card.instanceId)) {
+      gameState.addToLog('${card.card.name} はすでにこのターン発動済みです。');
+      return;
+    }
 
-    // TODO: 複数の起動効果がある場合の選択肢をプレイヤーに提示する
+    gameState.addToLog('${card.card.name} を起動...');
+
     // MVPでは最初に見つかった効果のみを発動
     final abilityToActivate = activatedAbilities.first;
+
+    // 使用済みとして記録
+    gameState.activatedThisTurn.add(card.instanceId);
 
     // トリガーサービスにアビリティをエンキュー
     TriggerService.enqueueAbility(gameState, card, abilityToActivate);
@@ -173,7 +203,7 @@ class TCGGame extends FlameGame {
     gameState.actionLog.addAll(resolveResult.logs);
 
     if (!resolveResult.success) {
-      gameState.addToLog('Trigger resolution failed: ${resolveResult.error}');
+      gameState.addToLog('トリガー解決に失敗しました: ${resolveResult.error}');
     }
   }
 }

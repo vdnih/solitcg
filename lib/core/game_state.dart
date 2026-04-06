@@ -16,6 +16,9 @@ class GameState {
   final GameZone extra;
 
   int spellsCastThisTurn = 0;
+  /// このターンに activated 能力を使用したカードの instanceId セット。
+  /// ドローフェイズ開始時にクリアする。
+  final Set<String> activatedThisTurn = {};
   int playerLife = 8000;
   int opponentLife = 8000;
   bool gameWon = false;

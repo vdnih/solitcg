@@ -218,12 +218,8 @@ class CardDetailDialog extends StatelessWidget {
         return 'プレイ時';
       case TriggerWhen.onDestroy:
         return '破壊時';
-      case TriggerWhen.static:
-        return '常時';
       case TriggerWhen.activated:
         return '起動型';
-      case TriggerWhen.onDraw:
-        return 'ドロー時';
       case TriggerWhen.onDiscard:
         return '捨て札時';
     }

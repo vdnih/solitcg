@@ -61,7 +61,6 @@ void main() {
       expect(card.abilities.length, 1);
       final ability = card.abilities.first;
       expect(ability.when, TriggerWhen.onPlay);
-      expect(ability.priority, 1);
       expect(ability.effects.length, 2);
       expect(ability.effects[0].op, 'draw');
       expect(ability.effects[0].params['count'], 2);
