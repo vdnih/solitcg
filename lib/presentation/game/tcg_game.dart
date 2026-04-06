@@ -87,8 +87,8 @@ class TCGGame extends FlameGame {
       }
     }
 
-    gameState.addToLog(
-        'Game initialized. ${gameState.hand.count} cards in hand.');
+    gameState
+        .addToLog('Game initialized. ${gameState.hand.count} cards in hand.');
   }
 
   /// デッキのカードをランダムにシャッフルします。
@@ -124,7 +124,7 @@ class TCGGame extends FlameGame {
     gameState.actionLog.addAll(result.logs);
 
     // UI更新のためのダミーコールバック。将来的にはイベントバスなどで置き換えるべき。
-    final dummyUpdate = () => {};
+    Map<dynamic, dynamic> dummyUpdate() => {};
 
     // トリガーサービスを呼び出して、発生したすべてのトリガーを解決
     final resolveResult =
@@ -151,13 +151,11 @@ class TCGGame extends FlameGame {
         .toList();
 
     if (activatedAbilities.isEmpty) {
-      gameState.addToLog(
-          '${card.card.name} has no activated abilities.');
+      gameState.addToLog('${card.card.name} has no activated abilities.');
       return;
     }
 
-    gameState
-        .addToLog('Activating ${card.card.name}...');
+    gameState.addToLog('Activating ${card.card.name}...');
 
     // TODO: 複数の起動効果がある場合の選択肢をプレイヤーに提示する
     // MVPでは最初に見つかった効果のみを発動
@@ -167,7 +165,7 @@ class TCGGame extends FlameGame {
     TriggerService.enqueueAbility(gameState, card, abilityToActivate);
 
     // UI更新のためのダミーコールバック
-    final dummyUpdate = () => {};
+    Map<dynamic, dynamic> dummyUpdate() => {};
 
     // トリガーサービスを呼び出して、発生したすべてのトリガーを解決
     final resolveResult =

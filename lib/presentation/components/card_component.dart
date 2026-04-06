@@ -135,21 +135,19 @@ class CardComponent extends PositionComponent with TapCallbacks {
     // モンスターとリチュアルのステータスを描画
     if (card.card.type == CardType.monster ||
         card.card.type == CardType.ritual) {
-      if (card.stats != null) {
-        final statsPainter = material.TextPainter(
-          text: material.TextSpan(
-            text:
-                'ATK: ${card.stats.atk} | DEF: ${card.stats.def} | HP: ${card.stats.hp}',
-            style: const material.TextStyle(
-              color: material.Colors.white,
-              fontSize: 8,
-            ),
+      final statsPainter = material.TextPainter(
+        text: material.TextSpan(
+          text:
+              'ATK: ${card.stats.atk} | DEF: ${card.stats.def} | HP: ${card.stats.hp}',
+          style: const material.TextStyle(
+            color: material.Colors.white,
+            fontSize: 8,
           ),
-          textDirection: material.TextDirection.ltr,
-        );
-        statsPainter.layout(maxWidth: size.x - 8);
-        statsPainter.paint(canvas, material.Offset(4, size.y - 28));
-      }
+        ),
+        textDirection: material.TextDirection.ltr,
+      );
+      statsPainter.layout(maxWidth: size.x - 8);
+      statsPainter.paint(canvas, material.Offset(4, size.y - 28));
     }
   }
 

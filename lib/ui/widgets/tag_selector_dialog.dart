@@ -7,10 +7,10 @@ class TagSelectorDialog extends StatefulWidget {
   final String? initialSelectedTag;
 
   const TagSelectorDialog({
-    Key? key,
+    super.key,
     required this.availableTags,
     this.initialSelectedTag,
-  }) : super(key: key);
+  });
 
   @override
   State<TagSelectorDialog> createState() => _TagSelectorDialogState();
@@ -19,7 +19,7 @@ class TagSelectorDialog extends StatefulWidget {
 class _TagSelectorDialogState extends State<TagSelectorDialog> {
   String? _selectedTag;
   String _searchQuery = '';
-  
+
   @override
   void initState() {
     super.initState();
@@ -32,9 +32,10 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
     final filteredTags = _searchQuery.isEmpty
         ? widget.availableTags
         : widget.availableTags
-            .where((tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .where(
+                (tag) => tag.toLowerCase().contains(_searchQuery.toLowerCase()))
             .toList();
-    
+
     return AlertDialog(
       title: const Text('タグを選択'),
       content: SizedBox(
@@ -55,9 +56,9 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // すべてのタグをクリアするオプション
             ListTile(
               title: const Text('すべて表示（タグなし）'),
@@ -76,9 +77,9 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
                 });
               },
             ),
-            
+
             const Divider(),
-            
+
             // タグリスト
             Expanded(
               child: ListView.builder(
@@ -125,13 +126,13 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
 /// カードリストからユニークなタグを抽出する
 List<String> extractUniqueTagsFromCards(List<CardData> cards) {
   final tagSet = <String>{};
-  
+
   for (final card in cards) {
     for (final tag in card.tags) {
       tagSet.add(tag);
     }
   }
-  
+
   final uniqueTags = tagSet.toList()..sort();
   return uniqueTags;
 }
