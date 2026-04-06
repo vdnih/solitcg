@@ -1,50 +1,83 @@
-# solitcg
+# SoliTCG
 
-SoliTCG は Dart/Flutter 製の実験的なカードゲームエンジンです。
-YAML で定義されたカードデータを読み込み、シンプルなゲームロジックを実装しています。
-現在は 1 ターン完結のデモが動作しており、基本的なプレイと効果解決を試せます。
+TCG 風ソリティアゲーム。対戦相手なしに、カード連鎖のコンボを設計・実行する体験を提供する。
+Flutter/Flame で開発し、Web ブラウザ上で即座にプレイできる。
 
-## Getting Started
+## アーキテクチャ
 
-1. Flutter 3.x と Dart の開発環境を用意します。
-2. 依存パッケージを取得します。
+3層レイヤードアーキテクチャ（Presentation / Domain / Data）を採用。
+GameState が Single Source of Truth として全ゲーム状態を管理し、カード効果はコマンドパターンで実装する。
 
-   ```bash
-   flutter pub get
-   ```
+詳細は `docs` ディレクトリ内のドキュメントを参照。
 
-3. Web デモを起動します。
+## ドキュメント
 
-   ```bash
-   flutter run -d chrome
-   ```
+| ドキュメント | 説明 |
+|---|---|
+| [PRODUCT_VISION.md](docs/PRODUCT_VISION.md) | Mission・Vision・Values（プロダクトの憲法） |
+| [PRD.md](docs/PRD.md) | フェーズ別機能一覧・非機能要件 |
+| [SPEC.md](docs/SPEC.md) | エンジンビジネスルール仕様 |
+| [SOFTWARE_ARCHITECTURE.md](docs/SOFTWARE_ARCHITECTURE.md) | ソフトウェアアーキテクチャ設計 |
+| [FIREBASE_ARCHITECTURE.md](docs/FIREBASE_ARCHITECTURE.md) | Firebase インフラ設計 |
+| [TESTING_POLICY.md](docs/TESTING_POLICY.md) | テスト方針 |
+| [CARD_YAML_SPEC.md](docs/CARD_YAML_SPEC.md) | カード定義 YAML スキーマ |
+| [GAME_RULES.md](docs/GAME_RULES.md) | プレイヤー向けゲームルール |
+| [feature_registry.md](docs/feature_registry.md) | 機能 ID とコード/テストパスの対応表 |
+| [adr/](docs/adr/) | Architecture Decision Records |
 
-## Tests
+## はじめに
 
-ユニットテストは次のコマンドで実行できます。
+### 前提条件
+
+- Flutter SDK 3.x
+- Dart SDK
+
+### インストール
 
 ```bash
-dart test
+git clone <repository-url>
+cd solitcg
+flutter pub get
 ```
 
-## Documentation
+### 実行
 
-詳細な仕様は `docs` ディレクトリを参照してください。
+```bash
+# Web デモ（推奨）
+flutter run -d chrome
 
-- `CARD_YAML_SPEC.md` — カード定義の YAML 仕様
-- `GAME_RULES.md` — 基本的なルール概要
-
-
-## Directory Structure
-
-```
-.
-├── engine/  # core game engine
-├── cards/   # card data and definitions
-├── docs/    # documentation
+# その他のプラットフォーム
+flutter run
 ```
 
-## License
+### テスト
 
-- Engine code is licensed under the [MIT License](./LICENSE).
-- Card data is licensed under [CC BY 4.0](./CARD_LICENSE).
+```bash
+flutter test
+```
+
+### ビルド（Web）
+
+```bash
+flutter build web --web-renderer canvaskit
+```
+
+## ディレクトリ構造
+
+```
+lib/
+├── core/           # GameState（ゲーム全状態の SSoT）
+├── data/           # Repository（YAML 読み込み・Firestore 通信）
+├── domain/         # モデル・サービス・コマンド（ゲームロジック）
+├── presentation/   # Flame コンポーネント・ゲーム本体
+├── providers/      # デッキ状態管理
+└── ui/             # Flutter 画面
+assets/
+└── cards/          # YAML 定義のカードデータ
+docs/               # 設計ドキュメント
+```
+
+## ライセンス
+
+- Engine code: [MIT License](./LICENSE)
+- Card data: [CC BY 4.0](./CARD_LICENSE)
