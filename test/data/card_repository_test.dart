@@ -88,5 +88,105 @@ void main() {
       // Assert
       expect(card, isNull);
     });
+
+    test('stats に hp のみ指定した場合 atk=0 / def=0 でパースされる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'm002'
+      name: 'HP Only Monster'
+      type: 'monster'
+      text: ''
+      version: 1
+      stats:
+        hp: 500
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.stats!.hp, 500);
+    });
+
+    test('stats に hp のみ指定した場合 atk が 0 になる', () {
+      const String cardYaml = '''
+      id: 'm003'
+      name: 'HP Only Monster'
+      type: 'monster'
+      text: ''
+      version: 1
+      stats:
+        hp: 300
+      ''';
+
+      final card = CardRepository.parseCard(cardYaml);
+
+      expect(card!.stats!.atk, 0);
+    });
+
+    test('when: on_discard は TriggerWhen.onDiscard にパースされる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'm004'
+      name: 'Discard Monster'
+      type: 'monster'
+      version: 1
+      stats:
+        hp: 100
+      abilities:
+        - when: 'on_discard'
+          effect:
+            - op: 'draw'
+              count: 1
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.abilities.first.when, TriggerWhen.onDiscard);
+    });
+
+    test('when: activated は TriggerWhen.activated にパースされる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'ar001'
+      name: 'Activated Artifact'
+      type: 'artifact'
+      version: 1
+      abilities:
+        - when: 'activated'
+          effect:
+            - op: 'draw'
+              count: 1
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.abilities.first.when, TriggerWhen.activated);
+    });
+
+    test('when: static（未対応値）はアビリティがスキップされ空リストになる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'd001'
+      name: 'Static Domain'
+      type: 'domain'
+      version: 1
+      abilities:
+        - when: 'static'
+          effect:
+            - op: 'draw'
+              count: 1
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.abilities, isEmpty);
+    });
   });
 }
