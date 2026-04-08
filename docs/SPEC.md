@@ -158,3 +158,46 @@
 | `count(tag:'X', zone:'Y')` | 指定ゾーンの指定タグのカード枚数 |
 
 対応する演算子: `>= <= > < == != && || !`
+
+---
+
+## 14. フィルタシステムとカード選択
+
+### filter パラメータ
+
+`discard`, `move`, `destroy`, `search` の各 op は `filter` パラメータをサポートする。
+
+```yaml
+filter:
+  tag: string    # タグ完全一致
+  type: string   # CardType 文字列完全一致（例: monster, spell）
+  name: string   # カード名完全一致
+```
+
+* 複数キーは AND 条件として評価する。
+* `filter` パラメータ自体を省略した場合はフィルタなし（全カードが対象）。
+
+### タグシステム
+
+* `CardData.tags: List<String>` に任意の文字列タグを設定できる。
+* YAML: `tags: [tagA, tagB, ...]`
+* タグは大文字・小文字を区別する。
+* 数の制限なし。
+
+### 各 op での filter と選択挙動
+
+| op | candidates < count | candidates == count | candidates > count かつ filter あり |
+|---|---|---|---|
+| `discard` | failure | 自動選択して捨て | ChoiceRequest → プレイヤー選択 |
+| `move` | 一致分だけ移動 | 自動移動 | ChoiceRequest → プレイヤー選択 |
+| `destroy` | 一致分だけ破壊（0件なら failure） | 自動破壊 | ChoiceRequest → プレイヤー選択 |
+| `search` | 一致分だけ移動 | 全移動 | 先頭 max 枚を自動移動（選択なし） |
+
+### ChoiceRequest の解決フロー
+
+1. エンジンが `ChoiceRequest` を `GameState.choiceRequest` ValueNotifier にセット
+2. `TriggerService.resolveAll()` が一時停止（`GameResult.pending` を返す）
+3. ゲーム画面が `ChoiceOverlay` を表示し、候補カードを一覧表示
+4. プレイヤーが指定枚数を選択して確定
+5. `TCGGame.resolveChoice()` が選択されたカードに操作を適用
+6. `choiceRequest` をクリアし、`TriggerService.resolveAll()` を再呼び出し

@@ -2,9 +2,11 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/models/card_selection_state.dart';
+import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
 import '../../presentation/game/tcg_game.dart';
 import '../widgets/card_detail_panel.dart';
+import '../widgets/choice_overlay.dart';
 
 /// ゲームプレイ画面
 ///
@@ -70,6 +72,17 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
               ),
+            },
+          ),
+          // カード選択オーバーレイ（ChoiceRequest 発生時に表示）
+          ValueListenableBuilder<ChoiceRequest?>(
+            valueListenable: _game.gameState.choiceRequest,
+            builder: (context, request, _) {
+              if (request == null) return const SizedBox.shrink();
+              return ChoiceOverlay(
+                request: request,
+                onConfirm: (selected) => _game.resolveChoice(selected),
+              );
             },
           ),
           // カード詳細パネル（選択時にスライドイン）

@@ -17,6 +17,32 @@
 
 ---
 
+## 2026-04-08 - [Feature] タグシステム拡充 + 汎用カード選択 UI の実装
+
+- **判断内容**:
+  - `discard` / `move` / `destroy` op に `filter` パラメータを追加し、タグ・タイプ・名前でカードを絞り込めるようにした
+  - `ChoiceRequest` モデルを再設計（`candidates: List<CardInstance>`, `sourceZone`, `targetZone` を追加。`pendingEffects` は削除）
+  - `GameResult` に `awaitingChoice: bool` フラグと `GameResult.pending()` ファクトリを追加
+  - `TriggerService.resolveAll()` に `awaitingChoice` 検出・一時停止ロジックを追加
+  - `TCGGame.resolveChoice()` を追加し、選択後のトリガー再開を実装
+  - `CardDetailPanel` にタグ Chip 表示を追加
+  - `ChoiceOverlay` ウィジェットを新規作成（候補カードグリッド + 確定ボタン）
+  - `GameScreen` に `ChoiceOverlay` を `ValueListenableBuilder` で接続
+- **理由**: filter なしの op は先頭から自動選択（従来動作）、filter あり + 複数候補の場合のみプレイヤーに選択を委ねる設計にすることで後方互換性を維持しつつ UX を改善
+- **影響範囲**:
+  - `lib/domain/models/choice_request.dart` （再設計）
+  - `lib/domain/models/game_result.dart` （フラグ追加）
+  - `lib/domain/commands/operation_executor.dart` （filter 対応）
+  - `lib/domain/services/trigger_service.dart` （一時停止）
+  - `lib/presentation/game/tcg_game.dart` （resolveChoice 追加）
+  - `lib/ui/widgets/card_detail_panel.dart` （タグ表示）
+  - `lib/ui/widgets/choice_overlay.dart` （新規）
+  - `lib/ui/screens/game_screen.dart` （接続）
+  - `test/domain/commands/operation_executor_test.dart` （テスト15件追加）
+  - `docs/CARD_YAML_SPEC.md` / `docs/SPEC.md` （ドキュメント更新）
+
+---
+
 ## 2025-10-22 00:00 - [Architecture] 3層アーキテクチャ採用
 
 - **判断内容**: Presentation / Domain / Data の 3 層構造を採用

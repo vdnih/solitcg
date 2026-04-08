@@ -11,6 +11,13 @@ CardInstance _makeCard(String id, CardType type, {List<Ability> abilities = cons
   );
 }
 
+CardInstance _makeTaggedCard(String id, CardType type, List<String> tags) {
+  return CardInstance(
+    card: CardData(id: id, name: id, type: type, tags: tags),
+    instanceId: id,
+  );
+}
+
 EffectStep _op(String op, [Map<String, dynamic> params = const {}]) {
   return EffectStep(op: op, params: params);
 }
@@ -227,6 +234,162 @@ void main() {
           state, _op('unknown_op'));
 
       expect(result.success, isFalse);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: discard (filter)', () {
+    test('filter tag が1枚だけ一致 → 自動で grave に移動する', () {
+      state.hand.add(_makeTaggedCard('h1', CardType.spell, ['burn']));
+      state.hand.add(_makeTaggedCard('h2', CardType.spell, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+
+      expect(state.grave.cards.first.card.id, 'h1');
+    });
+
+    test('filter tag が1枚だけ一致 → hand から消える', () {
+      state.hand.add(_makeTaggedCard('h1', CardType.spell, ['burn']));
+      state.hand.add(_makeTaggedCard('h2', CardType.spell, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+
+      expect(state.hand.count, 1);
+    });
+
+    test('filter tag に一致するカードが不足する場合は failure を返す', () {
+      state.hand.add(_makeTaggedCard('h1', CardType.spell, ['fire']));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+
+      expect(result.success, isFalse);
+    });
+
+    test('filter なしの discard は従来通り動作する', () {
+      state.hand.add(_makeCard('h1', CardType.spell));
+      state.hand.add(_makeCard('h2', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1}));
+
+      expect(state.grave.count, 1);
+    });
+
+    test('filter 複数候補 → choiceRequest が設定される', () {
+      state.hand.add(_makeTaggedCard('h1', CardType.spell, ['burn']));
+      state.hand.add(_makeTaggedCard('h2', CardType.spell, ['burn']));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+
+    test('filter 複数候補 → awaitingChoice が true', () {
+      state.hand.add(_makeTaggedCard('h1', CardType.spell, ['burn']));
+      state.hand.add(_makeTaggedCard('h2', CardType.spell, ['burn']));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+
+      expect(result.awaitingChoice, isTrue);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: move (filter)', () {
+    test('filter tag が1枚一致 → 自動移動する', () {
+      state.grave.add(_makeTaggedCard('g1', CardType.spell, ['token']));
+      state.grave.add(_makeTaggedCard('g2', CardType.spell, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+
+      expect(state.hand.cards.first.card.id, 'g1');
+    });
+
+    test('filter tag が1枚一致 → 元ゾーンから消える', () {
+      state.grave.add(_makeTaggedCard('g1', CardType.spell, ['token']));
+      state.grave.add(_makeTaggedCard('g2', CardType.spell, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+
+      expect(state.grave.count, 1);
+    });
+
+    test('filter tag に一致しないカードは移動されない', () {
+      state.grave.add(_makeTaggedCard('g1', CardType.spell, ['fire']));
+
+      OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+
+      expect(state.hand.count, 0);
+    });
+
+    test('filter 複数候補 → choiceRequest が設定される', () {
+      state.grave.add(_makeTaggedCard('g1', CardType.spell, ['token']));
+      state.grave.add(_makeTaggedCard('g2', CardType.spell, ['token']));
+
+      OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: destroy (filter)', () {
+    test('filter tag が1枚一致 → 自動破壊される', () {
+      state.board.add(_makeTaggedCard('b1', CardType.monster, ['weak']));
+      state.board.add(_makeTaggedCard('b2', CardType.monster, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+
+      expect(state.grave.cards.first.card.id, 'b1');
+    });
+
+    test('filter tag が1枚一致 → board から消える', () {
+      state.board.add(_makeTaggedCard('b1', CardType.monster, ['weak']));
+      state.board.add(_makeTaggedCard('b2', CardType.monster, []));
+
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+
+      expect(state.board.count, 1);
+    });
+
+    test('filter tag に一致するカードがない場合は failure を返す', () {
+      state.board.add(_makeTaggedCard('b1', CardType.monster, ['strong']));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+
+      expect(result.success, isFalse);
+    });
+
+    test('filter 複数候補 → choiceRequest が設定される', () {
+      state.board.add(_makeTaggedCard('b1', CardType.monster, ['weak']));
+      state.board.add(_makeTaggedCard('b2', CardType.monster, ['weak']));
+
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board', 'count': 1, 'filter': {'tag': 'weak'}}));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+
+    test('count=2 で filter 一致の2枚が破壊される', () {
+      state.board.add(_makeTaggedCard('b1', CardType.monster, ['weak']));
+      state.board.add(_makeTaggedCard('b2', CardType.monster, ['weak']));
+
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board', 'count': 2, 'filter': {'tag': 'weak'}}));
+
+      expect(state.grave.count, 2);
     });
   });
 }
