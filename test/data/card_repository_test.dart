@@ -188,5 +188,48 @@ void main() {
       // Assert
       expect(card!.abilities, isEmpty);
     });
+
+    test('once_per_turn: false の activated 能力は oncePerTurn が false になる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'ar002'
+      name: 'Unlimited Artifact'
+      type: 'artifact'
+      version: 1
+      abilities:
+        - when: 'activated'
+          once_per_turn: false
+          effect:
+            - op: 'draw'
+              count: 1
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.abilities.first.oncePerTurn, isFalse);
+    });
+
+    test('once_per_turn を省略した activated 能力は oncePerTurn がデフォルト true になる', () {
+      // Arrange
+      const String cardYaml = '''
+      id: 'ar003'
+      name: 'Default Artifact'
+      type: 'artifact'
+      version: 1
+      abilities:
+        - when: 'activated'
+          effect:
+            - op: 'draw'
+              count: 1
+      ''';
+
+      // Act
+      final card = CardRepository.parseCard(cardYaml);
+
+      // Assert
+      expect(card!.abilities.first.oncePerTurn, isTrue);
+    });
   });
 }

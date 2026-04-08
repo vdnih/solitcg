@@ -243,19 +243,22 @@ class TCGGame extends FlameGame {
       return;
     }
 
-    // 1ターン1度制限チェック
-    if (gameState.activatedThisTurn.contains(card.instanceId)) {
+    // MVPでは最初に見つかった効果のみを発動
+    final abilityToActivate = activatedAbilities.first;
+
+    // 1ターン1度制限チェック（oncePerTurn が true の場合のみ）
+    if (abilityToActivate.oncePerTurn &&
+        gameState.activatedThisTurn.contains(card.instanceId)) {
       gameState.addToLog('${card.card.name} はすでにこのターン発動済みです。');
       return;
     }
 
     gameState.addToLog('${card.card.name} を起動...');
 
-    // MVPでは最初に見つかった効果のみを発動
-    final abilityToActivate = activatedAbilities.first;
-
-    // 使用済みとして記録
-    gameState.activatedThisTurn.add(card.instanceId);
+    // 使用済みとして記録（oncePerTurn が true の場合のみ）
+    if (abilityToActivate.oncePerTurn) {
+      gameState.activatedThisTurn.add(card.instanceId);
+    }
 
     // トリガーサービスにアビリティをエンキュー
     TriggerService.enqueueAbility(gameState, card, abilityToActivate);

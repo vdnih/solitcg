@@ -52,10 +52,15 @@ class Ability {
   final List<String>? pre;
   final List<EffectStep> effects;
 
+  /// true の場合、1ターンに1度のみ発動できる（デフォルト）。
+  /// false の場合、コストが払えれば何度でも発動できる。
+  final bool oncePerTurn;
+
   const Ability({
     required this.when,
     this.pre,
     required this.effects,
+    this.oncePerTurn = true,
   });
 }
 

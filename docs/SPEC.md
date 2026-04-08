@@ -123,7 +123,8 @@
 
 ## 11. `activated` 能力の制限
 
-- `activated` 能力は **1ターンに1度** のみ発動できる（エンジン強制）。
+- `activated` 能力は `once_per_turn: true`（省略時デフォルト）の場合、**1ターンに1度** のみ発動できる（エンジン強制）。
+- `once_per_turn: false` の場合、コストが払えれば何度でも発動できる。
 - `GameState` の `activatedThisTurn: Set<String>` にカードの `instanceId` を記録する。
 - ドローフェイズ開始時に `activatedThisTurn` をクリアする。
 

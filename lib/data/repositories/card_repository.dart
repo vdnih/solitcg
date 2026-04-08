@@ -109,11 +109,13 @@ class CardRepository {
           }
           
           final effects = _parseEffects(abilityData['effect']);
+          final oncePerTurn = abilityData['once_per_turn'] as bool? ?? true;
 
           abilities.add(Ability(
             when: when,
             pre: pre,
             effects: effects,
+            oncePerTurn: oncePerTurn,
           ));
         }
       }
