@@ -23,7 +23,8 @@ import '../components/board_component.dart';
 /// `BoardComponent` などの子コンポーネントに責務を委譲します。
 class TCGGame extends FlameGame {
   /// ゲーム全体の共有状態。信頼できる唯一の情報源 (Single Source of Truth)。
-  late final GameState gameState;
+  /// GameScreen の build() が onLoad() より先に呼ばれるため、コンストラクタ時に初期化する。
+  final GameState gameState = GameState();
 
   /// ゲームで使用するデッキ
   final Deck? initialDeck;
@@ -33,9 +34,6 @@ class TCGGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     super.onLoad();
-
-    // ゲーム状態を初期化
-    gameState = GameState();
 
     // ゲームの初期設定を行う
     await _initializeGame();
