@@ -30,8 +30,12 @@ class _GameScreenState extends State<GameScreen> {
 
   void _handleConfirm(CardSelectionState sel) {
     _game.gameState.selectCard(null);
-    if (sel.zone == SelectionZone.hand && sel.handIndex != null) {
-      _game.playCardFromHand(sel.handIndex!);
+    if (sel.zone == SelectionZone.hand) {
+      // 選択時点の handIndex ではなく、実行時点の instanceId から正しいインデックスを解決する
+      final currentIndex = _game.gameState.hand.cards
+          .indexWhere((c) => c.instanceId == sel.card.instanceId);
+      if (currentIndex == -1) return;
+      _game.playCardFromHand(currentIndex);
     } else if (sel.zone == SelectionZone.board) {
       _game.activateCardOnBoard(sel.card);
     }

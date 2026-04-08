@@ -248,15 +248,21 @@ class BoardComponent extends PositionComponent
           onTap: () {
             final sel = gameRef.gameState.selectedCard.value;
             if (sel?.card.instanceId == card.instanceId) {
-              // 2回目タップ: プレイ
+              // 2回目タップ: instanceId から実行時点の正しいインデックスを検索してプレイ
+              final currentIndex = gameRef.gameState.hand.cards
+                  .indexWhere((c) => c.instanceId == card.instanceId);
+              if (currentIndex == -1) return; // 既に手札から消えている
               gameRef.gameState.selectCard(null);
-              gameRef.playCardFromHand(i);
+              gameRef.playCardFromHand(currentIndex);
             } else {
-              // 1回目タップ: 選択
+              // 1回目タップ: 選択（handIndex も実行時点で解決）
+              final currentIndex = gameRef.gameState.hand.cards
+                  .indexWhere((c) => c.instanceId == card.instanceId);
+              if (currentIndex == -1) return;
               gameRef.gameState.selectCard(CardSelectionState(
                 card: card,
                 zone: SelectionZone.hand,
-                handIndex: i,
+                handIndex: currentIndex,
               ));
             }
           },
