@@ -6,7 +6,9 @@ import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
+import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
+import '../../domain/models/game_zone.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
 import '../components/board_component.dart';
@@ -155,6 +157,72 @@ class TCGGame extends FlameGame {
     if (card != null) {
       gameState.hand.add(card);
       gameState.addToLog('ドロー: ${card.card.name}');
+    }
+  }
+
+  /// プレイヤーがカード選択を確定し、ChoiceRequest を解決してトリガー解決を再開する。
+  ///
+  /// [selected] には ChoiceRequest.candidates の中からプレイヤーが選んだカードを渡す。
+  Future<void> resolveChoice(List<CardInstance> selected) async {
+    final request = gameState.choiceRequest.value;
+    if (request == null) return;
+
+    Map<dynamic, dynamic> dummyUpdate() => {};
+
+    switch (request.type) {
+      case ChoiceType.discard:
+        for (final card in selected) {
+          gameState.hand.remove(card);
+          gameState.grave.add(card);
+          for (final ability in card.card.abilities) {
+            if (ability.when == TriggerWhen.onDiscard) {
+              TriggerService.enqueueAbility(gameState, card, ability);
+            }
+          }
+        }
+        gameState.addToLog('Player discarded ${selected.length} card(s)');
+      case ChoiceType.move:
+        final destination = _getZoneByName(request.targetZone ?? 'hand');
+        final source = _getZoneByName(request.sourceZone);
+        if (source != null && destination != null) {
+          for (final card in selected) {
+            source.remove(card);
+            destination.add(card);
+          }
+          gameState.addToLog('Player moved ${selected.length} card(s) to ${request.targetZone}');
+        }
+      case ChoiceType.destroy:
+        for (final card in selected) {
+          gameState.board.remove(card);
+          gameState.grave.add(card);
+          for (final ability in card.card.abilities) {
+            if (ability.when == TriggerWhen.onDestroy) {
+              TriggerService.enqueueAbility(gameState, card, ability);
+            }
+          }
+        }
+        gameState.addToLog('Player destroyed ${selected.length} card(s)');
+    }
+
+    // ChoiceRequest をクリアして UI を閉じる
+    gameState.choiceRequest.value = null;
+
+    // 残りのトリガーを再開
+    final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
+    gameState.actionLog.addAll(resolveResult.logs);
+  }
+
+  /// ゾーン名からゾーンオブジェクトを解決するヘルパー。
+  GameZone? _getZoneByName(String? name) {
+    if (name == null) return null;
+    switch (name.toLowerCase()) {
+      case 'hand': return gameState.hand;
+      case 'deck': return gameState.deck;
+      case 'board': return gameState.board;
+      case 'domain': return gameState.domain;
+      case 'grave': return gameState.grave;
+      case 'extra': return gameState.extra;
+      default: return null;
     }
   }
 

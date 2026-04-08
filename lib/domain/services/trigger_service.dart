@@ -55,6 +55,12 @@ class TriggerService {
       final result = _resolveTrigger(state, trigger);
       logs.addAll(result.logs);
 
+      if (result.awaitingChoice) {
+        // プレイヤーのカード選択待ち → キューに残りを保持したまま一時停止
+        onUpdate();
+        return GameResult.pending(logs: logs);
+      }
+
       if (!result.success) {
         logs.add('Effect failed: ${result.error}');
       }

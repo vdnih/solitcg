@@ -197,6 +197,32 @@ class _CardInfo extends StatelessWidget {
             ),
           ],
         ),
+        if (card.tags.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 4,
+            runSpacing: 2,
+            children: card.tags
+                .map(
+                  (tag) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF21262D),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: const Color(0xFF30363D)),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        color: Color(0xFF8B949E),
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
         if (card.stats != null) ...[
           const SizedBox(height: 6),
           _StatsRow(stats: card.stats!),

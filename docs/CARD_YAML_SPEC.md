@@ -106,23 +106,33 @@ pre:
 ### 6.1 カード移動・破壊
 
 ```yaml
-- { op: destroy, target: "choose:self:artifact", count: 1 }
-- { op: move, from: hand, to: grave, target: "choose:self:any", count: 1 }
+# タイプでフィルタリングしてサーチ
 - { op: search, from: deck, to: hand, filter: { type: "domain" }, max: 1 }
+
+# タグでフィルタリングして移動（複数候補 → プレイヤーが選択）
+- { op: move, from: grave, to: hand, filter: { tag: "token" }, count: 1 }
+
+# タグでフィルタリングして破壊（複数候補 → プレイヤーが選択）
+- { op: destroy, target: board, filter: { tag: "weak" }, count: 1 }
 ```
 
-* `from` / `to`: `hand | deck | grave | board | domain | extra`
-* `count`: 数。省略時は可能な限り全て。
-* `target`: 対象記法（後述）。`move` op でも使用可能。
+* `from` / `to` / `target`: `hand | deck | grave | board | domain | extra`
+* `count`: 対象枚数。省略時は 1。
+* `filter`: タグ・タイプ・名前でカードを絞り込む（後述「タグシステム」参照）。
+* **複数候補がある場合はプレイヤーが選択 UI で選択できる**。
 
 ### 6.2 手札操作
 
 ```yaml
 - { op: draw, count: 2 }
-- { op: discard, from: hand, count: 1, selection: choose }
+# filter なし → 先頭から count 枚を自動捨て
+- { op: discard, from: hand, count: 1 }
+# filter あり + 複数候補 → プレイヤーが選択
+- { op: discard, from: hand, count: 1, filter: { tag: "burn" } }
 ```
 
-* `selection`: `choose`（プレイヤー選択）または `random`。**省略時のデフォルトは `choose`**。
+* `filter` を指定した場合、一致するカードが `count` 枚を超えるとプレイヤーが選択する。
+* `filter` を省略した場合は先頭から `count` 枚を自動選択（従来動作）。
 
 ### 6.3 ステータス操作
 
@@ -150,7 +160,76 @@ pre:
 
 ---
 
-## 7. ターゲット記法
+## 7. タグシステム
+
+### タグの定義
+
+カード YAML の `tags` フィールドに任意の文字列タグを複数設定できます。
+
+```yaml
+tags: [warrior, elite, burn]
+```
+
+* タグは大文字・小文字を区別する（`'Warrior'` と `'warrior'` は別物）。
+* タグ名は英数字・アンダースコア・ハイフン推奨。
+* タグ数の上限はなし。
+
+### filter パラメータ
+
+`discard` / `move` / `destroy` / `search` の各 op は `filter` パラメータを受け付けます。
+
+```yaml
+filter:
+  tag: "xxx"      # 指定タグを持つカードのみ対象
+  type: "spell"   # 指定タイプのカードのみ対象（tag と同時使用可能）
+  name: "カード名" # 名前完全一致（tag/type と同時使用可能）
+```
+
+* 複数条件はすべて AND。
+* `filter` を省略した場合はすべてのカードが対象。
+
+### タグによる勝利条件の例
+
+```yaml
+id: spl_daisangen
+name: 大三元の魔法
+type: spell
+tags: [spl_daisangen]
+text: 「白の魔法」「發の魔法」「中の魔法」がそれぞれ3枚以上あること。効果：勝利する。
+version: 1
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'spl_haku', zone:'hand:self') >= 3"
+      - "count(tag:'spl_hatsu', zone:'hand:self') >= 3"
+      - "count(tag:'spl_chun', zone:'hand:self') >= 3"
+    effect:
+      - { op: win }
+```
+
+### プレイヤー選択との組み合わせ例
+
+```yaml
+id: spl_purge
+name: 弱者一掃
+type: spell
+tags: [removal]
+text: 手札の「burn」タグのカードを1枚捨て、場の「weak」タグを1体破壊する。
+version: 1
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'burn', zone:'hand:self') >= 1"
+      - "count(tag:'weak', zone:'board:self') >= 1"
+    effect:
+      # 複数候補があるとプレイヤーが選択 UI で選ぶ
+      - { op: discard, from: hand, count: 1, filter: { tag: "burn" } }
+      - { op: destroy, target: board, filter: { tag: "weak" }, count: 1 }
+```
+
+---
+
+## 8. ターゲット記法
 
 `"{scope}:{owner}:{selector}"`
 

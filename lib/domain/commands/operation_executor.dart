@@ -2,6 +2,7 @@ import 'dart:math';
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
+import '../models/choice_request.dart';
 import '../models/game_result.dart';
 import '../models/game_zone.dart';
 import '../services/expression_evaluator.dart';
@@ -62,25 +63,42 @@ class OperationExecutor {
   static GameResult _executeDiscard(GameState state, Map<String, dynamic> params) {
     final from = params['from'] as String? ?? 'hand';
     final count = params['count'] as int? ?? 1;
+    final filter = _parseFilter(params['filter']);
     final logs = <String>[];
 
     if (from != 'hand') {
       return GameResult.failure('discard: only supports from="hand" currently');
     }
 
-    if (state.hand.count < count) {
-      return GameResult.failure('Not enough cards to discard (need $count, have ${state.hand.count})');
+    final candidates = state.hand.where((card) => _matchesFilter(card, filter)).toList();
+
+    if (candidates.length < count) {
+      return GameResult.failure(
+        'Not enough cards to discard (need $count, matched ${candidates.length})',
+      );
     }
 
-    for (int i = 0; i < count; i++) {
-      final card = state.hand.removeAt(0);
-      if (card != null) {
-        state.grave.add(card);
-        
-        for (final ability in card.card.abilities) {
-          if (ability.when == TriggerWhen.onDiscard) {
-            TriggerService.enqueueAbility(state, card, ability);
-          }
+    // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+    // filter なし（全手札が対象）の場合は先頭から自動選択（従来動作）
+    if (filter.isNotEmpty && candidates.length > count) {
+      state.choiceRequest.value = ChoiceRequest(
+        type: ChoiceType.discard,
+        count: count,
+        candidates: candidates,
+        sourceZone: from,
+        message: 'フィルタに一致するカードを$count枚選んでください',
+      );
+      return GameResult.pending(logs: ['Awaiting player choice for discard']);
+    }
+
+    // 自動選択（filter なし or ちょうど count 枚一致）
+    for (final card in candidates.take(count).toList()) {
+      state.hand.remove(card);
+      state.grave.add(card);
+
+      for (final ability in card.card.abilities) {
+        if (ability.when == TriggerWhen.onDiscard) {
+          TriggerService.enqueueAbility(state, card, ability);
         }
       }
     }
@@ -92,7 +110,7 @@ class OperationExecutor {
   static GameResult _executeSearch(GameState state, Map<String, dynamic> params) {
     final fromZone = params['from'] as String? ?? 'deck';
     final toZone = params['to'] as String? ?? 'hand';
-    final filter = params['filter'] as Map<String, dynamic>? ?? {};
+    final filter = _parseFilter(params['filter']);
     final maxCount = params['max'] as int? ?? 1;
     final logs = <String>[];
 
@@ -124,6 +142,7 @@ class OperationExecutor {
     final toZone = params['to'] as String?;
     final target = params['target'] as String? ?? 'any';
     final count = params['count'] as int? ?? 1;
+    final filter = _parseFilter(params['filter']);
     final logs = <String>[];
 
     if (fromZone == null || toZone == null) {
@@ -137,27 +156,27 @@ class OperationExecutor {
       return GameResult.failure('Invalid zone in move operation');
     }
 
-    int moved = 0;
-    for (int i = 0; i < count && source.isNotEmpty; i++) {
-      CardInstance? card;
-      
-      switch (target) {
-        case 'top':
-          card = source.removeAt(0);
-          break;
-        case 'bottom':
-          card = source.removeAt(source.count - 1);
-          break;
-        case 'any':
-        default:
-          card = source.removeAt(0);
-          break;
-      }
+    final candidates = source.where((card) => _matchesFilter(card, filter)).toList();
+    final ordered = (target == 'bottom') ? candidates.reversed.toList() : candidates;
 
-      if (card != null) {
-        destination.add(card);
-        moved++;
-      }
+    // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+    if (filter.isNotEmpty && ordered.length > count) {
+      state.choiceRequest.value = ChoiceRequest(
+        type: ChoiceType.move,
+        count: count,
+        candidates: ordered,
+        sourceZone: fromZone,
+        targetZone: toZone,
+        message: '移動するカードを$count枚選んでください',
+      );
+      return GameResult.pending(logs: ['Awaiting player choice for move']);
+    }
+
+    int moved = 0;
+    for (int i = 0; i < count && i < ordered.length; i++) {
+      source.remove(ordered[i]);
+      destination.add(ordered[i]);
+      moved++;
     }
 
     logs.add('Moved $moved cards from $fromZone to $toZone');
@@ -166,32 +185,56 @@ class OperationExecutor {
 
   static GameResult _executeDestroy(GameState state, Map<String, dynamic> params) {
     final target = params['target'] as String? ?? 'board';
+    final filter = _parseFilter(params['filter']);
+    final count = params['count'] as int? ?? 1;
     final logs = <String>[];
 
     if (target == 'domain' && state.hasDomain) {
       final domainCard = state.domain.removeAt(0)!;
       state.grave.add(domainCard);
-      
+
       for (final ability in domainCard.card.abilities) {
         if (ability.when == TriggerWhen.onDestroy) {
           TriggerService.enqueueAbility(state, domainCard, ability);
         }
       }
-      
+
       logs.add('Destroyed domain card: ${domainCard.card.name}');
       return GameResult.success(logs: logs);
-    } else if (target == 'board' && state.board.isNotEmpty) {
-      // For now just destroy the first card on the board
-      final boardCard = state.board.removeAt(0)!;
-      state.grave.add(boardCard);
-      
-      for (final ability in boardCard.card.abilities) {
-        if (ability.when == TriggerWhen.onDestroy) {
-          TriggerService.enqueueAbility(state, boardCard, ability);
-        }
+    } else if (state.board.isNotEmpty) {
+      final candidates = state.board.where((card) => _matchesFilter(card, filter)).toList();
+
+      if (candidates.isEmpty) {
+        return GameResult.failure('No valid target to destroy');
       }
-      
-      logs.add('Destroyed board card: ${boardCard.card.name}');
+
+      // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+      if (filter.isNotEmpty && candidates.length > count) {
+        state.choiceRequest.value = ChoiceRequest(
+          type: ChoiceType.destroy,
+          count: count,
+          candidates: candidates,
+          sourceZone: 'board',
+          message: '破壊するカードを$count枚選んでください',
+        );
+        return GameResult.pending(logs: ['Awaiting player choice for destroy']);
+      }
+
+      int destroyed = 0;
+      for (int i = 0; i < count && i < candidates.length; i++) {
+        final boardCard = candidates[i];
+        state.board.remove(boardCard);
+        state.grave.add(boardCard);
+
+        for (final ability in boardCard.card.abilities) {
+          if (ability.when == TriggerWhen.onDestroy) {
+            TriggerService.enqueueAbility(state, boardCard, ability);
+          }
+        }
+        destroyed++;
+      }
+
+      logs.add('Destroyed $destroyed cards from board');
       return GameResult.success(logs: logs);
     }
 
@@ -236,7 +279,7 @@ class OperationExecutor {
   static GameResult _executeMill(GameState state, Map<String, dynamic> params) {
     final count = params['count'] as int? ?? 1;
     final logs = <String>[];
-    
+
     int milled = 0;
     for (int i = 0; i < count && state.deck.isNotEmpty; i++) {
       final card = state.deck.removeAt(0);
@@ -259,7 +302,7 @@ class OperationExecutor {
     if (cardId == null) {
       return GameResult.failure('set_domain: missing card parameter');
     }
-    
+
     // この部分は実際にはカードDBから該当カードを探す実装を行う
     return GameResult.failure('set_domain: implementation requires card database lookup');
   }
@@ -284,6 +327,17 @@ class OperationExecutor {
       default:
         return null;
     }
+  }
+
+  /// YAML の filter パラメータを Map に変換する。
+  /// YamlMap の場合も通常の Map として扱えるよう正規化する。
+  static Map<String, dynamic> _parseFilter(dynamic filterParam) {
+    if (filterParam == null) return {};
+    if (filterParam is Map<String, dynamic>) return filterParam;
+    if (filterParam is Map) {
+      return filterParam.map((k, v) => MapEntry(k.toString(), v));
+    }
+    return {};
   }
 
   static bool _matchesFilter(CardInstance card, Map<String, dynamic> filter) {
