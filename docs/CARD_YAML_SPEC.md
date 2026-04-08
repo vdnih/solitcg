@@ -64,7 +64,7 @@ abilities:                    # 任意。0個以上
 | `on_play` | 手札からプレイした直後（サーチ・移動では発火しない） |
 | `on_destroy` | hp ≤ 0 または `destroy` op により破壊された直後 |
 | `on_discard` | 手札から捨て札に置かれた直後 |
-| `activated` | プレイヤーが手動で発動（**1ターン1度制限**はエンジンが強制） |
+| `activated` | プレイヤーが手動で発動。`once_per_turn: true`（省略時デフォルト）でエンジンが1ターン1度を強制。`once_per_turn: false` で無制限。 |
 
 > MVP スコープ外（使用不可）: `on_enter` / `static` / `on_draw` / `on_domain_set`
 

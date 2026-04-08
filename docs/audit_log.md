@@ -83,3 +83,10 @@
 - **理由**: カードビジュアルの貧弱さとタップ即プレイの UX 問題を解消し、TCG らしいカッコいい画面を実現するため。
 - **影響範囲**: `lib/domain/models/card_data.dart`, `lib/domain/models/card_selection_state.dart`（新規）, `lib/core/game_state.dart`, `lib/presentation/components/card_component.dart`, `lib/presentation/components/board_component.dart`, `lib/ui/screens/game_screen.dart`, `lib/ui/theme/game_theme.dart`（新規）, `lib/ui/widgets/card_detail_panel.dart`（新規）, `pubspec.yaml`
 - **ADR**: なし（UI 改善のため）
+
+## 2026-04-08 - [Feature] activated 能力の発動制限をカードごとに設定可能に変更
+
+- **判断内容**: `Ability` クラスに `oncePerTurn` フィールド（bool, デフォルト `true`）を追加。YAML の `once_per_turn` フィールドで制御。エンジンの1ターン1度強制を `oncePerTurn: true` のカードのみに限定。
+- **理由**: カード効果として「1ターン1度」だけでなく「コストが払えれば何度でも」発動できる activated 能力を設計できるよう拡張するため。
+- **影響範囲**: `lib/domain/models/card_data.dart`, `lib/data/repositories/card_repository.dart`, `lib/presentation/game/tcg_game.dart`, `docs/SPEC.md`, `docs/CARD_YAML_SPEC.md`, `test/data/card_repository_test.dart`, `test/domain/services/activate_once_per_turn_test.dart`（新規）
+- **ADR**: なし
