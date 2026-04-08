@@ -112,4 +112,64 @@ void main() {
       expect(result.success, isTrue);
     }, timeout: const Timeout(Duration(seconds: 3)));
   });
+
+  // ----------------------------------------------------------------
+  group('TriggerService.resolveAll — awaitingChoice 伝播', () {
+    test('discard selection=choose でプレイヤー選択待ちになると pending を返す', () async {
+      // 手札3枚、2枚選んで捨てる(selection=choose) → ChoiceUI待ち
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h3', name: 'h3', type: CardType.spell),
+        instanceId: 'h3',
+      ));
+
+      final card = _makeCard('src', CardType.spell);
+      final ability = Ability(
+        when: TriggerWhen.onPlay,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 2, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      final result = await TriggerService.resolveAll(state, noopUpdate);
+
+      expect(result.awaitingChoice, isTrue);
+    }, timeout: const Timeout(Duration(seconds: 5)));
+
+    test('awaitingChoice 時に choiceRequest がセットされる', () async {
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h3', name: 'h3', type: CardType.spell),
+        instanceId: 'h3',
+      ));
+
+      final card = _makeCard('src', CardType.spell);
+      final ability = Ability(
+        when: TriggerWhen.onPlay,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 2, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      await TriggerService.resolveAll(state, noopUpdate);
+
+      expect(state.choiceRequest.value, isNotNull);
+    }, timeout: const Timeout(Duration(seconds: 5)));
+  });
 }

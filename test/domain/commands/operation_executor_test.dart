@@ -436,4 +436,63 @@ void main() {
       expect(state.hand.count, 1);
     });
   });
+
+  // ----------------------------------------------------------------
+  group('op: discard (selection: choose)', () {
+    test('selection=choose かつ候補が count より多い → choiceRequest が設定される', () {
+      state.hand.add(_makeCard('h1', CardType.spell));
+      state.hand.add(_makeCard('h2', CardType.spell));
+      state.hand.add(_makeCard('h3', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+
+    test('selection=choose かつ候補が count より多い → awaitingChoice が true', () {
+      state.hand.add(_makeCard('h1', CardType.spell));
+      state.hand.add(_makeCard('h2', CardType.spell));
+      state.hand.add(_makeCard('h3', CardType.spell));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+
+      expect(result.awaitingChoice, isTrue);
+    });
+
+    test('selection=choose かつ候補が count と同数 → 自動で grave に移動する', () {
+      state.hand.add(_makeCard('h1', CardType.spell));
+      state.hand.add(_makeCard('h2', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+
+      expect(state.grave.count, 2);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: move (selection: choose)', () {
+    test('selection=choose かつ候補が count より多い → choiceRequest が設定される', () {
+      state.grave.add(_makeCard('g1', CardType.spell));
+      state.grave.add(_makeCard('g2', CardType.spell));
+      state.grave.add(_makeCard('g3', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+
+    test('selection=choose かつ候補が count より多い → awaitingChoice が true', () {
+      state.grave.add(_makeCard('g1', CardType.spell));
+      state.grave.add(_makeCard('g2', CardType.spell));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}));
+
+      expect(result.awaitingChoice, isTrue);
+    });
+  });
 }

@@ -103,6 +103,10 @@ class TriggerService {
       final result = OperationExecutor.executeOperation(state, effect);
       logs.addAll(result.logs);
 
+      if (result.awaitingChoice) {
+        return GameResult.pending(logs: logs);
+      }
+
       if (!result.success) {
         logs.add('Effect step failed: ${effect.op} - ${result.error}');
         return GameResult.failure('Effect execution failed', logs: logs);
