@@ -146,6 +146,7 @@ class CardRepository {
       final equip = _parseEquipConfig(doc['equip']);
       final domain = _parseDomainConfig(doc['domain']);
       final abilities = _parseAbilities(doc['abilities']);
+      final image = doc['image'] as String?;
 
       return CardData(
         id: id,
@@ -158,6 +159,7 @@ class CardRepository {
         equip: equip,
         domain: domain,
         abilities: abilities,
+        image: image,
       );
     } catch (e) {
       return null;

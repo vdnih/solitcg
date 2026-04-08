@@ -72,6 +72,10 @@ class CardData {
   final DomainConfig? domain;
   final List<Ability> abilities;
 
+  /// カード画像のファイル名（例: "mon_warrior.png"）。
+  /// assets/images/cards/ 以下に配置。null の場合は色付き矩形で代替表示。
+  final String? image;
+
   const CardData({
     required this.id,
     required this.name,
@@ -83,5 +87,6 @@ class CardData {
     this.equip,
     this.domain,
     this.abilities = const [],
+    this.image,
   });
 }

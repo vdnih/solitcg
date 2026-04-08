@@ -76,3 +76,10 @@
 - **理由**: AI エージェントが設計意図を正確に把握し、一貫した開発スタイルを維持するため
 - **影響範囲**: `docs/` 全体、`CLAUDE.md`、`README.md`
 - **ADR**: なし（ドキュメント整備のため）
+
+## 2026-04-08 00:00 - [UI] カード画像・選択システム・ビジュアルポリッシュ
+
+- **判断内容**: (1) CardData に `String? image` フィールドを追加し YAML から読み込む。(2) 2タップ選択モデルを実装（1回目=選択+詳細パネル表示、2回目=プレイ/発動）。(3) 全体的な UI ポリッシュ（グラデーションカード・ゾーン背景・HUD・ログパネル）。
+- **理由**: カードビジュアルの貧弱さとタップ即プレイの UX 問題を解消し、TCG らしいカッコいい画面を実現するため。
+- **影響範囲**: `lib/domain/models/card_data.dart`, `lib/domain/models/card_selection_state.dart`（新規）, `lib/core/game_state.dart`, `lib/presentation/components/card_component.dart`, `lib/presentation/components/board_component.dart`, `lib/ui/screens/game_screen.dart`, `lib/ui/theme/game_theme.dart`（新規）, `lib/ui/widgets/card_detail_panel.dart`（新規）, `pubspec.yaml`
+- **ADR**: なし（UI 改善のため）

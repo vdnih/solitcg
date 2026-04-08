@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
+import '../domain/models/card_selection_state.dart';
 import '../domain/models/choice_request.dart';
 import '../domain/models/trigger.dart';
 import '../domain/models/game_zone.dart';
@@ -28,6 +29,14 @@ class GameState {
   final List<String> actionLog = [];
 
   final ValueNotifier<ChoiceRequest?> choiceRequest = ValueNotifier(null);
+
+  /// 現在選択中のカード状態。Flutter UI の詳細パネル表示に使用する。
+  final ValueNotifier<CardSelectionState?> selectedCard = ValueNotifier(null);
+
+  /// カードの選択状態を更新する。null を渡すと選択解除。
+  void selectCard(CardSelectionState? selection) {
+    selectedCard.value = selection;
+  }
 
   int _nextInstanceId = 1;
   int _triggerOrder = 0;
