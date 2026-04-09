@@ -86,16 +86,15 @@ class _GameScreenState extends State<GameScreen> {
             },
           ),
           // カード詳細パネル（選択時にスライドイン）
-          ValueListenableBuilder<CardSelectionState?>(
-            valueListenable: _game.gameState.selectedCard,
-            builder: (context, selection, _) {
-              return Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: AnimatedSlide(
-                  offset:
-                      selection != null ? Offset.zero : const Offset(0, 1),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ValueListenableBuilder<CardSelectionState?>(
+              valueListenable: _game.gameState.selectedCard,
+              builder: (context, selection, _) {
+                return AnimatedSlide(
+                  offset: selection != null ? Offset.zero : const Offset(0, 1),
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
                   child: AnimatedOpacity(
@@ -105,14 +104,13 @@ class _GameScreenState extends State<GameScreen> {
                         ? CardDetailPanel(
                             selection: selection,
                             onConfirm: _handleConfirm,
-                            onDismiss: () =>
-                                _game.gameState.selectCard(null),
+                            onDismiss: () => _game.gameState.selectCard(null),
                           )
                         : const SizedBox.shrink(),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ],
       ),

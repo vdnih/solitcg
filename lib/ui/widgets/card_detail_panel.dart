@@ -39,8 +39,8 @@ class CardDetailPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-        color: Colors.transparent,
-        child: Container(
+      color: Colors.transparent,
+      child: Container(
           decoration: BoxDecoration(
             color: const Color(0xF0161B22),
             border: const Border(
