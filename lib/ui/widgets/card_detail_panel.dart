@@ -37,11 +37,7 @@ class CardDetailPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Material(
+    return Material(
         color: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
@@ -79,7 +75,6 @@ class CardDetailPanel extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }

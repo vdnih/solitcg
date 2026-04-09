@@ -22,6 +22,7 @@ class GameState {
   final Set<String> activatedThisTurn = {};
   int playerLife = 8000;
   int opponentLife = 8000;
+  int opponentHandCount = 5;
   bool gameWon = false;
   bool gameLost = false;
 
