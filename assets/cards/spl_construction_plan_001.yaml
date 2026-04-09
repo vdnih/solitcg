@@ -1,0 +1,17 @@
+id: spl_construction_plan_001
+name: 建設計画
+type: spell
+tags: []
+text: デッキからdomainカードをランダムに1枚手札に加える。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      - op: search
+        from: deck
+        to: hand
+        filter:
+          type: domain
+        max: 1
+        random: true
