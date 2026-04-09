@@ -13,6 +13,9 @@ enum ChoiceType {
 /// [GameState.choiceRequest] にセットされる。
 /// UI は [candidates] を表示し、プレイヤーが [count] 枚選択して確定すると
 /// [TCGGame.resolveChoice] が呼ばれてトリガー解決が再開される。
+///
+/// [pendingEffects] は、この選択が中断した時点のアビリティ内の残り effect。
+/// 選択解決後に順次実行される。
 class ChoiceRequest {
   final ChoiceType type;
   final int count;
@@ -20,6 +23,7 @@ class ChoiceRequest {
   final String sourceZone;
   final String? targetZone;
   final String? message;
+  final List<EffectStep> pendingEffects;
 
   ChoiceRequest({
     required this.type,
@@ -28,5 +32,6 @@ class ChoiceRequest {
     required this.sourceZone,
     this.targetZone,
     this.message,
+    this.pendingEffects = const [],
   });
 }

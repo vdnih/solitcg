@@ -171,5 +171,41 @@ void main() {
 
       expect(state.choiceRequest.value, isNotNull);
     }, timeout: const Timeout(Duration(seconds: 5)));
+
+    test('選択後に続く effect が choiceRequest.pendingEffects に格納される', () async {
+      // 手札3枚、1枚捨てる→墓地から1枚回収（連続選択）
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.grave.add(CardInstance(
+        card: CardData(id: 'g1', name: 'g1', type: CardType.spell),
+        instanceId: 'g1',
+      ));
+      state.grave.add(CardInstance(
+        card: CardData(id: 'g2', name: 'g2', type: CardType.spell),
+        instanceId: 'g2',
+      ));
+
+      final card = _makeCard('src', CardType.artifact);
+      final ability = Ability(
+        when: TriggerWhen.activated,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 1, 'selection': 'choose'}),
+          EffectStep(op: 'move', params: {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      await TriggerService.resolveAll(state, noopUpdate);
+
+      // 最初の discard 選択待ち中に、move effect が pendingEffects に格納される
+      expect(state.choiceRequest.value?.pendingEffects.length, 1);
+      expect(state.choiceRequest.value?.pendingEffects.first.op, 'move');
+    }, timeout: const Timeout(Duration(seconds: 5)));
   });
 }
