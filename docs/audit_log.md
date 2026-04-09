@@ -116,3 +116,12 @@
 - **理由**: カード効果として「1ターン1度」だけでなく「コストが払えれば何度でも」発動できる activated 能力を設計できるよう拡張するため。
 - **影響範囲**: `lib/domain/models/card_data.dart`, `lib/data/repositories/card_repository.dart`, `lib/presentation/game/tcg_game.dart`, `docs/SPEC.md`, `docs/CARD_YAML_SPEC.md`, `test/data/card_repository_test.dart`, `test/domain/services/activate_once_per_turn_test.dart`（新規）
 - **ADR**: なし
+
+---
+
+## 2026-04-09 - [機能追加] search op に random パラメータを追加 + 宝石の採掘カード実装
+
+- **判断内容**: `search` op に `random: bool`（デフォルト `false`）パラメータを追加。`true` の場合、フィルタ一致カードをシャッフルしてから `max` 枚選択することでランダムサーチを実現。カード「宝石の採掘」（`spl_mining_gem_001`）を新規作成。
+- **理由**: 「宝石の採掘」の「ランダムに1枚」という挙動を実現するため。既存の `search` op はデッキ先頭から取るため非ランダム。新たな op は作らず既存 op の拡張で対応（最小変更の原則）。
+- **影響範囲**: `lib/domain/commands/operation_executor.dart`, `assets/cards/spl_mining_gem.yaml`（新規）, `assets/cards/index.yaml`, `test/domain/commands/operation_executor_test.dart`
+- **ADR**: なし

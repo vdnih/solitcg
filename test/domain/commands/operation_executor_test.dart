@@ -392,4 +392,48 @@ void main() {
       expect(state.grave.count, 2);
     });
   });
+
+  // ----------------------------------------------------------------
+  group('op: search', () {
+    test('random: true でデッキの artifact カードが手札に移動する', () {
+      state.deck.add(_makeCard('a1', CardType.artifact));
+      state.deck.add(_makeCard('s1', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+
+      expect(state.hand.count, 1);
+    });
+
+    test('random: true でデッキの artifact カードが手札に移動し、デッキから消える', () {
+      state.deck.add(_makeCard('a1', CardType.artifact));
+      state.deck.add(_makeCard('s1', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+
+      expect(state.deck.cards.any((c) => c.card.id == 'a1'), isFalse);
+    });
+
+    test('random: true でデッキに artifact がない場合は手札に変化なし', () {
+      state.deck.add(_makeCard('s1', CardType.spell));
+      state.deck.add(_makeCard('s2', CardType.spell));
+
+      OperationExecutor.executeOperation(
+          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+
+      expect(state.hand.count, 0);
+    });
+
+    test('random: true で複数の artifact がある場合も1枚だけ手札に加わる', () {
+      state.deck.add(_makeCard('a1', CardType.artifact));
+      state.deck.add(_makeCard('a2', CardType.artifact));
+      state.deck.add(_makeCard('a3', CardType.artifact));
+
+      OperationExecutor.executeOperation(
+          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+
+      expect(state.hand.count, 1);
+    });
+  });
 }

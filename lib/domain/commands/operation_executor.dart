@@ -112,6 +112,7 @@ class OperationExecutor {
     final toZone = params['to'] as String? ?? 'hand';
     final filter = _parseFilter(params['filter']);
     final maxCount = params['max'] as int? ?? 1;
+    final useRandom = params['random'] as bool? ?? false;
     final logs = <String>[];
 
     final source = _getZoneByName(state, fromZone);
@@ -122,6 +123,9 @@ class OperationExecutor {
     }
 
     final matchingCards = source.where((card) => _matchesFilter(card, filter)).toList();
+    if (useRandom) {
+      matchingCards.shuffle(Random());
+    }
     final cardsToMove = matchingCards.take(maxCount).toList();
 
     for (final card in cardsToMove) {

@@ -1,0 +1,16 @@
+id: spl_mining_gem_001
+name: 宝石の採掘
+type: spell
+tags: []
+text: デッキからartifactカードをランダムに1枚手札に加える。
+version: 1
+abilities:
+  - when: on_play
+    effect:
+      - op: search
+        from: deck
+        to: hand
+        filter:
+          type: artifact
+        max: 1
+        random: true
