@@ -31,6 +31,30 @@
 
 ---
 
+## 2026-04-09 - [Feature] 水力発電所カード追加（汎用カウンター + on_spell_played トリガー）
+
+- **判断内容**:
+  - `TriggerWhen.onSpellPlayed` を追加し、domain カードが spell/arcane のプレイを購読できるようにした
+  - `OperationExecutor` に `add_counter` / `remove_counter` op を追加。`CardInstance.metadata` に per-card カウンターを格納する
+  - `OperationExecutor.executeOperation` に `{CardInstance? source}` パラメータを追加し、トリガー発生元カードを effect 実行時に参照できるようにした
+  - `ExpressionEvaluator` に `{CardInstance? self}` パラメータを追加し、`self.counter('key')` 式で発生元カードのメタデータを参照できるようにした
+  - `TriggerService._resolveTrigger` で `trigger.source` を `executeOperation` と `evaluate` に伝播するよう変更
+  - `FieldRule.playCard` の spell/arcane ブランチで、domain カードの `onSpellPlayed` アビリティをキューに追加する処理を実装
+  - カード定義 `assets/cards/dmn_suiryoku_001.yaml` を新規作成（2アビリティ FIFO アプローチ: spell play → add_counter、条件付き remove_counter + draw）
+- **理由**:
+  - 「spell が発動されるたびにカウンターを積み、4つで draw」という効果を既存エンジンで表現するために、per-card カウンターシステムと spell 監視トリガーが必要だった
+  - 2アビリティアプローチ（add_counter と条件付き draw を別アビリティに分割）を採用した理由：FIFO 解決順序により ability1（add_counter）が先に解決され、ability2 の pre 条件（`>= 4`）が正しく評価されることが保証されるため
+- **影響範囲**:
+  - `lib/domain/models/card_data.dart`（enum 拡張）
+  - `lib/data/repositories/card_repository.dart`（parse 追加）
+  - `lib/domain/services/expression_evaluator.dart`（self パラメータ追加）
+  - `lib/domain/commands/operation_executor.dart`（source パラメータ + 新 op）
+  - `lib/domain/services/trigger_service.dart`（source 伝播 + enum 対応）
+  - `lib/domain/services/field_rule.dart`（onSpellPlayed 通知）
+  - `assets/cards/dmn_suiryoku_001.yaml`（新規）
+  - `assets/cards/index.yaml`（エントリ追加）
+- **ADR**: なし（既存アーキテクチャの自然な拡張）
+
 ## 2026-04-08 - [Feature] タグシステム拡充 + 汎用カード選択 UI の実装
 
 - **判断内容**:

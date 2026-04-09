@@ -10,7 +10,8 @@ import '../services/trigger_service.dart';
 import './draw_card_command.dart';
 
 class OperationExecutor {
-  static GameResult executeOperation(GameState state, EffectStep effect) {
+  static GameResult executeOperation(GameState state, EffectStep effect,
+      {CardInstance? source}) {
     try {
       switch (effect.op) {
         case 'require':
@@ -38,6 +39,10 @@ class OperationExecutor {
           return _executeSummon(state, effect.params);
         case 'set_domain':
           return _executeSetDomain(state, effect.params);
+        case 'add_counter':
+          return _executeAddCounter(state, effect.params, source);
+        case 'remove_counter':
+          return _executeRemoveCounter(state, effect.params, source);
         default:
           return GameResult.failure('Unknown operation: ${effect.op}');
       }
@@ -311,6 +316,31 @@ class OperationExecutor {
 
     // この部分は実際にはカードDBから該当カードを探す実装を行う
     return GameResult.failure('set_domain: implementation requires card database lookup');
+  }
+
+  static GameResult _executeAddCounter(
+      GameState state, Map<String, dynamic> params, CardInstance? source) {
+    if (source == null) {
+      return GameResult.failure('add_counter: source card is required');
+    }
+    final key = params['key'] as String? ?? 'counter';
+    final amount = params['amount'] as int? ?? 1;
+    final current = (source.metadata[key] as int?) ?? 0;
+    source.metadata[key] = current + amount;
+    return GameResult.success(logs: [
+      'Added $amount to counter "$key" on ${source.card.name} (now ${current + amount})'
+    ]);
+  }
+
+  static GameResult _executeRemoveCounter(
+      GameState state, Map<String, dynamic> params, CardInstance? source) {
+    if (source == null) {
+      return GameResult.failure('remove_counter: source card is required');
+    }
+    final key = params['key'] as String? ?? 'counter';
+    source.metadata[key] = 0;
+    return GameResult.success(
+        logs: ['Reset counter "$key" on ${source.card.name} to 0']);
   }
 
   static GameZone? _getZoneByName(GameState state, String zoneName) {

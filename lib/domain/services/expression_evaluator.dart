@@ -1,24 +1,26 @@
 import '../../core/game_state.dart';
+import '../models/card_instance.dart';
 import '../models/game_zone.dart';
 
 /// 文字列表現を評価して true/false を返す簡易式評価機。
 class ExpressionEvaluator {
   /// 与えられた式を評価する。解析に失敗した場合は false を返す。
-  static bool evaluate(GameState state, String expression) {
+  /// [self] にトリガー発生元のカードを渡すと self.counter('key') 式が評価できる。
+  static bool evaluate(GameState state, String expression, {CardInstance? self}) {
     try {
-      return _parseExpression(state, expression.trim());
+      return _parseExpression(state, expression.trim(), self: self);
     } catch (e) {
       return false;
     }
   }
 
   /// シンプルな比較式を解析して評価する。
-  static bool _parseExpression(GameState state, String expr) {
+  static bool _parseExpression(GameState state, String expr, {CardInstance? self}) {
     if (expr.contains('>=')) {
       final parts = expr.split('>=').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left >= right;
       }
     }
@@ -26,8 +28,8 @@ class ExpressionEvaluator {
     if (expr.contains('<=')) {
       final parts = expr.split('<=').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left <= right;
       }
     }
@@ -35,8 +37,8 @@ class ExpressionEvaluator {
     if (expr.contains('>')) {
       final parts = expr.split('>').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left > right;
       }
     }
@@ -44,8 +46,8 @@ class ExpressionEvaluator {
     if (expr.contains('<')) {
       final parts = expr.split('<').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left < right;
       }
     }
@@ -53,8 +55,8 @@ class ExpressionEvaluator {
     if (expr.contains('==')) {
       final parts = expr.split('==').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left == right;
       }
     }
@@ -62,16 +64,16 @@ class ExpressionEvaluator {
     if (expr.contains('!=')) {
       final parts = expr.split('!=').map((e) => e.trim()).toList();
       if (parts.length == 2) {
-        final left = _evaluateValue(state, parts[0]);
-        final right = _evaluateValue(state, parts[1]);
+        final left = _evaluateValue(state, parts[0], self: self);
+        final right = _evaluateValue(state, parts[1], self: self);
         return left != right;
       }
     }
 
-    return _evaluateValue(state, expr) > 0;
+    return _evaluateValue(state, expr, self: self) > 0;
   }
 
-  static int _evaluateValue(GameState state, String expr) {
+  static int _evaluateValue(GameState state, String expr, {CardInstance? self}) {
     switch (expr) {
       case 'hand.count':
         return state.hand.count;
@@ -97,6 +99,11 @@ class ExpressionEvaluator {
       default:
         if (int.tryParse(expr) != null) {
           return int.parse(expr);
+        }
+        // self.counter('key') 形式: トリガー発生元カードのメタデータからカウンターを取得する
+        if (self != null && expr.startsWith("self.counter('") && expr.endsWith("')")) {
+          final key = expr.substring("self.counter('".length, expr.length - 2);
+          return (self.metadata[key] as int?) ?? 0;
         }
         if (expr.startsWith('count(')) {
           return _evaluateCountExpression(state, expr);

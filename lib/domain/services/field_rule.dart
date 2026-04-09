@@ -53,10 +53,20 @@ class FieldRule {
         state.spellsCastThisTurn++;
         logs.add('Cast spell: ${card.card.name}');
         state.grave.add(card);
-        
+
         for (final ability in card.card.abilities) {
           if (ability.when == TriggerWhen.onPlay) {
             TriggerService.enqueueAbility(state, card, ability);
+          }
+        }
+
+        // domain カードの on_spell_played アビリティを通知
+        if (state.hasDomain) {
+          final domain = state.currentDomain!;
+          for (final ability in domain.card.abilities) {
+            if (ability.when == TriggerWhen.onSpellPlayed) {
+              TriggerService.enqueueAbility(state, domain, ability);
+            }
           }
         }
         break;

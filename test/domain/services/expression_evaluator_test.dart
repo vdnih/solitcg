@@ -153,4 +153,48 @@ void main() {
       expect(ExpressionEvaluator.evaluate(state, ""), isFalse);
     });
   });
+
+  group('ExpressionEvaluator - self.counter() 参照', () {
+    test("self.counter('spell_count') >= 4 はメタデータが4のとき true", () {
+      final self = CardInstance(
+        card: CardData(id: 'd1', name: 'd1', type: CardType.domain),
+        instanceId: 'd1',
+        metadata: {'spell_count': 4},
+      );
+      expect(
+        ExpressionEvaluator.evaluate(state, "self.counter('spell_count') >= 4", self: self),
+        isTrue,
+      );
+    });
+
+    test("self.counter('spell_count') >= 4 はメタデータが3のとき false", () {
+      final self = CardInstance(
+        card: CardData(id: 'd1', name: 'd1', type: CardType.domain),
+        instanceId: 'd1',
+        metadata: {'spell_count': 3},
+      );
+      expect(
+        ExpressionEvaluator.evaluate(state, "self.counter('spell_count') >= 4", self: self),
+        isFalse,
+      );
+    });
+
+    test("self.counter('spell_count') はメタデータ未設定のとき 0 を返す", () {
+      final self = CardInstance(
+        card: CardData(id: 'd1', name: 'd1', type: CardType.domain),
+        instanceId: 'd1',
+      );
+      expect(
+        ExpressionEvaluator.evaluate(state, "self.counter('spell_count') >= 1", self: self),
+        isFalse,
+      );
+    });
+
+    test("self が null のとき self.counter 式は false を返す", () {
+      expect(
+        ExpressionEvaluator.evaluate(state, "self.counter('spell_count') >= 1"),
+        isFalse,
+      );
+    });
+  });
 }
