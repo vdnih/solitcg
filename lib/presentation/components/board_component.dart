@@ -1,4 +1,6 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:math';
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart' as material;
@@ -11,16 +13,62 @@ import './card_component.dart';
 
 /// ゲームの盤面全体を描画し、UI要素を管理するコンポーネント。
 ///
-/// - カードコンポーネントは instanceId をキーとした Map で差分管理する（毎フレーム再生成しない）。
-/// - タップ処理は2タップモデル：1回目で選択+詳細表示、2回目でプレイ/発動。
-/// - 空白タップ（子コンポーネントが消費しないタップ）で選択解除。
+/// レイアウト（上から下、点対称デザイン）:
+///   [相手] HUD → 手札（裏向き） → フィールド（ドメイン右・ボード左）
+///   ────────── セパレーター ──────────
+///   [自分] フィールド（ドメイン左・ボード右） → 手札 → HUD
 class BoardComponent extends PositionComponent
-    with HasGameRef<TCGGame>, TapCallbacks {
-  // カードコンポーネントの差分管理マップ (instanceId → component)
-  final Map<String, CardComponent> _handComponentMap = {};
-  final Map<String, CardComponent> _fieldComponentMap = {};
+    with HasGameRef<TCGGame>, TapCallbacks, DragCallbacks {
+  // ─── レイアウト定数 ───────────────────────────────────────────
 
-  // ログ・トリガーキュー用（テキストは毎フレーム再生成でも軽量）
+  // 相手エリア（上）
+  static const double _oppHudY = 5.0;
+  static const double _oppHandZoneY = 30.0;
+  static const double _oppHandZoneH = 155.0;
+  static const double _oppFieldY = 190.0;
+  static const double _fieldH = 165.0;
+
+  // セパレーター
+  static const double _separatorY = 360.0;
+
+  // 自分エリア（下）
+  static const double _plyFieldY = 366.0;
+  static const double _plyHandZoneY = 536.0;
+  static const double _plyHandZoneH = 155.0;
+  static const double _plyHudY = 695.0;
+
+  // カードサイズ
+  static const double _cardW = 100.0;
+  static const double _cardH = 140.0;
+
+  // ドメインゾーン幅
+  static const double _domainW = 120.0;
+
+  // 自分: ドメイン左・ボード右
+  static const double _plyDomainX = 10.0;
+  static const double _plyBoardX = 140.0;
+
+  // 相手: ドメイン右・ボード左（点対称）
+  // _oppDomainX = size.x - 10 - _domainW (動的)
+  static const double _oppBoardX = 10.0;
+
+  // ─── コンポーネント管理 ───────────────────────────────────────
+
+  // 手札カード（BoardComponent直下）
+  final Map<String, CardComponent> _handComponentMap = {};
+
+  // ドメインカード（BoardComponent直下）
+  final Map<String, CardComponent> _domainComponentMap = {};
+
+  // ボードカード（_boardClipComponent配下、横スクロール）
+  final Map<String, CardComponent> _boardCardComponentMap = {};
+
+  // ボードスクロール用 ClipComponent
+  late ClipComponent _boardClipComponent;
+  double _boardScrollX = 0.0;
+  bool _dragIsInBoardZone = false;
+
+  // ログ・トリガーキュー（毎フレーム再生成）
   final List<Component> _logComponents = [];
   final List<Component> _triggerQueueComponents = [];
 
@@ -28,7 +76,19 @@ class BoardComponent extends PositionComponent
   Future<void> onLoad() async {
     await super.onLoad();
     size = gameRef.size;
+
+    // 自分フィールドのボードエリアをクリップする（横スクロール用）
+    _boardClipComponent = ClipComponent.rectangle(
+      position: Vector2(_plyBoardX, _plyFieldY),
+      size: Vector2(_plyBoardZoneWidth, _fieldH),
+    );
+    add(_boardClipComponent);
   }
+
+  // 動的に計算するゾーン幅
+  double get _plyBoardZoneWidth => size.x - _plyBoardX - 10;
+  double get _oppBoardZoneWidth => size.x - _oppBoardX - (_domainW + 20);
+  double get _oppDomainX => size.x - 10 - _domainW;
 
   @override
   void update(double dt) {
@@ -47,52 +107,159 @@ class BoardComponent extends PositionComponent
       material.Paint()..color = GameTheme.boardBg,
     );
 
-    // ─── グリッドテクスチャ（微細） ───────────────────────────
+    // ─── グリッドテクスチャ ───────────────────────────────────
     final gridPaint = material.Paint()
-      ..color = material.Colors.white.withOpacity(0.020);
+      ..color = material.Colors.white.withOpacity(0.018);
     const gridSize = 40.0;
     for (double x = 0; x < size.x; x += gridSize) {
       canvas.drawLine(
-        material.Offset(x, 0),
-        material.Offset(x, size.y),
-        gridPaint,
-      );
+          material.Offset(x, 0), material.Offset(x, size.y), gridPaint);
     }
     for (double y = 0; y < size.y; y += gridSize) {
       canvas.drawLine(
-        material.Offset(0, y),
-        material.Offset(size.x, y),
-        gridPaint,
-      );
+          material.Offset(0, y), material.Offset(size.x, y), gridPaint);
     }
 
-    // ─── ゾーン背景 ───────────────────────────────────────────
-    _renderZone(canvas, _handZoneRect(), GameTheme.handZoneBg, '手札');
-    _renderZone(canvas, _boardZoneRect(), GameTheme.boardZoneBg, 'フィールド');
-    _renderZone(canvas, _domainZoneRect(), GameTheme.domainZoneBg, 'ドメイン');
+    // ─── 相手エリア ───────────────────────────────────────────
+    _renderOpponentArea(canvas);
 
-    // ─── HUD（ライフ・スペルカウンター） ─────────────────────
-    _renderHud(canvas);
+    // ─── セパレーター ─────────────────────────────────────────
+    canvas.drawLine(
+      const material.Offset(0, _separatorY),
+      material.Offset(size.x, _separatorY),
+      material.Paint()
+        ..color = GameTheme.zoneBorder.withOpacity(0.6)
+        ..strokeWidth = 1.5,
+    );
+
+    // ─── 自分フィールドゾーン ─────────────────────────────────
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(_plyDomainX, _plyFieldY, _domainW, _fieldH),
+      GameTheme.domainZoneBg,
+      'ドメイン',
+    );
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(_plyBoardX, _plyFieldY, _plyBoardZoneWidth, _fieldH),
+      GameTheme.boardZoneBg,
+      'フィールド',
+    );
+
+    // ─── 自分手札ゾーン ───────────────────────────────────────
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(10, _plyHandZoneY, size.x - 20, _plyHandZoneH),
+      GameTheme.handZoneBg,
+      '手札',
+    );
+
+    // ─── 自分 HUD ─────────────────────────────────────────────
+    _renderPlayerHud(canvas);
 
     // ─── ログパネル ───────────────────────────────────────────
     _renderLogPanel(canvas);
 
-    super.render(canvas);
+    super.render(canvas); // 子コンポーネント（カード・ClipComponent）の描画
   }
 
-  // ─── ゾーン矩形の定義 ────────────────────────────────────────
+  // ─── 相手エリア ───────────────────────────────────────────────
 
-  material.Rect _handZoneRect() =>
-      material.Rect.fromLTWH(10, 85, size.x - 20, 170);
+  void _renderOpponentArea(material.Canvas canvas) {
+    final state = gameRef.gameState;
 
-  material.Rect _boardZoneRect() =>
-      material.Rect.fromLTWH(size.x / 2 - 10, 265, size.x / 2, 160);
+    // 相手 HUD（ライフ・手札枚数・デッキ枚数・墓地枚数）
+    _renderPill(canvas, '♥ ${state.opponentLife}',
+        const material.Offset(10, _oppHudY), GameTheme.hudLifeColor);
+    _renderPill(canvas, '🂠 ${state.opponentHandCount}',
+        material.Offset(110, _oppHudY), GameTheme.hudDimColor);
+    _renderPill(canvas, '📦 40',
+        material.Offset(180, _oppHudY), GameTheme.hudDimColor);
+    _renderPill(canvas, '☠ 0',
+        material.Offset(235, _oppHudY), GameTheme.hudDimColor);
 
-  material.Rect _domainZoneRect() =>
-      material.Rect.fromLTWH(10, 265, size.x / 2 - 20, 160);
+    // 相手手札ゾーン（裏向きカード）
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(10, _oppHandZoneY, size.x - 20, _oppHandZoneH),
+      GameTheme.handZoneBg,
+      '相手の手札',
+    );
+    _renderOpponentHand(canvas, state.opponentHandCount);
 
-  material.Rect _logPanelRect() =>
-      material.Rect.fromLTWH(10, size.y - 215, size.x * 0.6, 205);
+    // 相手フィールド：ボード（左）・ドメイン（右）— 点対称
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(_oppBoardX, _oppFieldY, _oppBoardZoneWidth, _fieldH),
+      GameTheme.boardZoneBg,
+      '相手のフィールド',
+    );
+    _renderZone(
+      canvas,
+      material.Rect.fromLTWH(_oppDomainX, _oppFieldY, _domainW, _fieldH),
+      GameTheme.domainZoneBg,
+      '相手のドメイン',
+    );
+  }
+
+  void _renderOpponentHand(material.Canvas canvas, int count) {
+    final displayCount = min(count, 7);
+    // 右から左に並べる（点対称: 自分の手札は左から右）
+    final cardY = _oppHandZoneY + (_oppHandZoneH - _cardH) / 2;
+    for (int i = 0; i < displayCount; i++) {
+      final cardX = size.x - 15 - _cardW - i * 108.0;
+      if (cardX < 15) break;
+      _renderFaceDownCard(
+        canvas,
+        material.Rect.fromLTWH(cardX, cardY, _cardW, _cardH),
+      );
+    }
+  }
+
+  void _renderFaceDownCard(material.Canvas canvas, material.Rect rect) {
+    final rRect = material.RRect.fromRectAndRadius(
+        rect, const material.Radius.circular(8));
+    // 裏面背景
+    canvas.drawRRect(
+        rRect, material.Paint()..color = const material.Color(0xFF1A2545));
+    // 縦ストライプ模様（カード裏面らしさ）
+    final stripePaint = material.Paint()
+      ..color = const material.Color(0xFF223366)
+      ..strokeWidth = 4;
+    canvas.save();
+    canvas.clipRRect(rRect);
+    for (double x = rect.left; x < rect.right; x += 10) {
+      canvas.drawLine(
+          material.Offset(x, rect.top), material.Offset(x, rect.bottom), stripePaint);
+    }
+    canvas.restore();
+    // ボーダー
+    canvas.drawRRect(
+      rRect,
+      material.Paint()
+        ..color = const material.Color(0xFF3A5580)
+        ..style = material.PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+  }
+
+  // ─── HUD ─────────────────────────────────────────────────────
+
+  void _renderPlayerHud(material.Canvas canvas) {
+    final state = gameRef.gameState;
+    final hudY = _plyHudY;
+
+    _renderPill(canvas, '♥ ${state.playerLife}',
+        material.Offset(10, hudY), GameTheme.hudLifeColor);
+    _renderPill(canvas, '✦ ${state.spellsCastThisTurn}スペル',
+        material.Offset(110, hudY), GameTheme.hudSpellColor);
+    _renderPill(canvas, '🂠 ${state.deck.count}',
+        material.Offset(size.x - 170, hudY), GameTheme.hudDimColor);
+    _renderPill(canvas, '☠ ${state.grave.count}',
+        material.Offset(size.x - 95, hudY), GameTheme.hudDimColor);
+  }
+
+  // ─── ゾーン描画ヘルパー ───────────────────────────────────────
 
   void _renderZone(
     material.Canvas canvas,
@@ -101,9 +268,7 @@ class BoardComponent extends PositionComponent
     String label,
   ) {
     final rRect = material.RRect.fromRectAndRadius(
-      rect,
-      const material.Radius.circular(10),
-    );
+        rect, const material.Radius.circular(10));
     canvas.drawRRect(rRect, material.Paint()..color = bg);
     canvas.drawRRect(
       rRect,
@@ -112,7 +277,6 @@ class BoardComponent extends PositionComponent
         ..style = material.PaintingStyle.stroke
         ..strokeWidth = 1,
     );
-    // ゾーンラベル
     final labelPainter = material.TextPainter(
       text: material.TextSpan(
         text: label,
@@ -120,51 +284,13 @@ class BoardComponent extends PositionComponent
           color: GameTheme.hudDimColor.withOpacity(0.7),
           fontSize: 10,
           fontWeight: material.FontWeight.w600,
-          letterSpacing: 1.2,
+          letterSpacing: 1.0,
         ),
       ),
       textDirection: material.TextDirection.ltr,
     );
     labelPainter.layout();
-    labelPainter.paint(
-      canvas,
-      material.Offset(rect.left + 8, rect.top + 5),
-    );
-  }
-
-  void _renderHud(material.Canvas canvas) {
-    final state = gameRef.gameState;
-    const hudY = 8.0;
-
-    // ライフポイントピル（左上）
-    _renderPill(
-      canvas,
-      '♥  ${state.playerLife}',
-      const material.Offset(10, 8),
-      GameTheme.hudLifeColor,
-    );
-
-    // スペルカウンター（ライフの右）
-    _renderPill(
-      canvas,
-      '✦  ${state.spellsCastThisTurn}スペル',
-      material.Offset(110, hudY),
-      GameTheme.hudSpellColor,
-    );
-
-    // デッキ・墓地カウント（右上）
-    _renderPill(
-      canvas,
-      '🂠 ${state.deck.count}',
-      material.Offset(size.x - 170, hudY),
-      GameTheme.hudDimColor,
-    );
-    _renderPill(
-      canvas,
-      '☠ ${state.grave.count}',
-      material.Offset(size.x - 95, hudY),
-      GameTheme.hudDimColor,
-    );
+    labelPainter.paint(canvas, material.Offset(rect.left + 8, rect.top + 5));
   }
 
   void _renderPill(
@@ -177,27 +303,17 @@ class BoardComponent extends PositionComponent
       text: material.TextSpan(
         text: text,
         style: material.TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: material.FontWeight.w600,
-        ),
+            color: color, fontSize: 11, fontWeight: material.FontWeight.w600),
       ),
       textDirection: material.TextDirection.ltr,
     );
     painter.layout();
     final pillRect = material.RRect.fromRectAndRadius(
       material.Rect.fromLTWH(
-        pos.dx - 6,
-        pos.dy - 3,
-        painter.width + 12,
-        painter.height + 6,
-      ),
+          pos.dx - 6, pos.dy - 3, painter.width + 12, painter.height + 6),
       const material.Radius.circular(12),
     );
-    canvas.drawRRect(
-      pillRect,
-      material.Paint()..color = color.withOpacity(0.15),
-    );
+    canvas.drawRRect(pillRect, material.Paint()..color = color.withOpacity(0.15));
     canvas.drawRRect(
       pillRect,
       material.Paint()
@@ -209,8 +325,8 @@ class BoardComponent extends PositionComponent
   }
 
   void _renderLogPanel(material.Canvas canvas) {
-    final rect = _logPanelRect();
-    // 半透明パネル
+    final rect =
+        material.Rect.fromLTWH(10, size.y - 200, size.x * 0.6, 190);
     canvas.drawRRect(
       material.RRect.fromRectAndRadius(rect, const material.Radius.circular(8)),
       material.Paint()..color = GameTheme.logPanelBg,
@@ -223,46 +339,42 @@ class BoardComponent extends PositionComponent
     final state = gameRef.gameState;
     final currentIds = state.hand.cards.map((c) => c.instanceId).toSet();
 
-    // 手札から消えたカードを削除
-    final toRemove = _handComponentMap.keys
+    // 消えたカードを削除
+    for (final id in _handComponentMap.keys
         .where((id) => !currentIds.contains(id))
-        .toList();
-    for (final id in toRemove) {
+        .toList()) {
       final comp = _handComponentMap.remove(id);
       if (comp != null) remove(comp);
     }
 
-    // 手札のカードを追加・位置更新
+    // 手札カードを追加・位置更新（左から右、手札ゾーン中央配置）
+    final cardY = _plyHandZoneY + (_plyHandZoneH - _cardH) / 2;
     for (int i = 0; i < state.hand.count; i++) {
       final card = state.hand.cards[i];
-      final targetPos = Vector2(20 + i * 120.0, 100);
+      final targetPos = Vector2(15 + i * 112.0, cardY);
 
       if (_handComponentMap.containsKey(card.instanceId)) {
-        // 位置のみ更新
         _handComponentMap[card.instanceId]!.position = targetPos;
       } else {
-        // 新規追加
         final component = CardComponent(
           card: card,
           position: targetPos,
           onTap: () {
             final sel = gameRef.gameState.selectedCard.value;
             if (sel?.card.instanceId == card.instanceId) {
-              // 2回目タップ: instanceId から実行時点の正しいインデックスを検索してプレイ
-              final currentIndex = gameRef.gameState.hand.cards
+              final idx = gameRef.gameState.hand.cards
                   .indexWhere((c) => c.instanceId == card.instanceId);
-              if (currentIndex == -1) return; // 既に手札から消えている
+              if (idx == -1) return;
               gameRef.gameState.selectCard(null);
-              gameRef.playCardFromHand(currentIndex);
+              gameRef.playCardFromHand(idx);
             } else {
-              // 1回目タップ: 選択（handIndex も実行時点で解決）
-              final currentIndex = gameRef.gameState.hand.cards
+              final idx = gameRef.gameState.hand.cards
                   .indexWhere((c) => c.instanceId == card.instanceId);
-              if (currentIndex == -1) return;
+              if (idx == -1) return;
               gameRef.gameState.selectCard(CardSelectionState(
                 card: card,
                 zone: SelectionZone.hand,
-                handIndex: currentIndex,
+                handIndex: idx,
               ));
             }
           },
@@ -278,57 +390,75 @@ class BoardComponent extends PositionComponent
   void _updateField() {
     final state = gameRef.gameState;
 
-    // フィールド上の有効なカード ID セット（ドメイン含む）
-    final currentIds = <String>{};
-    if (state.hasDomain) {
-      currentIds.add(state.currentDomain!.instanceId);
-    }
-    for (final c in state.board.cards) {
-      currentIds.add(c.instanceId);
-    }
+    // ── ドメインカード（BoardComponent直下） ──────────────────
+    final domainId =
+        state.hasDomain ? state.currentDomain!.instanceId : null;
 
-    // 消えたカードを削除
-    final toRemove = _fieldComponentMap.keys
-        .where((id) => !currentIds.contains(id))
-        .toList();
-    for (final id in toRemove) {
-      final comp = _fieldComponentMap.remove(id);
+    for (final id in _domainComponentMap.keys
+        .where((id) => id != domainId)
+        .toList()) {
+      final comp = _domainComponentMap.remove(id);
       if (comp != null) remove(comp);
     }
 
-    // ドメインカード
     if (state.hasDomain) {
       final domainCard = state.currentDomain!;
-      final targetPos = Vector2(size.x / 2 - 160, 280);
-      if (_fieldComponentMap.containsKey(domainCard.instanceId)) {
-        _fieldComponentMap[domainCard.instanceId]!.position = targetPos;
+      // ドメインスロット(plyDomainX, plyFieldY, domainW, fieldH)内に中央配置
+      final targetPos = Vector2(
+        _plyDomainX + (_domainW - _cardW) / 2,
+        _plyFieldY + (_fieldH - _cardH) / 2,
+      );
+      if (_domainComponentMap.containsKey(domainCard.instanceId)) {
+        _domainComponentMap[domainCard.instanceId]!.position = targetPos;
       } else {
         final component = CardComponent(
           card: domainCard,
           position: targetPos,
           isField: true,
           onTap: () {
-            // ドメインはタップで詳細のみ表示
             gameRef.gameState.selectCard(CardSelectionState(
               card: domainCard,
               zone: SelectionZone.board,
             ));
           },
         );
-        _fieldComponentMap[domainCard.instanceId] = component;
+        _domainComponentMap[domainCard.instanceId] = component;
         add(component);
       }
     }
 
-    // ボード上のカード
+    // ── ボードカード（_boardClipComponent配下、横スクロール） ──
+    final currentBoardIds =
+        state.board.cards.map((c) => c.instanceId).toSet();
+
+    for (final id in _boardCardComponentMap.keys
+        .where((id) => !currentBoardIds.contains(id))
+        .toList()) {
+      final comp = _boardCardComponentMap.remove(id);
+      if (comp != null) _boardClipComponent.remove(comp);
+    }
+
+    // スクロールオフセットのクランプ
+    // totalW がゾーン幅を超えた分だけ左スクロール可能（minScroll は常に <= 0）
+    if (state.board.count > 0) {
+      final totalW = state.board.count * 112.0 - 12.0;
+      final overflow = totalW - _plyBoardZoneWidth;
+      final minScroll = overflow > 0 ? -overflow : 0.0;
+      _boardScrollX = _boardScrollX.clamp(minScroll, 0.0);
+    } else {
+      _boardScrollX = 0.0;
+    }
+
+    // ボードカード追加/位置更新（ClipComponent内ローカル座標）
+    final cardY = (_fieldH - _cardH) / 2; // ClipComponent内で縦中央
     for (int i = 0; i < state.board.count; i++) {
       final boardCard = state.board.cards[i];
-      final targetPos = Vector2(size.x / 2 + 10 + i * 115.0, 280);
+      final targetPos = Vector2(_boardScrollX + i * 112.0, cardY);
       final hasActivated = boardCard.card.abilities
           .any((a) => a.when == TriggerWhen.activated);
 
-      if (_fieldComponentMap.containsKey(boardCard.instanceId)) {
-        _fieldComponentMap[boardCard.instanceId]!.position = targetPos;
+      if (_boardCardComponentMap.containsKey(boardCard.instanceId)) {
+        _boardCardComponentMap[boardCard.instanceId]!.position = targetPos;
       } else {
         final component = CardComponent(
           card: boardCard,
@@ -336,12 +466,11 @@ class BoardComponent extends PositionComponent
           isField: true,
           onTap: () {
             final sel = gameRef.gameState.selectedCard.value;
-            if (hasActivated && sel?.card.instanceId == boardCard.instanceId) {
-              // 2回目タップ: 発動
+            if (hasActivated &&
+                sel?.card.instanceId == boardCard.instanceId) {
               gameRef.gameState.selectCard(null);
               gameRef.activateCardOnBoard(boardCard);
             } else {
-              // 1回目タップ: 選択（activated がなくても詳細表示）
               gameRef.gameState.selectCard(CardSelectionState(
                 card: boardCard,
                 zone: SelectionZone.board,
@@ -349,8 +478,8 @@ class BoardComponent extends PositionComponent
             }
           },
         );
-        _fieldComponentMap[boardCard.instanceId] = component;
-        add(component);
+        _boardCardComponentMap[boardCard.instanceId] = component;
+        _boardClipComponent.add(component);
       }
     }
   }
@@ -371,7 +500,7 @@ class BoardComponent extends PositionComponent
       final isRecent = i == recentLogs.length - 1;
       final logComponent = TextComponent(
         text: recentLogs[i],
-        position: Vector2(18, size.y - 205 + i * 20),
+        position: Vector2(18, size.y - 190 + i * 19),
         textRenderer: TextPaint(
           style: material.TextStyle(
             color: isRecent ? GameTheme.logTextRecent : GameTheme.logTextOld,
@@ -388,13 +517,12 @@ class BoardComponent extends PositionComponent
     removeAll(_triggerQueueComponents);
     _triggerQueueComponents.clear();
 
-    final state = gameRef.gameState;
-    final queue = state.triggerQueue.toList();
+    final queue = gameRef.gameState.triggerQueue.toList();
     if (queue.isEmpty) return;
 
     final queueTitle = TextComponent(
       text: 'チェーン:',
-      position: Vector2(size.x - 180, 50),
+      position: Vector2(size.x - 180, _separatorY + 10),
       textRenderer: TextPaint(
         style: const material.TextStyle(
           color: material.Colors.orange,
@@ -410,7 +538,7 @@ class BoardComponent extends PositionComponent
       final trigger = queue[i];
       final component = TextComponent(
         text: '${i + 1}. ${trigger.source.card.name}',
-        position: Vector2(size.x - 180, 66 + i * 18),
+        position: Vector2(size.x - 180, _separatorY + 26 + i * 18),
         textRenderer: TextPaint(
           style: const material.TextStyle(
             color: material.Colors.white70,
@@ -423,12 +551,36 @@ class BoardComponent extends PositionComponent
     }
   }
 
+  // ─── ドラッグ（ボード横スクロール） ──────────────────────────
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    final pos = event.localPosition;
+    final boardRect = material.Rect.fromLTWH(
+        _plyBoardX, _plyFieldY, _plyBoardZoneWidth, _fieldH);
+    _dragIsInBoardZone =
+        boardRect.contains(material.Offset(pos.x, pos.y));
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    if (_dragIsInBoardZone) {
+      _boardScrollX += event.localDelta.x;
+    }
+  }
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
+    _dragIsInBoardZone = false;
+  }
+
   // ─── 空白タップで選択解除 ─────────────────────────────────────
 
   @override
   bool onTapDown(TapDownEvent event) {
-    // 子コンポーネントがイベントを消費しなかった場合のみここに来る
     gameRef.gameState.selectCard(null);
-    return false; // イベントは消費しない（Flame の伝播処理に従う）
+    return false;
   }
 }

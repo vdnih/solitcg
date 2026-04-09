@@ -89,20 +89,27 @@ class _GameScreenState extends State<GameScreen> {
           ValueListenableBuilder<CardSelectionState?>(
             valueListenable: _game.gameState.selectedCard,
             builder: (context, selection, _) {
-              return AnimatedSlide(
-                offset: selection != null ? Offset.zero : const Offset(0, 1),
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                child: AnimatedOpacity(
-                  opacity: selection != null ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 180),
-                  child: selection != null
-                      ? CardDetailPanel(
-                          selection: selection,
-                          onConfirm: _handleConfirm,
-                          onDismiss: () => _game.gameState.selectCard(null),
-                        )
-                      : const SizedBox.shrink(),
+              return Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: AnimatedSlide(
+                  offset:
+                      selection != null ? Offset.zero : const Offset(0, 1),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: selection != null ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: selection != null
+                        ? CardDetailPanel(
+                            selection: selection,
+                            onConfirm: _handleConfirm,
+                            onDismiss: () =>
+                                _game.gameState.selectCard(null),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               );
             },
