@@ -20,7 +20,6 @@ class GameTheme {
   // ─── HUD ─────────────────────────────────────────────────
   static const Color hudBg = Color(0xCC0D1117);
   static const Color hudLifeColor = Color(0xFF22C55E);
-  static const Color hudSpellColor = Color(0xFFA855F7);
   static const Color hudTextColor = Color(0xFFE2E8F0);
   static const Color hudDimColor = Color(0xFF64748B);
 

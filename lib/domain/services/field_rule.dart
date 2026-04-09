@@ -50,7 +50,6 @@ class FieldRule {
         
       case CardType.spell:
       case CardType.arcane:
-        state.spellsCastThisTurn++;
         logs.add('Cast spell: ${card.card.name}');
         state.grave.add(card);
 

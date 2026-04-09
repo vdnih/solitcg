@@ -147,7 +147,6 @@ class TCGGame extends FlameGame {
 
     // activated の1ターン1度制限をリセット
     gameState.activatedThisTurn.clear();
-    gameState.spellsCastThisTurn = 0;
 
     if (gameState.deck.isEmpty) {
       gameState.addToLog('デッキが0枚です。ターン終了時に勝利判定を行います。');

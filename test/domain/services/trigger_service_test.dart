@@ -62,9 +62,11 @@ void main() {
   // ----------------------------------------------------------------
   group('TriggerService.resolveAll — pre 条件', () {
     test('pre 条件が満たされる場合 effect が実行される', () async {
-      state.spellsCastThisTurn = 7;
+      for (int i = 0; i < 7; i++) {
+        state.hand.add(_makeCard('h$i', CardType.spell));
+      }
       final card = _makeCard('c1', CardType.spell);
-      final ability = _makeWinAbilityWithPre('spells_cast_this_turn >= 7');
+      final ability = _makeWinAbilityWithPre('hand.count >= 7');
 
       TriggerService.enqueueAbility(state, card, ability);
       await TriggerService.resolveAll(state, noopUpdate);
@@ -73,9 +75,8 @@ void main() {
     }, timeout: const Timeout(Duration(seconds: 5)));
 
     test('pre 条件が満たされない場合 effect がスキップされる', () async {
-      state.spellsCastThisTurn = 3;
       final card = _makeCard('c1', CardType.spell);
-      final ability = _makeWinAbilityWithPre('spells_cast_this_turn >= 7');
+      final ability = _makeWinAbilityWithPre('hand.count >= 7');
 
       TriggerService.enqueueAbility(state, card, ability);
       await TriggerService.resolveAll(state, noopUpdate);
