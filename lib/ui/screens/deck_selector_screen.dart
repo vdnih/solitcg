@@ -129,15 +129,22 @@ class DeckSelectorScreen extends ConsumerWidget {
           children: [
             const SizedBox(height: 4),
             Text('${deck.cardCount}枚のカード'),
+            if (deck.isReadOnly)
+              const Chip(
+                label: Text('サンプル'),
+                visualDensity: VisualDensity.compact,
+              ),
           ],
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(icon: const Icon(Icons.edit), onPressed: () => _selectDeck(context, ref, deck)),
-            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteDeck(context, ref, deck)),
-          ],
-        ),
+        trailing: deck.isReadOnly
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(icon: const Icon(Icons.edit), onPressed: () => _selectDeck(context, ref, deck)),
+                  IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteDeck(context, ref, deck)),
+                ],
+              ),
         onTap: () => _selectDeck(context, ref, deck),
       ),
     );

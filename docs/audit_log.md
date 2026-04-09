@@ -3,6 +3,12 @@
 重要な設計・アーキテクチャ判断の時系列記録。
 詳細な根拠は各 ADR（`docs/adr/`）を参照。
 
+## 2026-04-10 - [機能追加] サンプルデッキ機能の追加
+
+- **判断内容**: `Deck` モデルに `isReadOnly` フィールドを追加し、プレイヤーが編集・削除できないサンプルデッキ「サンプルデッキ＿魔法省」を実装。デッキは `DeckRepository.sampleDeckMahou` として定義し、`DeckCollectionNotifier.loadDecks()` で毎回先頭に注入する。JSONには永続化しない。
+- **理由**: ゲーム開始直後からプレイ可能なデッキを提供することで、ユーザーがデッキ構築なしにゲームを体験できるようにする。
+- **影響範囲**: `lib/domain/models/deck.dart`（`isReadOnly` フィールド追加）、`lib/data/repositories/deck_repository.dart`（サンプルデッキ定義・`saveDecks` フィルター追加）、`lib/providers/deck_provider.dart`（注入・ガード追加）、`lib/ui/screens/deck_selector_screen.dart`（サンプルチップ表示・ボタン非表示）、`lib/ui/screens/deck_builder_screen.dart`（編集操作の無効化）
+
 ## 2026-04-09 - [設計変更] spellsCastThisTurn カウンター廃止・魔法省カード追加
 
 - **判断内容**: ターン中のスペル詠唱回数カウンター（`spellsCastThisTurn`）を GameState・FieldRule・ExpressionEvaluator・HUD・tcg_game.dart から完全削除。依存していた `spl_x07（閃考の儀）` を削除し、代替として `dmn_mahou_001（魔法省）` ドメインカードを追加。魔法省はスペルをプレイされるたびカウンターを累積し、8個で勝利する。

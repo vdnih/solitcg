@@ -10,12 +10,14 @@ class Deck {
   String name;                   // デッキ名
   DeckType type;                 // デッキタイプ
   List<String> cardIds = [];     // カードIDのリスト
-  
+  final bool isReadOnly;         // 読み取り専用フラグ（サンプルデッキ等）
+
   Deck({
     required this.id,
     required this.name,
     required this.type,
     List<String>? cardIds,
+    this.isReadOnly = false,
   }) : cardIds = cardIds ?? [];
   
   /// デッキ内のカード枚数
