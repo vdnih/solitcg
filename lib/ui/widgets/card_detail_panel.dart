@@ -283,6 +283,8 @@ class _CardInfo extends StatelessWidget {
         return '起動効果';
       case TriggerWhen.onDiscard:
         return '廃棄時';
+      case TriggerWhen.onSpellPlayed:
+        return 'spell発動時';
     }
   }
 }

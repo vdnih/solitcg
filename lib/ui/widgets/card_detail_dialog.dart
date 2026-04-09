@@ -222,6 +222,8 @@ class CardDetailDialog extends StatelessWidget {
         return '起動型';
       case TriggerWhen.onDiscard:
         return '捨て札時';
+      case TriggerWhen.onSpellPlayed:
+        return 'spell発動時';
     }
   }
 
