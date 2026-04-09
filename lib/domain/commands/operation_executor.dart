@@ -194,11 +194,24 @@ class OperationExecutor {
   }
 
   static GameResult _executeDestroy(GameState state, Map<String, dynamic> params) {
-    final target = params['target'] as String? ?? 'board';
-    final filter = _parseFilter(params['filter']);
-    final selection = params['selection'] as String?;
+    final targetRaw = params['target'] as String? ?? 'board';
+    var filter = _parseFilter(params['filter']);
+    var selection = params['selection'] as String?;
     final count = params['count'] as int? ?? 1;
     final logs = <String>[];
+
+    // "choose:self:artifact" 形式のtargetをパース
+    String target = targetRaw;
+    if (targetRaw.contains(':')) {
+      final parts = targetRaw.split(':');
+      if (parts[0] == 'choose') {
+        selection = 'choose';
+        if (parts.length >= 3 && parts[2].isNotEmpty) {
+          filter = {'type': parts[2]};
+        }
+        target = 'board';
+      }
+    }
 
     if (target == 'domain' && state.hasDomain) {
       final domainCard = state.domain.removeAt(0)!;

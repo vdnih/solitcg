@@ -2,8 +2,8 @@ id: mon_crystal_looters_001
 name: クリスタル盗掘団
 type: monster
 tags: [human, thief]
-text: "起動：自分の場のアーティファクト1枚を破壊して発動できる。カードを1枚引く。この能力は1ターンに何度でも使用できる。"
-version: 1
+text: "自分の場にアーティファクトが存在する場合のみ召喚できる。起動：自分の場のアーティファクト1枚を選択して破壊し、カードを1枚引く。この能力は1ターンに何度でも使用できる。"
+version: 2
 
 # monsterタイプのためHPは必須。atk/defは任意ですが、標準的な値を設定しています。
 stats:
@@ -12,6 +12,13 @@ stats:
   hp: 1200
 
 abilities:
+  # 召喚条件：自分の場にアーティファクトが1枚以上存在する場合のみ召喚可能
+  - when: onPlay
+    pre:
+      - "count(type:'artifact', zone:'board:self') >= 1"
+    effect: []
+
+  # 起動効果：自分の場のアーティファクトを選択して破壊し、カードを1枚引く
   - when: activated
     # ターン制限なしの設定（デフォルトはtrueのため明示的にfalseを指定）
     once_per_turn: false
@@ -19,7 +26,7 @@ abilities:
     pre:
       - "count(type:'artifact', zone:'board:self') >= 1"
     effect:
-      # 1. 自分の場のアーティファクトを選択して破壊（コスト・消費処理）
+      # 1. 自分の場のアーティファクトを選択して破壊
       - { op: destroy, target: "choose:self:artifact", count: 1 }
       # 2. カードを1枚引く
       - { op: draw, count: 1 }
