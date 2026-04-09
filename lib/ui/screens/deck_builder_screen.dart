@@ -21,7 +21,7 @@ class DeckBuilderScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(selectedDeck?.name ?? 'デッキビルダー'),
         actions: [
-          if (selectedDeck != null)
+          if (selectedDeck != null && !selectedDeck.isReadOnly)
             ..._buildAppBarActions(context, ref, selectedDeck),
         ],
       ),
@@ -244,13 +244,14 @@ class _DeckContentView extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text('×${entry.value}'),
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: Colors.red),
-                            onPressed: () => ref
-                                .read(deckCollectionProvider.notifier)
-                                .removeCardFromDeck(deck.id, card.id),
-                          ),
+                          if (!deck.isReadOnly)
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline,
+                                  color: Colors.red),
+                              onPressed: () => ref
+                                  .read(deckCollectionProvider.notifier)
+                                  .removeCardFromDeck(deck.id, card.id),
+                            ),
                         ],
                       ),
                     );
@@ -388,7 +389,7 @@ class _CardCollectionViewState extends ConsumerState<_CardCollectionView> {
                   itemBuilder: (context, index) {
                     final card = filteredCards[index];
                     return InkWell(
-                      onTap: () => _addCardToDeck(card),
+                      onTap: widget.deck.isReadOnly ? null : () => _addCardToDeck(card),
                       onLongPress: () => showDialog(
                           context: context,
                           builder: (context) => CardDetailDialog(card: card)),

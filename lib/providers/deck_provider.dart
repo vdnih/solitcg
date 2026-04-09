@@ -55,7 +55,9 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   
   // デッキコレクションの読み込み
   Future<void> loadDecks() async {
-    state = await DeckRepository.loadDecks();
+    final loaded = await DeckRepository.loadDecks();
+    final sample = DeckRepository.sampleDeckMahou;
+    state = DeckCollection()..decks = [sample, ...loaded.decks];
   }
   
   // デッキの追加
@@ -67,13 +69,16 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   
   // デッキの更新
   void updateDeck(Deck deck) {
+    if (deck.isReadOnly) return;
     final newDecks = state.decks.map((d) => d.id == deck.id ? deck : d).toList();
     state = DeckCollection()..decks = newDecks;
     _saveDecks();
   }
-  
+
   // デッキの削除
   void removeDeck(String deckId) {
+    final target = state.getDeck(deckId);
+    if (target == null || target.isReadOnly) return;
     final newDecks = state.decks.where((d) => d.id != deckId).toList();
     state = DeckCollection()..decks = newDecks;
     _saveDecks();
@@ -81,19 +86,23 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   
   // デッキのカードを追加
   void addCardToDeck(String deckId, String cardId) {
+    final target = state.getDeck(deckId);
+    if (target == null || target.isReadOnly) return;
     final newDecks = state.decks.map((deck) {
       if (deck.id == deckId) {
         final newCardIds = [...deck.cardIds, cardId];
-        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds);
+        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds, isReadOnly: deck.isReadOnly);
       }
       return deck;
     }).toList();
     state = DeckCollection()..decks = newDecks;
     _saveDecks();
   }
-  
+
   // デッキのカードを削除
   void removeCardFromDeck(String deckId, String cardId) {
+    final target = state.getDeck(deckId);
+    if (target == null || target.isReadOnly) return;
     final newDecks = state.decks.map((deck) {
       if (deck.id == deckId) {
         final newCardIds = [...deck.cardIds];
@@ -102,7 +111,7 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
         if (index != -1) {
           newCardIds.removeAt(index);
         }
-        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds);
+        return Deck(id: deck.id, name: deck.name, type: deck.type, cardIds: newCardIds, isReadOnly: deck.isReadOnly);
       }
       return deck;
     }).toList();
@@ -118,7 +127,8 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   // デフォルトデッキの作成
   Future<void> createDefaultDecks(List<CardData> allCards) async {
     final defaultCollection = await DeckRepository.createDefaultDecks(allCards);
-    state = defaultCollection;
+    final sample = DeckRepository.sampleDeckMahou;
+    state = DeckCollection()..decks = [sample, ...defaultCollection.decks];
     _saveDecks();
   }
 }
