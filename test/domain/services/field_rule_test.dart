@@ -40,14 +40,6 @@ void main() {
       expect(state.board.count, 0);
     });
 
-    test('spell をプレイすると spellsCastThisTurn が +1 される', () {
-      final card = _makeCard('s1', CardType.spell);
-
-      FieldRule.playCard(state, card);
-
-      expect(state.spellsCastThisTurn, 1);
-    });
-
     test('spell の on_play アビリティがトリガーキューに積まれる', () {
       final ability = _makeAbility(TriggerWhen.onPlay);
       final card = _makeCard('s1', CardType.spell, abilities: [ability]);
@@ -68,13 +60,6 @@ void main() {
       expect(state.grave.count, 1);
     });
 
-    test('arcane をプレイすると spellsCastThisTurn が +1 される', () {
-      final card = _makeCard('a1', CardType.arcane);
-
-      FieldRule.playCard(state, card);
-
-      expect(state.spellsCastThisTurn, 1);
-    });
   });
 
   // ----------------------------------------------------------------

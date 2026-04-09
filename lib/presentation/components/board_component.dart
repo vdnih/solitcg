@@ -251,8 +251,6 @@ class BoardComponent extends PositionComponent
 
     _renderPill(canvas, '♥ ${state.playerLife}',
         material.Offset(10, hudY), GameTheme.hudLifeColor);
-    _renderPill(canvas, '✦ ${state.spellsCastThisTurn}スペル',
-        material.Offset(110, hudY), GameTheme.hudSpellColor);
     _renderPill(canvas, '🂠 ${state.deck.count}',
         material.Offset(size.x - 170, hudY), GameTheme.hudDimColor);
     _renderPill(canvas, '☠ ${state.grave.count}',

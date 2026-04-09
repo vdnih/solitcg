@@ -4,7 +4,6 @@ cards:
   - monster_basic.yaml
   - van001.yaml
   - spl_typhoon.yaml
-  - spl_x07.yaml
   - van_art.yaml
   - van_domain.yaml
   - spl_haku.yaml
@@ -18,4 +17,5 @@ cards:
   - mon_crystal_looters_001.yaml
   - spl_mining_gem.yaml
   - dmn_suiryoku_001.yaml
+  - dmn_mahou_001.yaml
   - spl_construction_plan_001.yaml

@@ -3,6 +3,13 @@
 重要な設計・アーキテクチャ判断の時系列記録。
 詳細な根拠は各 ADR（`docs/adr/`）を参照。
 
+## 2026-04-09 - [設計変更] spellsCastThisTurn カウンター廃止・魔法省カード追加
+
+- **判断内容**: ターン中のスペル詠唱回数カウンター（`spellsCastThisTurn`）を GameState・FieldRule・ExpressionEvaluator・HUD・tcg_game.dart から完全削除。依存していた `spl_x07（閃考の儀）` を削除し、代替として `dmn_mahou_001（魔法省）` ドメインカードを追加。魔法省はスペルをプレイされるたびカウンターを累積し、8個で勝利する。
+- **理由**: ゲームルールのシンプル化。ターン単位カウンターより場に置かれたドメインカードへの累積型がコンセプトに合致する。
+- **影響範囲**: `lib/core/game_state.dart`、`lib/domain/services/field_rule.dart`、`lib/domain/services/expression_evaluator.dart`、`lib/presentation/components/board_component.dart`、`lib/ui/theme/game_theme.dart`、`lib/presentation/game/tcg_game.dart`、`assets/cards/index.yaml`、`assets/cards/spl_x07.yaml`（削除）、`assets/cards/dmn_mahou_001.yaml`（新規）、関連テスト4ファイル
+- **ADR**: なし
+
 ## 2026-04-09 14:30 - [バグ修正] 連続選択効果で2つ目以降の effect が消失する問題を修正
 
 - **判断内容**: `ChoiceRequest` に `pendingEffects` フィールドを追加し、選択中断時に残り effect を保持するよう変更。`_resolveTrigger` でインデックスループに変更して残り effect を格納、`resolveChoice` で pendingEffects を順次実行し連続選択に対応

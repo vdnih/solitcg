@@ -106,19 +106,22 @@ void main() {
   // ----------------------------------------------------------------
   group('op: win_if', () {
     test('条件成立時 gameWon が true になる', () {
-      state.spellsCastThisTurn = 7;
+      for (int i = 0; i < 7; i++) {
+        state.grave.add(CardInstance(
+          card: CardData(id: 'g$i', name: 'g$i', type: CardType.spell),
+          instanceId: 'g$i',
+        ));
+      }
 
       OperationExecutor.executeOperation(
-          state, _op('win_if', {'expr': 'spells_cast_this_turn >= 7'}));
+          state, _op('win_if', {'expr': 'grave.count >= 7'}));
 
       expect(state.gameWon, isTrue);
     });
 
     test('条件不成立時 gameWon が false のまま', () {
-      state.spellsCastThisTurn = 3;
-
       OperationExecutor.executeOperation(
-          state, _op('win_if', {'expr': 'spells_cast_this_turn >= 7'}));
+          state, _op('win_if', {'expr': 'grave.count >= 7'}));
 
       expect(state.gameWon, isFalse);
     });

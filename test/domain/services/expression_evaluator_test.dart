@@ -55,15 +55,7 @@ void main() {
       expect(ExpressionEvaluator.evaluate(state, "grave.count > 2"), isTrue);
     });
 
-    test('spells_cast_this_turn >= 3 は spellsCastThisTurn=3 で true', () {
-      state.spellsCastThisTurn = 3;
-      expect(ExpressionEvaluator.evaluate(state, "spells_cast_this_turn >= 3"), isTrue);
-    });
 
-    test('spells_cast_this_turn >= 3 は spellsCastThisTurn=2 で false', () {
-      state.spellsCastThisTurn = 2;
-      expect(ExpressionEvaluator.evaluate(state, "spells_cast_this_turn >= 3"), isFalse);
-    });
   });
 
   group('ExpressionEvaluator - 比較演算子', () {

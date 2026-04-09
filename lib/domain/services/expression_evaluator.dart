@@ -89,8 +89,6 @@ class ExpressionEvaluator {
         return state.playerLife;
       case 'opponent.life':
         return state.opponentLife;
-      case 'spells_cast_this_turn':
-        return state.spellsCastThisTurn;
       // Legacy support
       case 'field.exists':
         return state.board.isNotEmpty ? 1 : 0;

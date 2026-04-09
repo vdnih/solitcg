@@ -1,0 +1,22 @@
+id: dmn_mahou_001
+name: 魔法省
+type: domain
+tags: [counter, victory]
+text: "スペルがプレイされるたびにカウンターを一つ置く。カウンターが8つ貯まったら勝利する。"
+version: 1
+
+domain:
+  unique: true
+
+abilities:
+  - when: on_spell_played
+    once_per_turn: false
+    effect:
+      - { op: add_counter, key: spell_count, amount: 1 }
+
+  - when: on_spell_played
+    once_per_turn: false
+    pre:
+      - "self.counter('spell_count') >= 8"
+    effect:
+      - { op: win }
