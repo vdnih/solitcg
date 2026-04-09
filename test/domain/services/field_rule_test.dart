@@ -158,6 +158,53 @@ void main() {
   });
 
   // ----------------------------------------------------------------
+  group('FieldRule.playCard — on_spell_played domain 通知', () {
+    test('spell をプレイすると domain の onSpellPlayed アビリティがキューに積まれる', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
+      state.domain.add(domain);
+
+      final spell = _makeCard('s1', CardType.spell);
+      FieldRule.playCard(state, spell);
+
+      expect(state.triggerQueue.length, 1);
+      expect(state.triggerQueue.first.ability.when, TriggerWhen.onSpellPlayed);
+    });
+
+    test('domain がないとき spell をプレイしても onSpellPlayed はキューに積まれない', () {
+      final spell = _makeCard('s1', CardType.spell);
+      FieldRule.playCard(state, spell);
+
+      expect(state.triggerQueue.length, 0);
+    });
+
+    test('arcane をプレイしても domain の onSpellPlayed が通知される', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
+      state.domain.add(domain);
+
+      final arcane = _makeCard('a1', CardType.arcane);
+      FieldRule.playCard(state, arcane);
+
+      expect(state.triggerQueue.length, 1);
+      expect(state.triggerQueue.first.ability.when, TriggerWhen.onSpellPlayed);
+    });
+
+    test('spell の on_play と domain の onSpellPlayed が両方キューに積まれる', () {
+      final onPlayAbility = _makeAbility(TriggerWhen.onPlay);
+      final spell = _makeCard('s1', CardType.spell, abilities: [onPlayAbility]);
+
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
+      state.domain.add(domain);
+
+      FieldRule.playCard(state, spell);
+
+      expect(state.triggerQueue.length, 2);
+    });
+  });
+
+  // ----------------------------------------------------------------
   group('FieldRule.playCardFromHand — エラーケース', () {
     test('無効なインデックス（負数）は failure を返す', () {
       final result = FieldRule.playCardFromHand(state, -1);

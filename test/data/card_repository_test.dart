@@ -231,5 +231,26 @@ void main() {
       // Assert
       expect(card!.abilities.first.oncePerTurn, isTrue);
     });
+
+    test('when: on_spell_played は TriggerWhen.onSpellPlayed にパースされる', () {
+      const String cardYaml = '''
+      id: 'dmn_test'
+      name: '水力発電所テスト'
+      type: 'domain'
+      version: 1
+      abilities:
+        - when: 'on_spell_played'
+          once_per_turn: false
+          effect:
+            - op: 'add_counter'
+              key: spell_count
+              amount: 1
+      ''';
+
+      final card = CardRepository.parseCard(cardYaml);
+
+      expect(card!.abilities.first.when, TriggerWhen.onSpellPlayed);
+      expect(card.abilities.first.oncePerTurn, isFalse);
+    });
   });
 }

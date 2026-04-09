@@ -495,4 +495,70 @@ void main() {
       expect(result.awaitingChoice, isTrue);
     });
   });
+
+  // ----------------------------------------------------------------
+  group('op: add_counter', () {
+    test('source のメタデータにカウンターを追加する', () {
+      final domain = _makeCard('d1', CardType.domain);
+
+      OperationExecutor.executeOperation(
+        state,
+        _op('add_counter', {'key': 'spell_count', 'amount': 1}),
+        source: domain,
+      );
+
+      expect(domain.metadata['spell_count'], 1);
+    });
+
+    test('2回呼ぶとカウンターが累積される', () {
+      final domain = _makeCard('d1', CardType.domain);
+
+      OperationExecutor.executeOperation(
+        state,
+        _op('add_counter', {'key': 'spell_count', 'amount': 1}),
+        source: domain,
+      );
+      OperationExecutor.executeOperation(
+        state,
+        _op('add_counter', {'key': 'spell_count', 'amount': 1}),
+        source: domain,
+      );
+
+      expect(domain.metadata['spell_count'], 2);
+    });
+
+    test('source が null のとき failure を返す', () {
+      final result = OperationExecutor.executeOperation(
+        state,
+        _op('add_counter', {'key': 'spell_count', 'amount': 1}),
+      );
+
+      expect(result.success, isFalse);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: remove_counter', () {
+    test('source のメタデータのカウンターを 0 にリセットする', () {
+      final domain = _makeCard('d1', CardType.domain);
+      domain.metadata['spell_count'] = 4;
+
+      OperationExecutor.executeOperation(
+        state,
+        _op('remove_counter', {'key': 'spell_count'}),
+        source: domain,
+      );
+
+      expect(domain.metadata['spell_count'], 0);
+    });
+
+    test('source が null のとき failure を返す', () {
+      final result = OperationExecutor.executeOperation(
+        state,
+        _op('remove_counter', {'key': 'spell_count'}),
+      );
+
+      expect(result.success, isFalse);
+    });
+  });
 }

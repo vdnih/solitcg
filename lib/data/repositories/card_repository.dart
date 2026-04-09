@@ -39,6 +39,8 @@ class CardRepository {
         return TriggerWhen.activated;
       case 'on_discard':
         return TriggerWhen.onDiscard;
+      case 'on_spell_played':
+        return TriggerWhen.onSpellPlayed;
       // MVP スコープ外: static / on_draw / on_enter / on_domain_set は無視
       default:
         return null;

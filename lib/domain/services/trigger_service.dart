@@ -87,7 +87,8 @@ class TriggerService {
       // すべての事前条件をチェック
       bool allPreConditionsMet = true;
       for (final condition in trigger.ability.pre!) {
-        final conditionResult = ExpressionEvaluator.evaluate(state, condition);
+        final conditionResult =
+          ExpressionEvaluator.evaluate(state, condition, self: trigger.source);
         if (!conditionResult) {
           allPreConditionsMet = false;
           break;
@@ -103,7 +104,7 @@ class TriggerService {
     final effects = trigger.ability.effects;
     for (int i = 0; i < effects.length; i++) {
       final effect = effects[i];
-      final result = OperationExecutor.executeOperation(state, effect);
+      final result = OperationExecutor.executeOperation(state, effect, source: trigger.source);
       logs.addAll(result.logs);
 
       if (result.awaitingChoice) {
@@ -148,6 +149,8 @@ class TriggerService {
         return 'activated';
       case TriggerWhen.onDiscard:
         return 'on_discard';
+      case TriggerWhen.onSpellPlayed:
+        return 'on_spell_played';
     }
   }
 }

@@ -1,0 +1,26 @@
+id: dmn_suiryoku_001
+name: 水力発電所
+type: domain
+tags: [counter, energy]
+text: spellが発動されるたびに、このカードにカウンターを一つのせる。カウンターが四つになったら、カウンターを全て取り除き、カードを一枚引く。
+version: 1
+
+domain:
+  unique: true
+
+abilities:
+  # spell play 時にカウンターを +1
+  - when: on_spell_played
+    once_per_turn: false
+    effect:
+      - { op: add_counter, key: spell_count, amount: 1 }
+
+  # spell play 時にカウンターが4以上ならリセットして1枚引く
+  # FIFO 解決により上のアビリティ（add_counter）が先に解決される
+  - when: on_spell_played
+    once_per_turn: false
+    pre:
+      - "self.counter('spell_count') >= 4"
+    effect:
+      - { op: remove_counter, key: spell_count }
+      - { op: draw, count: 1 }
