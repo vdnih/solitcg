@@ -110,7 +110,7 @@ class FieldRule {
 
     // Check preconditions for onPlay abilities
     for (final ability in card.card.abilities) {
-      if (ability.when == TriggerWhen.onPlay || ability.when == TriggerWhen.activated) {
+      if (ability.when == TriggerWhen.onPlay) {
         if (ability.pre != null) {
           for (final condition in ability.pre!) {
             if (!ExpressionEvaluator.evaluate(state, condition)) {

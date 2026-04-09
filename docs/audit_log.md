@@ -3,6 +3,11 @@
 重要な設計・アーキテクチャ判断の時系列記録。
 詳細な根拠は各 ADR（`docs/adr/`）を参照。
 
+## 2026-04-10 - [バグ修正+仕様変更] クリスタル盗掘団の召喚条件・効果ターゲット修正
+
+- **判断内容**: 3点を修正。①`field_rule.dart` の `playCardFromHand` で `activated` abilityのpre条件をカードプレイ時にも適用していたバグを修正（`onPlay` のみチェック対象に変更）。②`operation_executor.dart` の `_executeDestroy` で `target: "choose:self:artifact"` 形式の文字列を未パースだったバグを修正（コロン区切りでパースし `selection='choose'`・filterを抽出）。③カードYAMLに `onPlay` abilityを追加し、「場にArtifactがある時のみ召喚可能」を仕様として明示。
+- **理由**: バグ①によりArtifactなしでカードを出せなかった。バグ②によりArtifact以外の一番左のカードが破壊されていた。仕様変更はユーザーの意図するゲームデザインへの修正。
+- **影響範囲**: `assets/cards/mon_crystal_looters_001.yaml`、`lib/domain/services/field_rule.dart`、`lib/domain/commands/operation_executor.dart`
 ## 2026-04-10 - [機能追加] サンプルデッキ機能の追加
 
 - **判断内容**: `Deck` モデルに `isReadOnly` フィールドを追加し、プレイヤーが編集・削除できないサンプルデッキ「サンプルデッキ＿魔法省」を実装。デッキは `DeckRepository.sampleDeckMahou` として定義し、`DeckCollectionNotifier.loadDecks()` で毎回先頭に注入する。JSONには永続化しない。
