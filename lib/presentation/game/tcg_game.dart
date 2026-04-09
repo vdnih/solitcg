@@ -9,6 +9,7 @@ import '../../domain/models/card_instance.dart';
 import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
 import '../../domain/models/game_zone.dart';
+import '../../domain/commands/operation_executor.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
 import '../components/board_component.dart';
@@ -204,12 +205,45 @@ class TCGGame extends FlameGame {
         gameState.addToLog('Player destroyed ${selected.length} card(s)');
     }
 
-    // ChoiceRequest をクリアして UI を閉じる
+    // 残り effect を保存してから ChoiceRequest をクリア
+    final pendingEffects = request.pendingEffects;
     gameState.choiceRequest.value = null;
 
-    // 残りのトリガーを再開
-    final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
-    gameState.actionLog.addAll(resolveResult.logs);
+    // 中断されたアビリティの残り effect を順次実行
+    for (int i = 0; i < pendingEffects.length; i++) {
+      final effect = pendingEffects[i];
+      final result = OperationExecutor.executeOperation(gameState, effect);
+      gameState.actionLog.addAll(result.logs);
+
+      if (result.awaitingChoice) {
+        // さらに選択が必要 → 残り effect を新しい choiceRequest に付与して中断
+        final further = pendingEffects.skip(i + 1).toList();
+        if (further.isNotEmpty) {
+          final current = gameState.choiceRequest.value!;
+          gameState.choiceRequest.value = ChoiceRequest(
+            type: current.type,
+            count: current.count,
+            candidates: current.candidates,
+            sourceZone: current.sourceZone,
+            targetZone: current.targetZone,
+            message: current.message,
+            pendingEffects: further,
+          );
+        }
+        return; // 次の選択を待つ
+      }
+
+      if (!result.success) {
+        gameState.addToLog('Effect failed after choice: ${effect.op}');
+        break;
+      }
+    }
+
+    // 全 effect 完了 → トリガーキューの残りを再開
+    if (gameState.choiceRequest.value == null) {
+      final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
+      gameState.actionLog.addAll(resolveResult.logs);
+    }
   }
 
   /// ゾーン名からゾーンオブジェクトを解決するヘルパー。

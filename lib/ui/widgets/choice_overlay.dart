@@ -86,26 +86,27 @@ class _ChoiceOverlayState extends State<ChoiceOverlay> {
                 ),
               ),
               const SizedBox(height: 16),
-              // 候補カードグリッド
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.72,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  itemCount: widget.request.candidates.length,
-                  itemBuilder: (context, index) {
-                    final card = widget.request.candidates[index];
-                    final isSelected = _selectedIds.contains(card.instanceId);
-                    return _CandidateCard(
-                      card: card,
-                      isSelected: isSelected,
-                      onTap: () => _toggleCard(card),
-                    );
-                  },
+              // 候補カード（手札と同じサイズ・横並び）
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final card in widget.request.candidates)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: SizedBox(
+                          width: 100,
+                          height: 140,
+                          child: _CandidateCard(
+                            card: card,
+                            isSelected: _selectedIds.contains(card.instanceId),
+                            onTap: () => _toggleCard(card),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

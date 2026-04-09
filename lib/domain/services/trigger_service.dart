@@ -1,6 +1,7 @@
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
+import '../models/choice_request.dart';
 import '../models/game_result.dart';
 import '../models/trigger.dart';
 import '../commands/operation_executor.dart';
@@ -99,9 +100,29 @@ class TriggerService {
       }
     }
 
-    for (final effect in trigger.ability.effects) {
+    final effects = trigger.ability.effects;
+    for (int i = 0; i < effects.length; i++) {
+      final effect = effects[i];
       final result = OperationExecutor.executeOperation(state, effect);
       logs.addAll(result.logs);
+
+      if (result.awaitingChoice) {
+        // 残り effect を choiceRequest に付与して中断
+        final remaining = effects.skip(i + 1).toList();
+        if (remaining.isNotEmpty) {
+          final current = state.choiceRequest.value!;
+          state.choiceRequest.value = ChoiceRequest(
+            type: current.type,
+            count: current.count,
+            candidates: current.candidates,
+            sourceZone: current.sourceZone,
+            targetZone: current.targetZone,
+            message: current.message,
+            pendingEffects: remaining,
+          );
+        }
+        return GameResult.pending(logs: logs);
+      }
 
       if (!result.success) {
         logs.add('Effect step failed: ${effect.op} - ${result.error}');

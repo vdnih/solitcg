@@ -112,4 +112,100 @@ void main() {
       expect(result.success, isTrue);
     }, timeout: const Timeout(Duration(seconds: 3)));
   });
+
+  // ----------------------------------------------------------------
+  group('TriggerService.resolveAll — awaitingChoice 伝播', () {
+    test('discard selection=choose でプレイヤー選択待ちになると pending を返す', () async {
+      // 手札3枚、2枚選んで捨てる(selection=choose) → ChoiceUI待ち
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h3', name: 'h3', type: CardType.spell),
+        instanceId: 'h3',
+      ));
+
+      final card = _makeCard('src', CardType.spell);
+      final ability = Ability(
+        when: TriggerWhen.onPlay,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 2, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      final result = await TriggerService.resolveAll(state, noopUpdate);
+
+      expect(result.awaitingChoice, isTrue);
+    }, timeout: const Timeout(Duration(seconds: 5)));
+
+    test('awaitingChoice 時に choiceRequest がセットされる', () async {
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h3', name: 'h3', type: CardType.spell),
+        instanceId: 'h3',
+      ));
+
+      final card = _makeCard('src', CardType.spell);
+      final ability = Ability(
+        when: TriggerWhen.onPlay,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 2, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      await TriggerService.resolveAll(state, noopUpdate);
+
+      expect(state.choiceRequest.value, isNotNull);
+    }, timeout: const Timeout(Duration(seconds: 5)));
+
+    test('選択後に続く effect が choiceRequest.pendingEffects に格納される', () async {
+      // 手札3枚、1枚捨てる→墓地から1枚回収（連続選択）
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h1', name: 'h1', type: CardType.spell),
+        instanceId: 'h1',
+      ));
+      state.hand.add(CardInstance(
+        card: CardData(id: 'h2', name: 'h2', type: CardType.spell),
+        instanceId: 'h2',
+      ));
+      state.grave.add(CardInstance(
+        card: CardData(id: 'g1', name: 'g1', type: CardType.spell),
+        instanceId: 'g1',
+      ));
+      state.grave.add(CardInstance(
+        card: CardData(id: 'g2', name: 'g2', type: CardType.spell),
+        instanceId: 'g2',
+      ));
+
+      final card = _makeCard('src', CardType.artifact);
+      final ability = Ability(
+        when: TriggerWhen.activated,
+        effects: const [
+          EffectStep(op: 'discard', params: {'from': 'hand', 'count': 1, 'selection': 'choose'}),
+          EffectStep(op: 'move', params: {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}),
+        ],
+      );
+
+      TriggerService.enqueueAbility(state, card, ability);
+      await TriggerService.resolveAll(state, noopUpdate);
+
+      // 最初の discard 選択待ち中に、move effect が pendingEffects に格納される
+      expect(state.choiceRequest.value?.pendingEffects.length, 1);
+      expect(state.choiceRequest.value?.pendingEffects.first.op, 'move');
+    }, timeout: const Timeout(Duration(seconds: 5)));
+  });
 }

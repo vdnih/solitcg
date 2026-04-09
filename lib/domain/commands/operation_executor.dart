@@ -64,6 +64,7 @@ class OperationExecutor {
     final from = params['from'] as String? ?? 'hand';
     final count = params['count'] as int? ?? 1;
     final filter = _parseFilter(params['filter']);
+    final selection = params['selection'] as String?;
     final logs = <String>[];
 
     if (from != 'hand') {
@@ -78,9 +79,8 @@ class OperationExecutor {
       );
     }
 
-    // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-    // filter なし（全手札が対象）の場合は先頭から自動選択（従来動作）
-    if (filter.isNotEmpty && candidates.length > count) {
+    // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+    if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
       state.choiceRequest.value = ChoiceRequest(
         type: ChoiceType.discard,
         count: count,
@@ -147,6 +147,7 @@ class OperationExecutor {
     final target = params['target'] as String? ?? 'any';
     final count = params['count'] as int? ?? 1;
     final filter = _parseFilter(params['filter']);
+    final selection = params['selection'] as String?;
     final logs = <String>[];
 
     if (fromZone == null || toZone == null) {
@@ -163,8 +164,8 @@ class OperationExecutor {
     final candidates = source.where((card) => _matchesFilter(card, filter)).toList();
     final ordered = (target == 'bottom') ? candidates.reversed.toList() : candidates;
 
-    // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-    if (filter.isNotEmpty && ordered.length > count) {
+    // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+    if ((selection == 'choose' || filter.isNotEmpty) && ordered.length > count) {
       state.choiceRequest.value = ChoiceRequest(
         type: ChoiceType.move,
         count: count,
@@ -190,6 +191,7 @@ class OperationExecutor {
   static GameResult _executeDestroy(GameState state, Map<String, dynamic> params) {
     final target = params['target'] as String? ?? 'board';
     final filter = _parseFilter(params['filter']);
+    final selection = params['selection'] as String?;
     final count = params['count'] as int? ?? 1;
     final logs = <String>[];
 
@@ -212,8 +214,8 @@ class OperationExecutor {
         return GameResult.failure('No valid target to destroy');
       }
 
-      // filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-      if (filter.isNotEmpty && candidates.length > count) {
+      // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
+      if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
         state.choiceRequest.value = ChoiceRequest(
           type: ChoiceType.destroy,
           count: count,

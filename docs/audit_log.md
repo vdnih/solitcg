@@ -3,6 +3,20 @@
 重要な設計・アーキテクチャ判断の時系列記録。
 詳細な根拠は各 ADR（`docs/adr/`）を参照。
 
+## 2026-04-09 14:30 - [バグ修正] 連続選択効果で2つ目以降の effect が消失する問題を修正
+
+- **判断内容**: `ChoiceRequest` に `pendingEffects` フィールドを追加し、選択中断時に残り effect を保持するよう変更。`_resolveTrigger` でインデックスループに変更して残り effect を格納、`resolveChoice` で pendingEffects を順次実行し連続選択に対応
+- **理由**: `artifact_crystal_recycle.yaml` のように discard→move の2段階選択を持つカードで、1つ目の選択後に2つ目の effect が失われていた（トリガー dequeue 後の残り effect が保存されていなかった）
+- **影響範囲**: `lib/domain/models/choice_request.dart`、`lib/domain/services/trigger_service.dart`、`lib/presentation/game/tcg_game.dart`、`test/domain/services/trigger_service_test.dart`
+- **ADR**: なし（実装バグ修正のため）
+
+## 2026-04-09 14:00 - [バグ修正] selection: choose 効果でChoiceUIが表示されない問題を修正
+
+- **判断内容**: `TriggerService._resolveTrigger` に `awaitingChoice` チェックを追加し、`OperationExecutor` の discard/move/destroy で `selection: choose` パラメータを読むよう条件を変更した
+- **理由**: ①`_resolveTrigger` が `executeOperation` の `pending` 結果を無視してループを継続していた。② `selection: choose` のみ（filter なし）の効果で ChoiceUI が出ないバグがあった（条件が `filter.isNotEmpty` のみだったため）
+- **影響範囲**: `lib/domain/services/trigger_service.dart`、`lib/domain/commands/operation_executor.dart`、`test/domain/commands/operation_executor_test.dart`、`test/domain/services/trigger_service_test.dart`
+- **ADR**: なし（実装バグ修正のため）
+
 ## 記録フォーマット
 
 ```
