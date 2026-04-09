@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import '../../domain/models/card_data.dart';
+import '../../domain/models/card_instance.dart';
 import '../../domain/models/card_selection_state.dart';
 import '../theme/game_theme.dart';
 
@@ -62,7 +63,7 @@ class CardDetailPanel extends StatelessWidget {
                 children: [
                   _CardArtwork(card: selection.card.card),
                   const SizedBox(width: 16),
-                  Expanded(child: _CardInfo(card: selection.card.card)),
+                  Expanded(child: _CardInfo(instance: selection.card)),
                   const SizedBox(width: 12),
                   _ActionButtons(
                     canAct: _canAct,
@@ -149,8 +150,10 @@ class _CardArtwork extends StatelessWidget {
 }
 
 class _CardInfo extends StatelessWidget {
-  final CardData card;
-  const _CardInfo({required this.card});
+  final CardInstance instance;
+  const _CardInfo({required this.instance});
+
+  CardData get card => instance.card;
 
   @override
   Widget build(BuildContext context) {
@@ -235,12 +238,46 @@ class _CardInfo extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+        ..._buildCounterChips(instance.metadata),
         if (card.abilities.isNotEmpty) ...[
           const SizedBox(height: 6),
           ..._buildAbilityTexts(card),
         ],
       ],
     );
+  }
+
+  List<Widget> _buildCounterChips(Map<String, dynamic> metadata) {
+    final counters = metadata.entries
+        .where((e) => e.value is int && (e.value as int) > 0)
+        .toList();
+    if (counters.isEmpty) return [];
+
+    return [
+      const SizedBox(height: 6),
+      Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: counters.map((e) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFBBF24).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.5)),
+            ),
+            child: Text(
+              'カウンター×${e.value}',
+              style: const TextStyle(
+                color: Color(0xFFFBBF24),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    ];
   }
 
   List<Widget> _buildAbilityTexts(CardData card) {

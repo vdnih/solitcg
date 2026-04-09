@@ -179,6 +179,30 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
       typePainter.paint(canvas, material.Offset(4, size.y - 13));
     }
 
+    // カウンター表示（metadata に 1 以上の整数値があれば "・N" を描画）
+    final counters = card.metadata.entries
+        .where((e) => e.value is int && (e.value as int) > 0)
+        .toList();
+    if (counters.isNotEmpty) {
+      final totalCount = counters.fold<int>(0, (sum, e) => sum + (e.value as int));
+      final counterPainter = material.TextPainter(
+        text: material.TextSpan(
+          text: '・$totalCount',
+          style: const material.TextStyle(
+            color: material.Color(0xFFFBBF24),
+            fontSize: 9,
+            fontWeight: material.FontWeight.bold,
+            shadows: [
+              material.Shadow(color: material.Colors.black, blurRadius: 2),
+            ],
+          ),
+        ),
+        textDirection: material.TextDirection.ltr,
+      );
+      counterPainter.layout(maxWidth: size.x - 8);
+      counterPainter.paint(canvas, material.Offset(4, size.y - 25));
+    }
+
     // 選択中ゴールドボーダー
     if (_isSelected) {
       canvas.drawRRect(
