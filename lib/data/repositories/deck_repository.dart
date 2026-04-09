@@ -13,10 +13,66 @@ class DeckRepository {
   static const String deckFileName = 'decks.json';
   static const String localStorageKey = 'solitcg_decks';
   
+  /// サンプルデッキ＿魔法省（読み取り専用）
+  static Deck get sampleDeckMahou {
+    const cardIds = [
+      'activated_artifact',
+      'activated_artifact',
+      'activated_artifact',
+      'activated_artifact',
+      'atf_crystal_001',
+      'atf_crystal_001',
+      'atf_crystal_001',
+      'atf_crystal_001',
+      'dmn_mahou_001',
+      'dmn_mahou_001',
+      'dmn_mahou_001',
+      'dmn_mahou_001',
+      'mon_crystal_looters_001',
+      'mon_crystal_looters_001',
+      'mon_crystal_looters_001',
+      'mon_crystal_looters_001',
+      'mon_akuma_001',
+      'mon_akuma_001',
+      'mon_akuma_001',
+      'mon_akuma_001',
+      'mon_robot_001',
+      'mon_robot_001',
+      'mon_robot_001',
+      'mon_robot_001',
+      'simple_draw_001',
+      'simple_draw_001',
+      'simple_draw_001',
+      'simple_draw_001',
+      'spl_construction_plan_001',
+      'spl_construction_plan_001',
+      'spl_construction_plan_001',
+      'spl_construction_plan_001',
+      'spl_mining_gem_001',
+      'spl_mining_gem_001',
+      'spl_mining_gem_001',
+      'spl_mining_gem_001',
+      'spl_typhoon',
+      'spl_typhoon',
+      'spl_typhoon',
+      'spl_typhoon',
+    ];
+    return Deck(
+      id: 'sample_mahou_sho',
+      name: 'サンプルデッキ＿魔法省',
+      type: DeckType.main,
+      cardIds: List<String>.from(cardIds),
+      isReadOnly: true,
+    );
+  }
+
   /// デッキコレクションを保存
   static Future<bool> saveDecks(DeckCollection collection) async {
     try {
-      final jsonData = jsonEncode(collection.toJson());
+      // 読み取り専用デッキは永続化しない
+      final saveable = DeckCollection()
+        ..decks = collection.decks.where((d) => !d.isReadOnly).toList();
+      final jsonData = jsonEncode(saveable.toJson());
       
       if (kIsWeb) {
         // Webの場合はローカルストレージに保存
