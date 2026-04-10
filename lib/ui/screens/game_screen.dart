@@ -8,6 +8,7 @@ import '../../presentation/components/board_component.dart';
 import '../../presentation/game/tcg_game.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
+import '../widgets/game_over_overlay.dart';
 import '../widgets/log_panel.dart';
 
 /// ゲームプレイ画面
@@ -125,6 +126,14 @@ class _GameScreenState extends State<GameScreen> {
                 constraints: const BoxConstraints(),
               ),
             ),
+          ),
+          // ゲームオーバーオーバーレイ（勝利・敗北時に表示）
+          ValueListenableBuilder<bool?>(
+            valueListenable: _game.gameState.gameOverNotifier,
+            builder: (context, result, _) {
+              if (result == null) return const SizedBox.shrink();
+              return GameOverOverlay(isWin: result);
+            },
           ),
           // カード詳細パネル（選択時にスライドイン）
           Positioned(

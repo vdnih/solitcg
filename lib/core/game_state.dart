@@ -34,6 +34,9 @@ class GameState {
   /// 現在選択中のカード状態。Flutter UI の詳細パネル表示に使用する。
   final ValueNotifier<CardSelectionState?> selectedCard = ValueNotifier(null);
 
+  /// ゲーム終了通知。null=ゲーム中、true=勝利、false=敗北
+  final ValueNotifier<bool?> gameOverNotifier = ValueNotifier(null);
+
   /// カードの選択状態を更新する。null を渡すと選択解除。
   void selectCard(CardSelectionState? selection) {
     selectedCard.value = selection;
