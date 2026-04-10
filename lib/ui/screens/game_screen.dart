@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import '../../domain/models/card_selection_state.dart';
 import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
+import '../../presentation/components/board_component.dart';
 import '../../presentation/game/tcg_game.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
+import '../widgets/log_panel.dart';
 
 /// ゲームプレイ画面
 ///
@@ -23,11 +25,21 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late final TCGGame _game;
+  bool _opponentAreaVisible = true;
 
   @override
   void initState() {
     super.initState();
     _game = TCGGame(initialDeck: widget.deck);
+  }
+
+  void _toggleOpponentArea() {
+    setState(() {
+      _opponentAreaVisible = !_opponentAreaVisible;
+      // BoardComponent に反映
+      final board = _game.children.whereType<BoardComponent>().firstOrNull;
+      if (board != null) board.opponentAreaVisible = _opponentAreaVisible;
+    });
   }
 
   void _handleConfirm(CardSelectionState sel) {
@@ -84,6 +96,35 @@ class _GameScreenState extends State<GameScreen> {
                 onConfirm: (selected) => _game.resolveChoice(selected),
               );
             },
+          ),
+          // ログパネル（画面左下固定・カードと重ならない）
+          Positioned(
+            left: 0,
+            bottom: 8,
+            child: ValueListenableBuilder<List<String>>(
+              valueListenable: _game.gameState.actionLogNotifier,
+              builder: (context, logs, _) => LogPanel(logs: logs),
+            ),
+          ),
+          // 相手エリアトグルボタン（右上固定）
+          Positioned(
+            top: 8,
+            right: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  _opponentAreaVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.white54,
+                  size: 20,
+                ),
+                tooltip: _opponentAreaVisible ? '相手エリアを隠す' : '相手エリアを表示',
+                onPressed: _toggleOpponentArea,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
           ),
           // カード詳細パネル（選択時にスライドイン）
           Positioned(
