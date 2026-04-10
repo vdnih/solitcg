@@ -3,6 +3,12 @@
 重要な設計・アーキテクチャ判断の時系列記録。
 詳細な根拠は各 ADR（`docs/adr/`）を参照。
 
+## 2026-04-10 - [機能追加] 勝利・敗北時のゲームオーバーオーバーレイ演出を追加
+
+- **判断内容**: `GameState` に `ValueNotifier<bool?> gameOverNotifier` を追加し、`OperationExecutor` の `_executeWin` / `_executeWinIf` / `_executeLoseIf` で勝敗確定時に通知する。新規ウィジェット `GameOverOverlay` を作成し（勝利=金色スケールイン、敗北=赤フェードイン）、`GameScreen` の Stack 最上位に `ValueListenableBuilder` で組み込んだ。
+- **理由**: 勝敗フラグは既存だったが UI への通知手段がなく、ゲーム終了後も画面に変化がなかった。プレイヤーへのフィードバックとして演出が必要。
+- **影響範囲**: `lib/core/game_state.dart`、`lib/domain/commands/operation_executor.dart`、`lib/ui/widgets/game_over_overlay.dart`（新規）、`lib/ui/screens/game_screen.dart`
+
 ## 2026-04-10 - [バグ修正+仕様変更] クリスタル盗掘団の召喚条件・効果ターゲット修正
 
 - **判断内容**: 3点を修正。①`field_rule.dart` の `playCardFromHand` で `activated` abilityのpre条件をカードプレイ時にも適用していたバグを修正（`onPlay` のみチェック対象に変更）。②`operation_executor.dart` の `_executeDestroy` で `target: "choose:self:artifact"` 形式の文字列を未パースだったバグを修正（コロン区切りでパースし `selection='choose'`・filterを抽出）。③カードYAMLに `onPlay` abilityを追加し、「場にArtifactがある時のみ召喚可能」を仕様として明示。

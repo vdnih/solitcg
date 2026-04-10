@@ -267,6 +267,7 @@ class OperationExecutor {
 
   static GameResult _executeWin(GameState state) {
     state.gameWon = true;
+    state.gameOverNotifier.value = true;
     return GameResult.success(logs: ['VICTORY']);
   }
 
@@ -279,6 +280,7 @@ class OperationExecutor {
     final condition = ExpressionEvaluator.evaluate(state, expr);
     if (condition) {
       state.gameWon = true;
+      state.gameOverNotifier.value = true;
       return GameResult.success(logs: ['VICTORY: $expr']);
     }
 
@@ -294,6 +296,7 @@ class OperationExecutor {
     final condition = ExpressionEvaluator.evaluate(state, expr);
     if (condition) {
       state.gameLost = true;
+      state.gameOverNotifier.value = false;
       return GameResult.success(logs: ['DEFEAT: $expr']);
     }
 
