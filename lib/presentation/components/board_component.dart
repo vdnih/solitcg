@@ -131,6 +131,17 @@ class BoardComponent extends PositionComponent
   double get _oppDomainX => size.x - 10 - _domainW;
 
   @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    this.size = size;
+    // ClipComponent のサイズを新しい画面幅に合わせて更新
+    _boardClipComponent.size = Vector2(_plyBoardZoneWidth, _fieldH);
+    _handClipComponent.size = Vector2(size.x - 20, _plyHandZoneH);
+    // スクロール範囲を再クランプ
+    _clampViewScrollY();
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
     // ClipComponent の縦位置を毎フレーム同期
@@ -602,6 +613,13 @@ class BoardComponent extends PositionComponent
     super.onDragEnd(event);
     _dragIsInBoardZone = false;
     _dragIsInHandZone = false;
+  }
+
+  // ─── マウスホイール（Flutter Listener から呼び出し） ─────────
+
+  void applyMouseScroll(double dy) {
+    _viewScrollY -= dy;
+    _clampViewScrollY();
   }
 
   // ─── 空白タップで選択解除 ─────────────────────────────────────

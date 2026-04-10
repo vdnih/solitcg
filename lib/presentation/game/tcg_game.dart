@@ -34,6 +34,9 @@ class TCGGame extends FlameGame {
 
   TCGGame({this.initialDeck});
 
+  /// ゲームボードコンポーネントへの参照（外部からトグル操作などに使用）
+  BoardComponent? boardComponent;
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
@@ -42,7 +45,8 @@ class TCGGame extends FlameGame {
     await _initializeGame();
 
     // ゲームボードのUIコンポーネントをゲームに追加
-    add(BoardComponent());
+    boardComponent = BoardComponent();
+    add(boardComponent!);
   }
 
   /// ゲームの初期設定（デッキのロード、シャッフル、ドロー）を行います。

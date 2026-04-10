@@ -1,10 +1,10 @@
 import 'package:flame/game.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/models/card_selection_state.dart';
 import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
-import '../../presentation/components/board_component.dart';
 import '../../presentation/game/tcg_game.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
@@ -37,9 +37,8 @@ class _GameScreenState extends State<GameScreen> {
   void _toggleOpponentArea() {
     setState(() {
       _opponentAreaVisible = !_opponentAreaVisible;
-      // BoardComponent に反映
-      final board = _game.children.whereType<BoardComponent>().firstOrNull;
-      if (board != null) board.opponentAreaVisible = _opponentAreaVisible;
+      // TCGGame が保持する boardComponent に直接反映
+      _game.boardComponent?.opponentAreaVisible = _opponentAreaVisible;
     });
   }
 
@@ -62,30 +61,37 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor: const Color(0xFF0D1117),
       body: Stack(
         children: [
-          GameWidget(
-            game: _game,
-            loadingBuilder: (context) => const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFFFD700),
-              ),
-            ),
-            errorBuilder: (context, error) => Center(
-              child: Text(
-                'エラーが発生しました: $error',
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-            overlayBuilderMap: {
-              'pause': (context, TCGGame game) => Center(
-                child: Container(
-                  color: Colors.black54,
-                  child: const Text(
-                    '一時停止中',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
+          Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                _game.boardComponent?.applyMouseScroll(event.scrollDelta.dy);
+              }
+            },
+            child: GameWidget(
+              game: _game,
+              loadingBuilder: (context) => const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFFFD700),
                 ),
               ),
-            },
+              errorBuilder: (context, error) => Center(
+                child: Text(
+                  'エラーが発生しました: $error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              overlayBuilderMap: {
+                'pause': (context, TCGGame game) => Center(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Text(
+                      '一時停止中',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
+                ),
+              },
+            ),
           ),
           // カード選択オーバーレイ（ChoiceRequest 発生時に表示）
           ValueListenableBuilder<ChoiceRequest?>(
