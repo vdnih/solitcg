@@ -76,12 +76,30 @@ class BoardComponent extends PositionComponent
   // 縦スクロール
   double _viewScrollY = 0.0;
   static const double _totalContentH = 725.0;
+  // 相手エリアの高さ（非表示時にビューをシフトする量）
+  static const double _opponentAreaH = _separatorY; // 360.0
 
   // トリガーキュー（毎フレーム再生成）
   final List<Component> _triggerQueueComponents = [];
 
-  // 相手エリア表示フラグ（外部から制御）
-  bool opponentAreaVisible = true;
+  // 相手エリア表示フラグ（外部から setter で制御）
+  bool _opponentAreaVisible = true;
+  bool get opponentAreaVisible => _opponentAreaVisible;
+  set opponentAreaVisible(bool value) {
+    if (_opponentAreaVisible == value) return;
+    _opponentAreaVisible = value;
+    // 非表示にしたら相手エリア分だけ上にシフト、表示に戻したら元に戻す
+    _viewScrollY += value ? _opponentAreaH : -_opponentAreaH;
+    _clampViewScrollY();
+  }
+
+  void _clampViewScrollY() {
+    final effectiveH = _opponentAreaVisible
+        ? _totalContentH
+        : _totalContentH - _opponentAreaH;
+    final minScrollY = (size.y - effectiveH).clamp(-double.infinity, 0.0);
+    _viewScrollY = _viewScrollY.clamp(minScrollY, 0.0);
+  }
 
   @override
   Future<void> onLoad() async {
@@ -90,6 +108,7 @@ class BoardComponent extends PositionComponent
 
     // 縦スクロール初期位置: 画面が小さい場合はプレイヤーHUDが見える位置から開始
     _viewScrollY = (size.y - _totalContentH).clamp(-double.infinity, 0.0);
+    _clampViewScrollY();
 
     // 自分フィールドのボードエリアをクリップする（横スクロール用）
     _boardClipComponent = ClipComponent.rectangle(
@@ -574,8 +593,7 @@ class BoardComponent extends PositionComponent
     } else {
       // 縦スクロール
       _viewScrollY += event.localDelta.y;
-      final minScrollY = (size.y - _totalContentH).clamp(-double.infinity, 0.0);
-      _viewScrollY = _viewScrollY.clamp(minScrollY, 0.0);
+      _clampViewScrollY();
     }
   }
 
