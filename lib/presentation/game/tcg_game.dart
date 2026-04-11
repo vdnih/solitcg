@@ -51,19 +51,18 @@ class TCGGame extends FlameGame {
 
   /// ゲームの初期設定（デッキのロード、シャッフル、ドロー）を行います。
   Future<void> _initializeGame() async {
-    List<CardData> cards = [];
+    if (initialDeck == null) {
+      gameState.addToLog('Error: No deck specified. Please select a deck.');
+      return;
+    }
 
-    if (initialDeck != null) {
-      // 指定されたデッキからカードを読み込む
-      for (final cardId in initialDeck!.cardIds) {
-        final card = await CardRepository.loadCard(cardId);
-        if (card != null) {
-          cards.add(card);
-        }
+    // 指定されたデッキからカードを読み込む
+    final List<CardData> cards = [];
+    for (final cardId in initialDeck!.cardIds) {
+      final card = await CardRepository.loadCard(cardId);
+      if (card != null) {
+        cards.add(card);
       }
-    } else {
-      // デッキが指定されていない場合は全カードを読み込む（デバッグ用など）
-      cards = await CardRepository.loadAllCards();
     }
 
     if (cards.isEmpty) {

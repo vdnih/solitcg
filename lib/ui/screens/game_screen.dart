@@ -6,6 +6,7 @@ import '../../domain/models/card_selection_state.dart';
 import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
 import '../../presentation/game/tcg_game.dart';
+import '../../routes.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
 import '../widgets/game_over_overlay.dart';
@@ -32,6 +33,16 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _game = TCGGame(initialDeck: widget.deck);
+    if (widget.deck == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed(
+            AppRoutes.deckSelector,
+            arguments: true,
+          );
+        }
+      });
+    }
   }
 
   void _toggleOpponentArea() {
