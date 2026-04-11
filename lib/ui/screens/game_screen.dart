@@ -64,7 +64,11 @@ class _GameScreenState extends State<GameScreen> {
           Listener(
             onPointerSignal: (event) {
               if (event is PointerScrollEvent) {
-                _game.boardComponent?.applyMouseScroll(event.scrollDelta.dy);
+                _game.boardComponent?.applyMouseScroll(
+                  event.scrollDelta.dx,
+                  event.scrollDelta.dy,
+                  event.localPosition,
+                );
               }
             },
             child: GameWidget(

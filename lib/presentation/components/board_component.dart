@@ -76,22 +76,29 @@ class BoardComponent extends PositionComponent
   // 縦スクロール
   double _viewScrollY = 0.0;
   static const double _totalContentH = 725.0;
-  // 相手エリアの高さ（非表示時にビューをシフトする量）
-  static const double _opponentAreaH = _separatorY; // 360.0
+  // 相手の手札・フィールドゾーン高さ（HUDを除いた部分）
+  static const double _opponentAreaH = _separatorY - _oppHandZoneY; // 330.0
 
   // トリガーキュー（毎フレーム再生成）
   final List<Component> _triggerQueueComponents = [];
 
-  // 相手エリア表示フラグ（外部から setter で制御）
+  // 相手エリア（手札・フィールド）表示フラグ
+  // _opponentAreaOffset: _viewScrollY と独立した固定オフセット
+  // 画面が大きい場合でもクランプに消されず確実にシフトする
   bool _opponentAreaVisible = true;
+  double _opponentAreaOffset = 0.0;
+
   bool get opponentAreaVisible => _opponentAreaVisible;
   set opponentAreaVisible(bool value) {
     if (_opponentAreaVisible == value) return;
     _opponentAreaVisible = value;
-    // 非表示にしたら相手エリア分だけ上にシフト、表示に戻したら元に戻す
-    _viewScrollY += value ? _opponentAreaH : -_opponentAreaH;
+    // HUDは常に表示。手札・フィールド非表示時はその分だけ上へ固定シフト
+    _opponentAreaOffset = value ? 0.0 : -_opponentAreaH;
     _clampViewScrollY();
   }
+
+  // 描画・ヒットテストに使う実効スクロール量
+  double get _effectiveScrollY => _viewScrollY + _opponentAreaOffset;
 
   void _clampViewScrollY() {
     final effectiveH = _opponentAreaVisible
@@ -145,8 +152,8 @@ class BoardComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
     // ClipComponent の縦位置を毎フレーム同期
-    _boardClipComponent.position = Vector2(_plyBoardX, _plyFieldY + _viewScrollY);
-    _handClipComponent.position = Vector2(10, _plyHandZoneY + _viewScrollY);
+    _boardClipComponent.position = Vector2(_plyBoardX, _plyFieldY + _effectiveScrollY);
+    _handClipComponent.position = Vector2(10, _plyHandZoneY + _effectiveScrollY);
     _updateHand();
     _updateField();
     _updateTriggerQueue();
@@ -173,15 +180,18 @@ class BoardComponent extends PositionComponent
           material.Offset(0, y), material.Offset(size.x, y), gridPaint);
     }
 
-    // ─── 相手エリア ───────────────────────────────────────────
-    if (opponentAreaVisible) {
-      _renderOpponentArea(canvas);
+    // ─── 相手HUD（ライフ等）は常に表示 ─────────────────────────
+    _renderOpponentHud(canvas);
+
+    // ─── 相手の手札・フィールドゾーン（トグルで非表示可） ────
+    if (_opponentAreaVisible) {
+      _renderOpponentHandAndField(canvas);
     }
 
     // ─── セパレーター ─────────────────────────────────────────
     canvas.drawLine(
-      material.Offset(0, _separatorY + _viewScrollY),
-      material.Offset(size.x, _separatorY + _viewScrollY),
+      material.Offset(0, _separatorY + _effectiveScrollY),
+      material.Offset(size.x, _separatorY + _effectiveScrollY),
       material.Paint()
         ..color = GameTheme.zoneBorder.withOpacity(0.6)
         ..strokeWidth = 1.5,
@@ -190,13 +200,13 @@ class BoardComponent extends PositionComponent
     // ─── 自分フィールドゾーン ─────────────────────────────────
     _renderZone(
       canvas,
-      material.Rect.fromLTWH(_plyDomainX, _plyFieldY + _viewScrollY, _domainW, _fieldH),
+      material.Rect.fromLTWH(_plyDomainX, _plyFieldY + _effectiveScrollY, _domainW, _fieldH),
       GameTheme.domainZoneBg,
       'ドメイン',
     );
     _renderZone(
       canvas,
-      material.Rect.fromLTWH(_plyBoardX, _plyFieldY + _viewScrollY, _plyBoardZoneWidth, _fieldH),
+      material.Rect.fromLTWH(_plyBoardX, _plyFieldY + _effectiveScrollY, _plyBoardZoneWidth, _fieldH),
       GameTheme.boardZoneBg,
       'フィールド',
     );
@@ -204,7 +214,7 @@ class BoardComponent extends PositionComponent
     // ─── 自分手札ゾーン ───────────────────────────────────────
     _renderZone(
       canvas,
-      material.Rect.fromLTWH(10, _plyHandZoneY + _viewScrollY, size.x - 20, _plyHandZoneH),
+      material.Rect.fromLTWH(10, _plyHandZoneY + _effectiveScrollY, size.x - 20, _plyHandZoneH),
       GameTheme.handZoneBg,
       '手札',
     );
@@ -217,11 +227,10 @@ class BoardComponent extends PositionComponent
 
   // ─── 相手エリア ───────────────────────────────────────────────
 
-  void _renderOpponentArea(material.Canvas canvas) {
+  /// 相手HUD（ライフ・手札枚数等）は常に表示
+  void _renderOpponentHud(material.Canvas canvas) {
     final state = gameRef.gameState;
-    final s = _viewScrollY;
-
-    // 相手 HUD（ライフ・手札枚数・デッキ枚数・墓地枚数）
+    final s = _viewScrollY; // HUDはユーザースクロールのみ追従（トグルオフセット不要）
     _renderPill(canvas, '♥ ${state.opponentLife}',
         material.Offset(10, _oppHudY + s), GameTheme.hudLifeColor);
     _renderPill(canvas, '🂠 ${state.opponentHandCount}',
@@ -230,6 +239,12 @@ class BoardComponent extends PositionComponent
         material.Offset(180, _oppHudY + s), GameTheme.hudDimColor);
     _renderPill(canvas, '☠ 0',
         material.Offset(235, _oppHudY + s), GameTheme.hudDimColor);
+  }
+
+  /// 相手の手札・フィールドゾーン（トグルで非表示可）
+  void _renderOpponentHandAndField(material.Canvas canvas) {
+    final state = gameRef.gameState;
+    final s = _effectiveScrollY;
 
     // 相手手札ゾーン（裏向きカード）
     _renderZone(
@@ -238,7 +253,7 @@ class BoardComponent extends PositionComponent
       GameTheme.handZoneBg,
       '相手の手札',
     );
-    _renderOpponentHand(canvas, state.opponentHandCount);
+    _renderOpponentHandCards(canvas, state.opponentHandCount);
 
     // 相手フィールド：ボード（左）・ドメイン（右）— 点対称
     _renderZone(
@@ -255,10 +270,10 @@ class BoardComponent extends PositionComponent
     );
   }
 
-  void _renderOpponentHand(material.Canvas canvas, int count) {
+  void _renderOpponentHandCards(material.Canvas canvas, int count) {
     final displayCount = min(count, 7);
     // 右から左に並べる（点対称: 自分の手札は左から右）
-    final cardY = _oppHandZoneY + (_oppHandZoneH - _cardH) / 2 + _viewScrollY;
+    final cardY = _oppHandZoneY + (_oppHandZoneH - _cardH) / 2 + _effectiveScrollY;
     for (int i = 0; i < displayCount; i++) {
       final cardX = size.x - 15 - _cardW - i * 108.0;
       if (cardX < 15) break;
@@ -300,7 +315,7 @@ class BoardComponent extends PositionComponent
 
   void _renderPlayerHud(material.Canvas canvas) {
     final state = gameRef.gameState;
-    final hudY = _plyHudY + _viewScrollY;
+    final hudY = _plyHudY + _effectiveScrollY;
 
     _renderPill(canvas, '♥ ${state.playerLife}',
         material.Offset(10, hudY), GameTheme.hudLifeColor);
@@ -459,7 +474,7 @@ class BoardComponent extends PositionComponent
       // ドメインスロット(plyDomainX, plyFieldY, domainW, fieldH)内に中央配置
       final targetPos = Vector2(
         _plyDomainX + (_domainW - _cardW) / 2,
-        _plyFieldY + (_fieldH - _cardH) / 2 + _viewScrollY,
+        _plyFieldY + (_fieldH - _cardH) / 2 + _effectiveScrollY,
       );
       if (_domainComponentMap.containsKey(domainCard.instanceId)) {
         _domainComponentMap[domainCard.instanceId]!.position = targetPos;
@@ -548,7 +563,7 @@ class BoardComponent extends PositionComponent
 
     final queueTitle = TextComponent(
       text: 'キュー:',
-      position: Vector2(size.x - 180, _separatorY + _viewScrollY + 10),
+      position: Vector2(size.x - 180, _separatorY + _effectiveScrollY + 10),
       textRenderer: TextPaint(
         style: const material.TextStyle(
           color: material.Colors.orange,
@@ -564,7 +579,7 @@ class BoardComponent extends PositionComponent
       final trigger = queue[i];
       final component = TextComponent(
         text: '${i + 1}. ${trigger.source.card.name}',
-        position: Vector2(size.x - 180, _separatorY + _viewScrollY + 26 + i * 18),
+        position: Vector2(size.x - 180, _separatorY + _effectiveScrollY + 26 + i * 18),
         textRenderer: TextPaint(
           style: const material.TextStyle(
             color: material.Colors.white70,
@@ -584,7 +599,7 @@ class BoardComponent extends PositionComponent
     super.onDragStart(event);
     final pos = event.localPosition;
     // スクロール補正後のY座標でヒットテスト
-    final adjustedY = pos.y - _viewScrollY;
+    final adjustedY = pos.y - _effectiveScrollY;
     final boardRect = material.Rect.fromLTWH(
         _plyBoardX, _plyFieldY, _plyBoardZoneWidth, _fieldH);
     final handRect = material.Rect.fromLTWH(
@@ -617,9 +632,26 @@ class BoardComponent extends PositionComponent
 
   // ─── マウスホイール（Flutter Listener から呼び出し） ─────────
 
-  void applyMouseScroll(double dy) {
-    _viewScrollY -= dy;
-    _clampViewScrollY();
+  /// [dx] 水平デルタ, [dy] 垂直デルタ, [localPos] カーソル位置
+  void applyMouseScroll(double dx, double dy, material.Offset localPos) {
+    // 垂直スクロールは常に縦移動に適用
+    if (dy != 0) {
+      _viewScrollY -= dy;
+      _clampViewScrollY();
+    }
+    // 水平スクロールはカーソル下のゾーンに適用
+    if (dx != 0) {
+      final adjustedY = localPos.dy - _effectiveScrollY;
+      final boardRect = material.Rect.fromLTWH(
+          _plyBoardX, _plyFieldY, _plyBoardZoneWidth, _fieldH);
+      final handRect = material.Rect.fromLTWH(
+          10, _plyHandZoneY, size.x - 20, _plyHandZoneH);
+      if (boardRect.contains(material.Offset(localPos.dx, adjustedY))) {
+        _boardScrollX -= dx;
+      } else if (handRect.contains(material.Offset(localPos.dx, adjustedY))) {
+        _handScrollX -= dx;
+      }
+    }
   }
 
   // ─── 空白タップで選択解除 ─────────────────────────────────────
