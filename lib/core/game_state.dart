@@ -26,7 +26,8 @@ class GameState {
   bool gameLost = false;
 
   final Queue<Trigger> triggerQueue = Queue<Trigger>();
-  final List<String> actionLog = [];
+  final ValueNotifier<List<String>> actionLogNotifier = ValueNotifier([]);
+  List<String> get actionLog => actionLogNotifier.value;
 
   final ValueNotifier<ChoiceRequest?> choiceRequest = ValueNotifier(null);
 
@@ -74,7 +75,12 @@ class GameState {
   int getNextTriggerOrder() => ++_triggerOrder;
 
   void addToLog(String message) {
-    actionLog.add(message);
+    actionLogNotifier.value = [...actionLogNotifier.value, message];
+  }
+
+  void addAllToLog(List<String> messages) {
+    if (messages.isEmpty) return;
+    actionLogNotifier.value = [...actionLogNotifier.value, ...messages];
   }
 
   bool get isGameOver => gameWon || gameLost;

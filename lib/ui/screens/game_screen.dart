@@ -1,4 +1,5 @@
 import 'package:flame/game.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/models/card_selection_state.dart';
@@ -8,6 +9,7 @@ import '../../presentation/game/tcg_game.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
 import '../widgets/game_over_overlay.dart';
+import '../widgets/log_panel.dart';
 
 /// ゲームプレイ画面
 ///
@@ -24,11 +26,20 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   late final TCGGame _game;
+  bool _opponentAreaVisible = true;
 
   @override
   void initState() {
     super.initState();
     _game = TCGGame(initialDeck: widget.deck);
+  }
+
+  void _toggleOpponentArea() {
+    setState(() {
+      _opponentAreaVisible = !_opponentAreaVisible;
+      // TCGGame が保持する boardComponent に直接反映
+      _game.boardComponent?.opponentAreaVisible = _opponentAreaVisible;
+    });
   }
 
   void _handleConfirm(CardSelectionState sel) {
@@ -50,30 +61,41 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor: const Color(0xFF0D1117),
       body: Stack(
         children: [
-          GameWidget(
-            game: _game,
-            loadingBuilder: (context) => const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFFFD700),
-              ),
-            ),
-            errorBuilder: (context, error) => Center(
-              child: Text(
-                'エラーが発生しました: $error',
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-            overlayBuilderMap: {
-              'pause': (context, TCGGame game) => Center(
-                child: Container(
-                  color: Colors.black54,
-                  child: const Text(
-                    '一時停止中',
-                    style: TextStyle(color: Colors.white, fontSize: 24),
-                  ),
+          Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                _game.boardComponent?.applyMouseScroll(
+                  event.scrollDelta.dx,
+                  event.scrollDelta.dy,
+                  event.localPosition,
+                );
+              }
+            },
+            child: GameWidget(
+              game: _game,
+              loadingBuilder: (context) => const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFFFD700),
                 ),
               ),
-            },
+              errorBuilder: (context, error) => Center(
+                child: Text(
+                  'エラーが発生しました: $error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              overlayBuilderMap: {
+                'pause': (context, TCGGame game) => Center(
+                  child: Container(
+                    color: Colors.black54,
+                    child: const Text(
+                      '一時停止中',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
+                ),
+              },
+            ),
           ),
           // カード選択オーバーレイ（ChoiceRequest 発生時に表示）
           ValueListenableBuilder<ChoiceRequest?>(
@@ -85,6 +107,35 @@ class _GameScreenState extends State<GameScreen> {
                 onConfirm: (selected) => _game.resolveChoice(selected),
               );
             },
+          ),
+          // ログパネル（画面左下固定・カードと重ならない）
+          Positioned(
+            left: 0,
+            bottom: 8,
+            child: ValueListenableBuilder<List<String>>(
+              valueListenable: _game.gameState.actionLogNotifier,
+              builder: (context, logs, _) => LogPanel(logs: logs),
+            ),
+          ),
+          // 相手エリアトグルボタン（右上固定）
+          Positioned(
+            top: 8,
+            right: 8,
+            child: SafeArea(
+              child: IconButton(
+                icon: Icon(
+                  _opponentAreaVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: Colors.white54,
+                  size: 20,
+                ),
+                tooltip: _opponentAreaVisible ? '相手エリアを隠す' : '相手エリアを表示',
+                onPressed: _toggleOpponentArea,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
           ),
           // ゲームオーバーオーバーレイ（勝利・敗北時に表示）
           ValueListenableBuilder<bool?>(

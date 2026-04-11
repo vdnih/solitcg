@@ -34,6 +34,9 @@ class TCGGame extends FlameGame {
 
   TCGGame({this.initialDeck});
 
+  /// ゲームボードコンポーネントへの参照（外部からトグル操作などに使用）
+  BoardComponent? boardComponent;
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
@@ -42,7 +45,8 @@ class TCGGame extends FlameGame {
     await _initializeGame();
 
     // ゲームボードのUIコンポーネントをゲームに追加
-    add(BoardComponent());
+    boardComponent = BoardComponent();
+    add(boardComponent!);
   }
 
   /// ゲームの初期設定（デッキのロード、シャッフル、ドロー）を行います。
@@ -122,7 +126,7 @@ class TCGGame extends FlameGame {
     }
 
     // ログを追加
-    gameState.actionLog.addAll(result.logs);
+    gameState.addAllToLog(result.logs);
 
     // UI更新のためのダミーコールバック。将来的にはイベントバスなどで置き換えるべき。
     Map<dynamic, dynamic> dummyUpdate() => {};
@@ -130,7 +134,7 @@ class TCGGame extends FlameGame {
     // トリガーサービスを呼び出して、発生したすべてのトリガーを解決
     final resolveResult =
         await TriggerService.resolveAll(gameState, dummyUpdate);
-    gameState.actionLog.addAll(resolveResult.logs);
+    gameState.addAllToLog(resolveResult.logs);
 
     if (!resolveResult.success) {
       gameState.addToLog('Trigger resolution failed: ${resolveResult.error}');
@@ -212,7 +216,7 @@ class TCGGame extends FlameGame {
     for (int i = 0; i < pendingEffects.length; i++) {
       final effect = pendingEffects[i];
       final result = OperationExecutor.executeOperation(gameState, effect);
-      gameState.actionLog.addAll(result.logs);
+      gameState.addAllToLog(result.logs);
 
       if (result.awaitingChoice) {
         // さらに選択が必要 → 残り effect を新しい choiceRequest に付与して中断
@@ -241,7 +245,7 @@ class TCGGame extends FlameGame {
     // 全 effect 完了 → トリガーキューの残りを再開
     if (gameState.choiceRequest.value == null) {
       final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
-      gameState.actionLog.addAll(resolveResult.logs);
+      gameState.addAllToLog(resolveResult.logs);
     }
   }
 
@@ -302,7 +306,7 @@ class TCGGame extends FlameGame {
     // トリガーサービスを呼び出して、発生したすべてのトリガーを解決
     final resolveResult =
         await TriggerService.resolveAll(gameState, dummyUpdate);
-    gameState.actionLog.addAll(resolveResult.logs);
+    gameState.addAllToLog(resolveResult.logs);
 
     if (!resolveResult.success) {
       gameState.addToLog('トリガー解決に失敗しました: ${resolveResult.error}');
