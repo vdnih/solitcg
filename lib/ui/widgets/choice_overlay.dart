@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 
 import '../../domain/models/card_data.dart';
@@ -56,7 +55,7 @@ class _ChoiceOverlayState extends State<ChoiceOverlay> {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: Material(
-        color: Colors.black.withOpacity(0.75),
+        color: Colors.black.withValues(alpha: 0.75),
         child: SafeArea(
           child: Column(
             children: [
@@ -120,7 +119,7 @@ class _ChoiceOverlayState extends State<ChoiceOverlay> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: GameTheme.selectionGlow,
                       foregroundColor: Colors.black,
-                      disabledBackgroundColor: const Color(0xFF30363D),
+                      disabledBackgroundColor: GameTheme.zoneBorder,
                       disabledForegroundColor: const Color(0xFF8B949E),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -176,13 +175,13 @@ class _CandidateCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? GameTheme.selectionBorder
-                : accentColor.withOpacity(0.4),
+                : accentColor.withValues(alpha: 0.4),
             width: isSelected ? 3 : 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: GameTheme.selectionGlow.withOpacity(0.5),
+                    color: GameTheme.selectionGlow.withValues(alpha: 0.5),
                     blurRadius: 12,
                     spreadRadius: 2,
                   )
@@ -220,7 +219,7 @@ class _CandidateCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                   ),
                 ),
                 child: Text(
@@ -267,7 +266,7 @@ class _CandidateCard extends StatelessWidget {
         _typeIcon(card.card.type),
         style: TextStyle(
           fontSize: 36,
-          color: gradColors[1].withOpacity(0.7),
+          color: gradColors[1].withValues(alpha: 0.7),
         ),
       ),
     );

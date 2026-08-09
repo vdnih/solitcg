@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
@@ -44,11 +43,11 @@ class CardDetailPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xF0161B22),
             border: const Border(
-              top: BorderSide(color: Color(0xFF30363D), width: 1),
+              top: BorderSide(color: GameTheme.zoneBorder, width: 1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -98,7 +97,7 @@ class _CardArtwork extends StatelessWidget {
           colors: gradColors,
         ),
         border: Border.all(
-          color: GameTheme.cardAccentColor(card.type).withOpacity(0.6),
+          color: GameTheme.cardAccentColor(card.type).withValues(alpha: 0.6),
           width: 1.5,
         ),
       ),
@@ -121,7 +120,7 @@ class _CardArtwork extends StatelessWidget {
         _typeIcon(card.type),
         style: TextStyle(
           fontSize: 32,
-          color: gradColors[1].withOpacity(0.7),
+          color: gradColors[1].withValues(alpha: 0.7),
         ),
       ),
     );
@@ -178,10 +177,10 @@ class _CardInfo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: GameTheme.cardAccentColor(card.type).withOpacity(0.2),
+                color: GameTheme.cardAccentColor(card.type).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: GameTheme.cardAccentColor(card.type).withOpacity(0.5),
+                  color: GameTheme.cardAccentColor(card.type).withValues(alpha: 0.5),
                 ),
               ),
               child: Text(
@@ -207,7 +206,7 @@ class _CardInfo extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0xFF21262D),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF30363D)),
+                      border: Border.all(color: GameTheme.zoneBorder),
                     ),
                     child: Text(
                       tag,
@@ -262,9 +261,9 @@ class _CardInfo extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFFFBBF24).withOpacity(0.15),
+              color: const Color(0xFFFBBF24).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.5)),
+              border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.5)),
             ),
             child: Text(
               'カウンター×${e.value}',
@@ -338,7 +337,7 @@ class _StatsRow extends StatelessWidget {
         const SizedBox(width: 6),
         _StatBadge(label: 'DEF', value: stats.def, color: const Color(0xFF3B82F6)),
         const SizedBox(width: 6),
-        _StatBadge(label: 'HP', value: stats.hp, color: const Color(0xFF22C55E)),
+        _StatBadge(label: 'HP', value: stats.hp, color: GameTheme.hudLifeColor),
       ],
     );
   }
@@ -355,9 +354,9 @@ class _StatBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         '$label $value',
@@ -395,7 +394,7 @@ class _ActionButtons extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onConfirm,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFFD700),
+                backgroundColor: GameTheme.selectionGlow,
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
@@ -415,8 +414,8 @@ class _ActionButtons extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onDismiss,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-              side: const BorderSide(color: Color(0xFF30363D)),
+              foregroundColor: GameTheme.hudDimColor,
+              side: const BorderSide(color: GameTheme.zoneBorder),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

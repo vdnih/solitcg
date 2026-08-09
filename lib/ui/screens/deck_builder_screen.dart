@@ -5,6 +5,7 @@ import '../../domain/models/card_data.dart';
 import '../../domain/models/deck.dart';
 import '../../domain/models/deck_rules.dart';
 import '../../providers/deck_provider.dart';
+import '../theme/game_theme.dart';
 import '../widgets/card_detail_dialog.dart';
 import '../widgets/tag_selector_dialog.dart';
 
@@ -240,7 +241,7 @@ class _DeckContentView extends ConsumerWidget {
 
                     return ListTile(
                       title: Text(card.name),
-                      subtitle: Text(_getCardTypeText(card.type)),
+                      subtitle: Text(GameTheme.cardTypeName(card.type)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -349,7 +350,7 @@ class _CardCollectionViewState extends ConsumerState<_CardCollectionView> {
                         const DropdownMenuItem<CardType?>(
                             value: null, child: Text('すべて')),
                         ...CardType.values.map((type) => DropdownMenuItem(
-                            value: type, child: Text(_getCardTypeText(type)))),
+                            value: type, child: Text(GameTheme.cardTypeName(type)))),
                       ],
                       onChanged: (value) => setState(() => _filterType = value),
                     ),
@@ -420,7 +421,7 @@ class _CardItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          color: _getCardTypeColor(card.type),
+          color: GameTheme.cardAccentColor(card.type),
           width: double.infinity,
           padding: const EdgeInsets.all(4),
           child: Column(
@@ -431,7 +432,7 @@ class _CardItem extends StatelessWidget {
                       fontWeight: FontWeight.bold, color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
-              Text(_getCardTypeText(card.type),
+              Text(GameTheme.cardTypeName(card.type),
                   style: const TextStyle(fontSize: 12, color: Colors.white70)),
             ],
           ),
@@ -462,48 +463,5 @@ class _CardItem extends StatelessWidget {
           ),
       ],
     );
-  }
-}
-
-// Helper methods
-Color _getCardTypeColor(CardType type) {
-  switch (type) {
-    case CardType.monster:
-      return Colors.brown;
-    case CardType.spell:
-      return Colors.blue;
-    case CardType.ritual:
-      return Colors.purple;
-    case CardType.artifact:
-      return Colors.orange;
-    case CardType.relic:
-      return Colors.deepOrange;
-    case CardType.equip:
-      return Colors.teal;
-    case CardType.domain:
-      return Colors.green;
-    case CardType.arcane:
-      return Colors.indigo;
-  }
-}
-
-String _getCardTypeText(CardType type) {
-  switch (type) {
-    case CardType.monster:
-      return 'モンスター';
-    case CardType.spell:
-      return '魔法';
-    case CardType.ritual:
-      return '儀式';
-    case CardType.artifact:
-      return 'アーティファクト';
-    case CardType.relic:
-      return 'レリック';
-    case CardType.equip:
-      return '装備';
-    case CardType.domain:
-      return 'ドメイン';
-    case CardType.arcane:
-      return '秘術';
   }
 }

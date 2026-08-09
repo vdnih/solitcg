@@ -43,7 +43,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
     return FadeTransition(
       opacity: _fade,
       child: Container(
-        color: Colors.black.withOpacity(0.82),
+        color: Colors.black.withValues(alpha: 0.82),
         child: Center(
           child: ScaleTransition(
             scale: widget.isWin ? _scale : _fade,
@@ -67,7 +67,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
     if (widget.isWin) {
       return ShaderMask(
         shaderCallback: (bounds) => const LinearGradient(
-          colors: [Color(0xFFFFD700), Color(0xFFFFF176), Color(0xFFFFD700)],
+          colors: [GameTheme.selectionGlow, Color(0xFFFFF176), GameTheme.selectionGlow],
           stops: [0.0, 0.5, 1.0],
         ).createShader(bounds),
         child: const Text(
@@ -79,7 +79,7 @@ class _GameOverOverlayState extends State<GameOverOverlay>
             letterSpacing: 4,
             shadows: [
               Shadow(
-                color: Color(0xFFFFD700),
+                color: GameTheme.selectionGlow,
                 blurRadius: 24,
                 offset: Offset(0, 0),
               ),

@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:math';
 
 import 'package:flame/components.dart';
@@ -18,7 +17,7 @@ import './card_component.dart';
 ///   ────────── セパレーター ──────────
 ///   [自分] フィールド（ドメイン左・ボード右） → 手札 → HUD
 class BoardComponent extends PositionComponent
-    with HasGameRef<TCGGame>, TapCallbacks, DragCallbacks {
+    with HasGameReference<TCGGame>, TapCallbacks, DragCallbacks {
   // ─── レイアウト定数 ───────────────────────────────────────────
 
   // 相手エリア（上）
@@ -111,7 +110,7 @@ class BoardComponent extends PositionComponent
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    size = gameRef.size;
+    size = game.size;
 
     // 縦スクロール初期位置: 画面が小さい場合はプレイヤーHUDが見える位置から開始
     _viewScrollY = (size.y - _totalContentH).clamp(-double.infinity, 0.0);
@@ -169,7 +168,7 @@ class BoardComponent extends PositionComponent
 
     // ─── グリッドテクスチャ ───────────────────────────────────
     final gridPaint = material.Paint()
-      ..color = material.Colors.white.withOpacity(0.018);
+      ..color = material.Colors.white.withValues(alpha: 0.018);
     const gridSize = 40.0;
     for (double x = 0; x < size.x; x += gridSize) {
       canvas.drawLine(
@@ -193,7 +192,7 @@ class BoardComponent extends PositionComponent
       material.Offset(0, _separatorY + _effectiveScrollY),
       material.Offset(size.x, _separatorY + _effectiveScrollY),
       material.Paint()
-        ..color = GameTheme.zoneBorder.withOpacity(0.6)
+        ..color = GameTheme.zoneBorder.withValues(alpha: 0.6)
         ..strokeWidth = 1.5,
     );
 
@@ -229,7 +228,7 @@ class BoardComponent extends PositionComponent
 
   /// 相手HUD（ライフ・手札枚数等）は常に表示
   void _renderOpponentHud(material.Canvas canvas) {
-    final state = gameRef.gameState;
+    final state = game.gameState;
     final s = _viewScrollY; // HUDはユーザースクロールのみ追従（トグルオフセット不要）
     _renderPill(canvas, '♥ ${state.opponentLife}',
         material.Offset(10, _oppHudY + s), GameTheme.hudLifeColor);
@@ -243,7 +242,7 @@ class BoardComponent extends PositionComponent
 
   /// 相手の手札・フィールドゾーン（トグルで非表示可）
   void _renderOpponentHandAndField(material.Canvas canvas) {
-    final state = gameRef.gameState;
+    final state = game.gameState;
     final s = _effectiveScrollY;
 
     // 相手手札ゾーン（裏向きカード）
@@ -314,7 +313,7 @@ class BoardComponent extends PositionComponent
   // ─── HUD ─────────────────────────────────────────────────────
 
   void _renderPlayerHud(material.Canvas canvas) {
-    final state = gameRef.gameState;
+    final state = game.gameState;
     final hudY = _plyHudY + _effectiveScrollY;
 
     _renderPill(canvas, '♥ ${state.playerLife}',
@@ -347,7 +346,7 @@ class BoardComponent extends PositionComponent
       text: material.TextSpan(
         text: label,
         style: material.TextStyle(
-          color: GameTheme.hudDimColor.withOpacity(0.7),
+          color: GameTheme.hudDimColor.withValues(alpha: 0.7),
           fontSize: 10,
           fontWeight: material.FontWeight.w600,
           letterSpacing: 1.0,
@@ -379,11 +378,11 @@ class BoardComponent extends PositionComponent
           pos.dx - 6, pos.dy - 3, painter.width + 12, painter.height + 6),
       const material.Radius.circular(12),
     );
-    canvas.drawRRect(pillRect, material.Paint()..color = color.withOpacity(0.15));
+    canvas.drawRRect(pillRect, material.Paint()..color = color.withValues(alpha: 0.15));
     canvas.drawRRect(
       pillRect,
       material.Paint()
-        ..color = color.withOpacity(0.4)
+        ..color = color.withValues(alpha: 0.4)
         ..style = material.PaintingStyle.stroke
         ..strokeWidth = 1,
     );
@@ -393,7 +392,7 @@ class BoardComponent extends PositionComponent
   // ─── 手札の差分更新 ──────────────────────────────────────────
 
   void _updateHand() {
-    final state = gameRef.gameState;
+    final state = game.gameState;
     final currentIds = state.hand.cards.map((c) => c.instanceId).toSet();
 
     // 消えたカードを削除
@@ -428,18 +427,18 @@ class BoardComponent extends PositionComponent
           card: card,
           position: targetPos,
           onTap: () {
-            final sel = gameRef.gameState.selectedCard.value;
+            final sel = game.gameState.selectedCard.value;
             if (sel?.card.instanceId == card.instanceId) {
-              final idx = gameRef.gameState.hand.cards
+              final idx = game.gameState.hand.cards
                   .indexWhere((c) => c.instanceId == card.instanceId);
               if (idx == -1) return;
-              gameRef.gameState.selectCard(null);
-              gameRef.playCardFromHand(idx);
+              game.gameState.selectCard(null);
+              game.playCardFromHand(idx);
             } else {
-              final idx = gameRef.gameState.hand.cards
+              final idx = game.gameState.hand.cards
                   .indexWhere((c) => c.instanceId == card.instanceId);
               if (idx == -1) return;
-              gameRef.gameState.selectCard(CardSelectionState(
+              game.gameState.selectCard(CardSelectionState(
                 card: card,
                 zone: SelectionZone.hand,
                 handIndex: idx,
@@ -456,7 +455,7 @@ class BoardComponent extends PositionComponent
   // ─── フィールドの差分更新 ─────────────────────────────────────
 
   void _updateField() {
-    final state = gameRef.gameState;
+    final state = game.gameState;
 
     // ── ドメインカード（BoardComponent直下） ──────────────────
     final domainId =
@@ -484,7 +483,7 @@ class BoardComponent extends PositionComponent
           position: targetPos,
           isField: true,
           onTap: () {
-            gameRef.gameState.selectCard(CardSelectionState(
+            game.gameState.selectCard(CardSelectionState(
               card: domainCard,
               zone: SelectionZone.board,
             ));
@@ -533,13 +532,13 @@ class BoardComponent extends PositionComponent
           position: targetPos,
           isField: true,
           onTap: () {
-            final sel = gameRef.gameState.selectedCard.value;
+            final sel = game.gameState.selectedCard.value;
             if (hasActivated &&
                 sel?.card.instanceId == boardCard.instanceId) {
-              gameRef.gameState.selectCard(null);
-              gameRef.activateCardOnBoard(boardCard);
+              game.gameState.selectCard(null);
+              game.activateCardOnBoard(boardCard);
             } else {
-              gameRef.gameState.selectCard(CardSelectionState(
+              game.gameState.selectCard(CardSelectionState(
                 card: boardCard,
                 zone: SelectionZone.board,
               ));
@@ -558,7 +557,7 @@ class BoardComponent extends PositionComponent
     removeAll(_triggerQueueComponents);
     _triggerQueueComponents.clear();
 
-    final queue = gameRef.gameState.triggerQueue.toList();
+    final queue = game.gameState.triggerQueue.toList();
     if (queue.isEmpty) return;
 
     final queueTitle = TextComponent(
@@ -658,7 +657,7 @@ class BoardComponent extends PositionComponent
 
   @override
   bool onTapDown(TapDownEvent event) {
-    gameRef.gameState.selectCard(null);
+    game.gameState.selectCard(null);
     return false;
   }
 }

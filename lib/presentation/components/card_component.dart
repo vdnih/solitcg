@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
@@ -13,7 +12,7 @@ import '../../ui/theme/game_theme.dart';
 ///
 /// 描画は毎フレーム行われ、選択グローは GameState.selectedCard を参照して自動更新される。
 /// カード画像がある場合は Sprite としてレンダリングし、ない場合はグラデーション矩形で代替する。
-class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGGame> {
+class CardComponent extends PositionComponent with TapCallbacks, HasGameReference<TCGGame> {
   /// 描画対象のカードインスタンス。
   final CardInstance card;
 
@@ -40,7 +39,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
     await super.onLoad();
     if (card.card.image != null) {
       try {
-        _sprite = await gameRef.loadSprite('images/cards/${card.card.image}');
+        _sprite = await game.loadSprite('images/cards/${card.card.image}');
       } catch (_) {
         // 画像ロード失敗時はグラデーション矩形にフォールバック
       }
@@ -48,7 +47,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
   }
 
   bool get _isSelected =>
-      gameRef.gameState.selectedCard.value?.card.instanceId == card.instanceId;
+      game.gameState.selectedCard.value?.card.instanceId == card.instanceId;
 
   @override
   void render(material.Canvas canvas) {
@@ -65,7 +64,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
       canvas.drawRRect(
         outerRRect,
         material.Paint()
-          ..color = GameTheme.selectionGlow.withOpacity(0.5)
+          ..color = GameTheme.selectionGlow.withValues(alpha: 0.5)
           ..maskFilter = const material.MaskFilter.blur(material.BlurStyle.outer, 8),
       );
     }
@@ -89,7 +88,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
     );
     canvas.drawRRect(
       innerRRect,
-      material.Paint()..color = gradColors[0].withOpacity(0.85),
+      material.Paint()..color = gradColors[0].withValues(alpha: 0.85),
     );
 
     // カード画像 or プレースホルダー（上部 55%）
@@ -108,7 +107,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
       final placeholderShader = ui.Gradient.linear(
         ui.Offset(imageRect.left, imageRect.top),
         ui.Offset(imageRect.right, imageRect.bottom),
-        [gradColors[1].withOpacity(0.5), gradColors[0].withOpacity(0.3)],
+        [gradColors[1].withValues(alpha: 0.5), gradColors[0].withValues(alpha: 0.3)],
       );
       canvas.drawRect(
         imageRect,
@@ -119,7 +118,7 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameRef<TCGG
         text: material.TextSpan(
           text: _cardTypeIcon(card.card.type),
           style: material.TextStyle(
-            color: material.Colors.white.withOpacity(0.4),
+            color: material.Colors.white.withValues(alpha: 0.4),
             fontSize: 24,
           ),
         ),

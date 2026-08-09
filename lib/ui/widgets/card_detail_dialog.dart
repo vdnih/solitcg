@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/card_data.dart';
+import '../theme/game_theme.dart';
 
 /// カード詳細ダイアログウィジェット
 class CardDetailDialog extends StatelessWidget {
@@ -23,7 +24,7 @@ class CardDetailDialog extends StatelessWidget {
             children: [
               // カードヘッダー（名前とタイプ）
               Container(
-                color: _getCardTypeColor(card.type),
+                color: GameTheme.cardAccentColor(card.type),
                 width: double.infinity,
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
@@ -39,7 +40,7 @@ class CardDetailDialog extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getCardTypeText(card.type),
+                      GameTheme.cardTypeName(card.type),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.white70,
@@ -224,50 +225,6 @@ class CardDetailDialog extends StatelessWidget {
         return '捨て札時';
       case TriggerWhen.onSpellPlayed:
         return 'spell発動時';
-    }
-  }
-
-  // カードタイプに応じた色を取得
-  Color _getCardTypeColor(CardType type) {
-    switch (type) {
-      case CardType.monster:
-        return Colors.brown;
-      case CardType.spell:
-        return Colors.blue;
-      case CardType.ritual:
-        return Colors.purple;
-      case CardType.artifact:
-        return Colors.orange;
-      case CardType.relic:
-        return Colors.deepOrange;
-      case CardType.equip:
-        return Colors.teal;
-      case CardType.domain:
-        return Colors.green;
-      case CardType.arcane:
-        return Colors.indigo;
-    }
-  }
-  
-  // カードタイプのテキストを取得
-  String _getCardTypeText(CardType type) {
-    switch (type) {
-      case CardType.monster:
-        return 'モンスター';
-      case CardType.spell:
-        return '魔法';
-      case CardType.ritual:
-        return '儀式';
-      case CardType.artifact:
-        return 'アーティファクト';
-      case CardType.relic:
-        return 'レリック';
-      case CardType.equip:
-        return '装備';
-      case CardType.domain:
-        return 'ドメイン';
-      case CardType.arcane:
-        return '秘術';
     }
   }
 }
