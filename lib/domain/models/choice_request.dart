@@ -34,4 +34,17 @@ class ChoiceRequest {
     this.message,
     this.pendingEffects = const [],
   });
+
+  /// [pendingEffects] だけを差し替えたコピーを返す。
+  ChoiceRequest withPendingEffects(List<EffectStep> effects) {
+    return ChoiceRequest(
+      type: type,
+      count: count,
+      candidates: candidates,
+      sourceZone: sourceZone,
+      targetZone: targetZone,
+      message: message,
+      pendingEffects: effects,
+    );
+  }
 }

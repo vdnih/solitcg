@@ -1,12 +1,13 @@
 import 'dart:math';
+
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
 import '../models/choice_request.dart';
 import '../models/game_result.dart';
-import '../models/game_zone.dart';
 import '../services/expression_evaluator.dart';
 import '../services/trigger_service.dart';
+import '../services/zone_resolver.dart';
 import './draw_card_command.dart';
 
 class OperationExecutor {
@@ -86,26 +87,20 @@ class OperationExecutor {
 
     // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
     if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
-      state.choiceRequest.value = ChoiceRequest(
+      return _requestChoice(
+        state,
         type: ChoiceType.discard,
         count: count,
         candidates: candidates,
         sourceZone: from,
         message: 'フィルタに一致するカードを$count枚選んでください',
       );
-      return GameResult.pending(logs: ['Awaiting player choice for discard']);
     }
 
     // 自動選択（filter なし or ちょうど count 枚一致）
     for (final card in candidates.take(count).toList()) {
       state.hand.remove(card);
-      state.grave.add(card);
-
-      for (final ability in card.card.abilities) {
-        if (ability.when == TriggerWhen.onDiscard) {
-          TriggerService.enqueueAbility(state, card, ability);
-        }
-      }
+      _sendToGrave(state, card, TriggerWhen.onDiscard);
     }
 
     logs.add('Discarded $count cards');
@@ -120,8 +115,8 @@ class OperationExecutor {
     final useRandom = params['random'] as bool? ?? false;
     final logs = <String>[];
 
-    final source = _getZoneByName(state, fromZone);
-    final destination = _getZoneByName(state, toZone);
+    final source = ZoneResolver.byName(state,fromZone);
+    final destination = ZoneResolver.byName(state,toZone);
 
     if (source == null || destination == null) {
       return GameResult.failure('Invalid zone in search operation');
@@ -159,8 +154,8 @@ class OperationExecutor {
       return GameResult.failure('move: missing from or to parameter');
     }
 
-    final source = _getZoneByName(state, fromZone);
-    final destination = _getZoneByName(state, toZone);
+    final source = ZoneResolver.byName(state,fromZone);
+    final destination = ZoneResolver.byName(state,toZone);
 
     if (source == null || destination == null) {
       return GameResult.failure('Invalid zone in move operation');
@@ -171,7 +166,8 @@ class OperationExecutor {
 
     // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
     if ((selection == 'choose' || filter.isNotEmpty) && ordered.length > count) {
-      state.choiceRequest.value = ChoiceRequest(
+      return _requestChoice(
+        state,
         type: ChoiceType.move,
         count: count,
         candidates: ordered,
@@ -179,7 +175,6 @@ class OperationExecutor {
         targetZone: toZone,
         message: '移動するカードを$count枚選んでください',
       );
-      return GameResult.pending(logs: ['Awaiting player choice for move']);
     }
 
     int moved = 0;
@@ -215,13 +210,7 @@ class OperationExecutor {
 
     if (target == 'domain' && state.hasDomain) {
       final domainCard = state.domain.removeAt(0)!;
-      state.grave.add(domainCard);
-
-      for (final ability in domainCard.card.abilities) {
-        if (ability.when == TriggerWhen.onDestroy) {
-          TriggerService.enqueueAbility(state, domainCard, ability);
-        }
-      }
+      _sendToGrave(state, domainCard, TriggerWhen.onDestroy);
 
       logs.add('Destroyed domain card: ${domainCard.card.name}');
       return GameResult.success(logs: logs);
@@ -234,27 +223,21 @@ class OperationExecutor {
 
       // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
       if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
-        state.choiceRequest.value = ChoiceRequest(
+        return _requestChoice(
+          state,
           type: ChoiceType.destroy,
           count: count,
           candidates: candidates,
           sourceZone: 'board',
           message: '破壊するカードを$count枚選んでください',
         );
-        return GameResult.pending(logs: ['Awaiting player choice for destroy']);
       }
 
       int destroyed = 0;
       for (int i = 0; i < count && i < candidates.length; i++) {
         final boardCard = candidates[i];
         state.board.remove(boardCard);
-        state.grave.add(boardCard);
-
-        for (final ability in boardCard.card.abilities) {
-          if (ability.when == TriggerWhen.onDestroy) {
-            TriggerService.enqueueAbility(state, boardCard, ability);
-          }
-        }
+        _sendToGrave(state, boardCard, TriggerWhen.onDestroy);
         destroyed++;
       }
 
@@ -359,28 +342,6 @@ class OperationExecutor {
         logs: ['Reset counter "$key" on ${source.card.name} to 0']);
   }
 
-  static GameZone? _getZoneByName(GameState state, String zoneName) {
-    switch (zoneName.toLowerCase()) {
-      case 'hand':
-        return state.hand;
-      case 'deck':
-        return state.deck;
-      case 'board':
-        return state.board;
-      case 'domain':
-        return state.domain;
-      case 'grave':
-        return state.grave;
-      case 'extra':
-        return state.extra;
-      // Handle legacy zone name for backward compatibility
-      case 'field':
-        return state.board;
-      default:
-        return null;
-    }
-  }
-
   /// YAML の filter パラメータを Map に変換する。
   /// YamlMap の場合も通常の Map として扱えるよう正規化する。
   static Map<String, dynamic> _parseFilter(dynamic filterParam) {
@@ -418,12 +379,37 @@ class OperationExecutor {
   }
 
   static void _shuffleDeck(GameState state) {
-    final random = Random();
-    for (int i = state.deck.count - 1; i > 0; i--) {
-      final j = random.nextInt(i + 1);
-      final temp = state.deck.cards[i];
-      state.deck.cards[i] = state.deck.cards[j];
-      state.deck.cards[j] = temp;
+    state.deck.shuffle();
+  }
+
+  /// プレイヤーにカード選択を要求し、選択待ち状態の [GameResult] を返す共通ヘルパー。
+  static GameResult _requestChoice(
+    GameState state, {
+    required ChoiceType type,
+    required int count,
+    required List<CardInstance> candidates,
+    required String sourceZone,
+    String? targetZone,
+    required String message,
+  }) {
+    state.choiceRequest.value = ChoiceRequest(
+      type: type,
+      count: count,
+      candidates: candidates,
+      sourceZone: sourceZone,
+      targetZone: targetZone,
+      message: message,
+    );
+    return GameResult.pending(logs: ['Awaiting player choice for ${type.name}']);
+  }
+
+  /// カードを墓地へ送り、該当する [when] のアビリティをトリガーキューに積む共通ヘルパー。
+  static void _sendToGrave(GameState state, CardInstance card, TriggerWhen when) {
+    state.grave.add(card);
+    for (final ability in card.card.abilities) {
+      if (ability.when == when) {
+        TriggerService.enqueueAbility(state, card, ability);
+      }
     }
   }
 }

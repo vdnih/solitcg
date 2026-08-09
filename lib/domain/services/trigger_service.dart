@@ -1,7 +1,6 @@
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
-import '../models/choice_request.dart';
 import '../models/game_result.dart';
 import '../models/trigger.dart';
 import '../commands/operation_executor.dart';
@@ -112,15 +111,7 @@ class TriggerService {
         final remaining = effects.skip(i + 1).toList();
         if (remaining.isNotEmpty) {
           final current = state.choiceRequest.value!;
-          state.choiceRequest.value = ChoiceRequest(
-            type: current.type,
-            count: current.count,
-            candidates: current.candidates,
-            sourceZone: current.sourceZone,
-            targetZone: current.targetZone,
-            message: current.message,
-            pendingEffects: remaining,
-          );
+          state.choiceRequest.value = current.withPendingEffects(remaining);
         }
         return GameResult.pending(logs: logs);
       }

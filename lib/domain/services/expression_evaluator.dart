@@ -1,6 +1,6 @@
 import '../../core/game_state.dart';
 import '../models/card_instance.dart';
-import '../models/game_zone.dart';
+import './zone_resolver.dart';
 
 /// 文字列表現を評価して true/false を返す簡易式評価機。
 class ExpressionEvaluator {
@@ -182,30 +182,7 @@ class ExpressionEvaluator {
       // TODO: 将来的に相手のゾーンを参照する処理を実装する場合に使用
       // final zoneOwner = zoneParts.length > 1 ? zoneParts[1] : 'self';
 
-      GameZone? zone;
-      switch (zoneName) {
-        case 'hand':
-          zone = state.hand;
-          break;
-        case 'board':
-          zone = state.board;
-          break;
-        case 'deck':
-          zone = state.deck;
-          break;
-        case 'grave':
-          zone = state.grave;
-          break;
-        case 'domain':
-          zone = state.domain;
-          break;
-        case 'extra':
-          zone = state.extra;
-          break;
-        case 'field':
-          zone = state.board;
-          break; // 後方互換性
-      }
+      final zone = ZoneResolver.byName(state, zoneName);
 
       if (zone == null) {
         return 0;
