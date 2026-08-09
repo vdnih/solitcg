@@ -4,12 +4,10 @@ import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
-import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
-import '../../domain/commands/operation_executor.dart';
+import '../../domain/services/choice_resolver.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
-import '../../domain/services/zone_resolver.dart';
 import '../components/board_component.dart';
 
 /// ゲーム全体のライフサイクルを管理し、主要なゲームサービスへのアクセスを提供する FlameGame の実装。
@@ -136,75 +134,14 @@ class TCGGame extends FlameGame {
   /// プレイヤーがカード選択を確定し、ChoiceRequest を解決してトリガー解決を再開する。
   ///
   /// [selected] には ChoiceRequest.candidates の中からプレイヤーが選んだカードを渡す。
+  /// 実際の選択適用ロジックは [ChoiceResolver] に委譲する。
   Future<void> resolveChoice(List<CardInstance> selected) async {
-    final request = gameState.choiceRequest.value;
-    if (request == null) return;
+    final result = ChoiceResolver.applySelection(gameState, selected);
+    gameState.addAllToLog(result.logs);
 
-    Map<dynamic, dynamic> dummyUpdate() => {};
-
-    switch (request.type) {
-      case ChoiceType.discard:
-        for (final card in selected) {
-          gameState.hand.remove(card);
-          gameState.grave.add(card);
-          for (final ability in card.card.abilities) {
-            if (ability.when == TriggerWhen.onDiscard) {
-              TriggerService.enqueueAbility(gameState, card, ability);
-            }
-          }
-        }
-        gameState.addToLog('Player discarded ${selected.length} card(s)');
-      case ChoiceType.move:
-        final destination = ZoneResolver.byName(gameState, request.targetZone ?? 'hand');
-        final source = ZoneResolver.byName(gameState, request.sourceZone);
-        if (source != null && destination != null) {
-          for (final card in selected) {
-            source.remove(card);
-            destination.add(card);
-          }
-          gameState.addToLog('Player moved ${selected.length} card(s) to ${request.targetZone}');
-        }
-      case ChoiceType.destroy:
-        for (final card in selected) {
-          gameState.board.remove(card);
-          gameState.grave.add(card);
-          for (final ability in card.card.abilities) {
-            if (ability.when == TriggerWhen.onDestroy) {
-              TriggerService.enqueueAbility(gameState, card, ability);
-            }
-          }
-        }
-        gameState.addToLog('Player destroyed ${selected.length} card(s)');
-    }
-
-    // 残り effect を保存してから ChoiceRequest をクリア
-    final pendingEffects = request.pendingEffects;
-    gameState.choiceRequest.value = null;
-
-    // 中断されたアビリティの残り effect を順次実行
-    for (int i = 0; i < pendingEffects.length; i++) {
-      final effect = pendingEffects[i];
-      final result = OperationExecutor.executeOperation(gameState, effect);
-      gameState.addAllToLog(result.logs);
-
-      if (result.awaitingChoice) {
-        // さらに選択が必要 → 残り effect を新しい choiceRequest に付与して中断
-        final further = pendingEffects.skip(i + 1).toList();
-        if (further.isNotEmpty) {
-          final current = gameState.choiceRequest.value!;
-          gameState.choiceRequest.value = current.withPendingEffects(further);
-        }
-        return; // 次の選択を待つ
-      }
-
-      if (!result.success) {
-        gameState.addToLog('Effect failed after choice: ${effect.op}');
-        break;
-      }
-    }
-
-    // 全 effect 完了 → トリガーキューの残りを再開
-    if (gameState.choiceRequest.value == null) {
+    // 選択待ちに戻っていなければ、トリガーキューの残りを再開する
+    if (!result.awaitingChoice && gameState.choiceRequest.value == null) {
+      Map<dynamic, dynamic> dummyUpdate() => {};
       final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
       gameState.addAllToLog(resolveResult.logs);
     }

@@ -15,7 +15,8 @@ enum ChoiceType {
 /// [TCGGame.resolveChoice] が呼ばれてトリガー解決が再開される。
 ///
 /// [pendingEffects] は、この選択が中断した時点のアビリティ内の残り effect。
-/// 選択解決後に順次実行される。
+/// 選択解決後に順次実行される。[sourceCard] はその effect の発生元カードで、
+/// add_counter 等 source を要求する op を選択解決後も実行できるようにする。
 class ChoiceRequest {
   final ChoiceType type;
   final int count;
@@ -24,6 +25,7 @@ class ChoiceRequest {
   final String? targetZone;
   final String? message;
   final List<EffectStep> pendingEffects;
+  final CardInstance? sourceCard;
 
   ChoiceRequest({
     required this.type,
@@ -33,6 +35,7 @@ class ChoiceRequest {
     this.targetZone,
     this.message,
     this.pendingEffects = const [],
+    this.sourceCard,
   });
 
   /// [pendingEffects] だけを差し替えたコピーを返す。
@@ -45,6 +48,7 @@ class ChoiceRequest {
       targetZone: targetZone,
       message: message,
       pendingEffects: effects,
+      sourceCard: sourceCard,
     );
   }
 }

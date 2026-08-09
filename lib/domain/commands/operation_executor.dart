@@ -21,13 +21,13 @@ class OperationExecutor {
           final count = effect.params['count'] as int? ?? 1;
           return DrawCardCommand(count: count).execute(state);
         case 'discard':
-          return _executeDiscard(state, effect.params);
+          return _executeDiscard(state, effect.params, source);
         case 'search':
           return _executeSearch(state, effect.params);
         case 'move':
-          return _executeMove(state, effect.params);
+          return _executeMove(state, effect.params, source);
         case 'destroy':
-          return _executeDestroy(state, effect.params);
+          return _executeDestroy(state, effect.params, source);
         case 'win':
           return _executeWin(state);
         case 'win_if':
@@ -66,7 +66,8 @@ class OperationExecutor {
     return GameResult.success(logs: ['Require passed: $expr']);
   }
 
-  static GameResult _executeDiscard(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeDiscard(
+      GameState state, Map<String, dynamic> params, CardInstance? sourceCard) {
     final from = params['from'] as String? ?? 'hand';
     final count = params['count'] as int? ?? 1;
     final filter = _parseFilter(params['filter']);
@@ -94,6 +95,7 @@ class OperationExecutor {
         candidates: candidates,
         sourceZone: from,
         message: 'フィルタに一致するカードを$count枚選んでください',
+        source: sourceCard,
       );
     }
 
@@ -141,7 +143,8 @@ class OperationExecutor {
     return GameResult.success(logs: logs);
   }
 
-  static GameResult _executeMove(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeMove(
+      GameState state, Map<String, dynamic> params, CardInstance? sourceCard) {
     final fromZone = params['from'] as String?;
     final toZone = params['to'] as String?;
     final target = params['target'] as String? ?? 'any';
@@ -174,6 +177,7 @@ class OperationExecutor {
         sourceZone: fromZone,
         targetZone: toZone,
         message: '移動するカードを$count枚選んでください',
+        source: sourceCard,
       );
     }
 
@@ -188,7 +192,8 @@ class OperationExecutor {
     return GameResult.success(logs: logs);
   }
 
-  static GameResult _executeDestroy(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeDestroy(
+      GameState state, Map<String, dynamic> params, CardInstance? sourceCard) {
     final targetRaw = params['target'] as String? ?? 'board';
     var filter = _parseFilter(params['filter']);
     var selection = params['selection'] as String?;
@@ -230,6 +235,7 @@ class OperationExecutor {
           candidates: candidates,
           sourceZone: 'board',
           message: '破壊するカードを$count枚選んでください',
+          source: sourceCard,
         );
       }
 
@@ -391,6 +397,7 @@ class OperationExecutor {
     required String sourceZone,
     String? targetZone,
     required String message,
+    CardInstance? source,
   }) {
     state.choiceRequest.value = ChoiceRequest(
       type: type,
@@ -399,6 +406,7 @@ class OperationExecutor {
       sourceZone: sourceZone,
       targetZone: targetZone,
       message: message,
+      sourceCard: source,
     );
     return GameResult.pending(logs: ['Awaiting player choice for ${type.name}']);
   }
