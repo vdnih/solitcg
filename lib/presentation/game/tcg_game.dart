@@ -4,6 +4,7 @@ import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
+import '../../domain/models/card_selection_state.dart';
 import '../../domain/models/deck.dart';
 import '../../domain/services/choice_resolver.dart';
 import '../../domain/services/field_rule.dart';
@@ -197,5 +198,50 @@ class TCGGame extends FlameGame {
     if (!resolveResult.success) {
       gameState.addToLog('トリガー解決に失敗しました: ${resolveResult.error}');
     }
+  }
+
+  /// 手札カードがタップされたときの選択/プレイ判定を行う。
+  ///
+  /// 既に選択中のカードを再タップした場合はプレイを実行し、
+  /// それ以外の場合は選択状態にする。`BoardComponent` から委譲される。
+  void onHandCardTapped(CardInstance card) {
+    final sel = gameState.selectedCard.value;
+    final idx =
+        gameState.hand.cards.indexWhere((c) => c.instanceId == card.instanceId);
+    if (idx == -1) return;
+
+    if (sel?.card.instanceId == card.instanceId) {
+      gameState.selectCard(null);
+      playCardFromHand(idx);
+    } else {
+      gameState.selectCard(CardSelectionState(
+        card: card,
+        zone: SelectionZone.hand,
+        handIndex: idx,
+      ));
+    }
+  }
+
+  /// ボードカードがタップされたときの選択/起動判定を行う。
+  ///
+  /// activated 能力を持つカードを選択中に再タップした場合は発動し、
+  /// それ以外の場合は選択状態にする。`BoardComponent` から委譲される。
+  void onBoardCardTapped(CardInstance card) {
+    final sel = gameState.selectedCard.value;
+    final hasActivated =
+        card.card.abilities.any((a) => a.when == TriggerWhen.activated);
+
+    if (hasActivated && sel?.card.instanceId == card.instanceId) {
+      gameState.selectCard(null);
+      activateCardOnBoard(card);
+    } else {
+      gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
+    }
+  }
+
+  /// ドメインカードがタップされたときの選択判定を行う。
+  /// `BoardComponent` から委譲される。
+  void onDomainCardTapped(CardInstance card) {
+    gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
   }
 }

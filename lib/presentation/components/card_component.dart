@@ -155,12 +155,9 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
     // モンスター・リチュアルのステータス
     if (card.card.type == CardType.monster || card.card.type == CardType.ritual) {
       final s = card.stats;
-      // ignore: unnecessary_null_comparison
-      if (s != null) {
-        _drawStatsBadge(canvas, 'ATK ${s.atk}', size.y - 38);
-        _drawStatsBadge(canvas, 'DEF ${s.def}', size.y - 26);
-        _drawStatsBadge(canvas, 'HP  ${s.hp}', size.y - 14);
-      }
+      _drawStatsBadge(canvas, 'ATK ${s.atk}', size.y - 38);
+      _drawStatsBadge(canvas, 'DEF ${s.def}', size.y - 26);
+      _drawStatsBadge(canvas, 'HP  ${s.hp}', size.y - 14);
     } else {
       // 種別バッジ（下部）
       final typePainter = material.TextPainter(
