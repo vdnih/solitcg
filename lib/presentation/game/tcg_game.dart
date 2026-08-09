@@ -142,27 +142,6 @@ class TCGGame extends FlameGame {
     // ゲーム状態の変更は、リアクティブにUIコンポーネントに通知される
   }
 
-  /// ドローフェイズを実行します。
-  ///
-  /// activated 使用済みフラグをリセットし、デッキから1枚引きます。
-  void drawPhase() {
-    if (gameState.isGameOver) return;
-
-    // activated の1ターン1度制限をリセット
-    gameState.activatedThisTurn.clear();
-
-    if (gameState.deck.isEmpty) {
-      gameState.addToLog('デッキが0枚です。ターン終了時に勝利判定を行います。');
-      return;
-    }
-
-    final card = gameState.deck.removeAt(0);
-    if (card != null) {
-      gameState.hand.add(card);
-      gameState.addToLog('ドロー: ${card.card.name}');
-    }
-  }
-
   /// プレイヤーがカード選択を確定し、ChoiceRequest を解決してトリガー解決を再開する。
   ///
   /// [selected] には ChoiceRequest.candidates の中からプレイヤーが選んだカードを渡す。

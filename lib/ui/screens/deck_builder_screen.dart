@@ -97,7 +97,7 @@ class DeckBuilderScreen extends ConsumerWidget {
       DropdownButton<DeckType>(
         value: deck.type,
         items: DeckType.values.map((type) {
-          String label = type == DeckType.main ? 'メイン' : 'エクストラ';
+          final String label = type == DeckType.main ? 'メイン' : 'エクストラ';
           return DropdownMenuItem(
               value: type,
               child: Padding(
@@ -234,8 +234,9 @@ class _DeckContentView extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final entry = cardEntries[index];
                     final card = cardMap[entry.key];
-                    if (card == null)
+                    if (card == null) {
                       return ListTile(title: Text('不明なカード: ${entry.key}'));
+                    }
 
                     return ListTile(
                       title: Text(card.name),
@@ -315,7 +316,9 @@ class _CardCollectionViewState extends ConsumerState<_CardCollectionView> {
       if (_searchQuery != null && _searchQuery!.isNotEmpty) {
         final query = _searchQuery!.toLowerCase();
         if (!card.name.toLowerCase().contains(query) &&
-            !card.text.toLowerCase().contains(query)) return false;
+            !card.text.toLowerCase().contains(query)) {
+          return false;
+        }
       }
       return true;
     }).toList();
@@ -364,8 +367,9 @@ class _CardCollectionViewState extends ConsumerState<_CardCollectionView> {
                               availableTags: availableTags,
                               initialSelectedTag: _filterTag),
                         );
-                        if (selectedTag != _filterTag)
+                        if (selectedTag != _filterTag) {
                           setState(() => _filterTag = selectedTag);
+                        }
                       },
                       child: Text('タグ: ${_filterTag ?? "すべて"}'),
                     ),

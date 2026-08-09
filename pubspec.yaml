@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
   flame: ^1.11.0
   yaml: ^3.1.2
-  collection: ^1.18.0
   flutter_riverpod: ^2.5.0
   path_provider: ^2.1.5
   universal_html: ^2.2.4
@@ -24,7 +23,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

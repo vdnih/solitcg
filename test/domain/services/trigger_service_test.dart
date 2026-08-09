@@ -14,13 +14,6 @@ CardInstance _makeCard(String id, CardType type) {
   );
 }
 
-Ability _makeWinAbility() {
-  return Ability(
-    when: TriggerWhen.onPlay,
-    effects: [const EffectStep(op: 'win', params: {})],
-  );
-}
-
 Ability _makeWinAbilityWithPre(String preExpr) {
   return Ability(
     when: TriggerWhen.onPlay,

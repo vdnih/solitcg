@@ -116,7 +116,7 @@ class DeckRepository {
       }
       
       if (jsonData != null && jsonData.isNotEmpty) {
-        final Map<String, dynamic> decodedJson = jsonDecode(jsonData);
+        final decodedJson = jsonDecode(jsonData) as Map<String, dynamic>;
         return DeckCollection.fromJson(decodedJson);
       }
       

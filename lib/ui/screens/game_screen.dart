@@ -95,17 +95,6 @@ class _GameScreenState extends State<GameScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-              overlayBuilderMap: {
-                'pause': (context, TCGGame game) => Center(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Text(
-                      '一時停止中',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
-                    ),
-                  ),
-                ),
-              },
             ),
           ),
           // カード選択オーバーレイ（ChoiceRequest 発生時に表示）

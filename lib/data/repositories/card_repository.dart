@@ -228,31 +228,4 @@ class CardRepository {
 
     return cards;
   }
-
-  /// カードデータが基本的な要件を満たしているか検証する。
-  static bool validateCard(CardData card) {
-    if (card.id.isEmpty || card.name.isEmpty) return false;
-
-    switch (card.type) {
-      case CardType.monster:
-      case CardType.ritual:
-        if (card.stats == null) return false;
-        break;
-      case CardType.equip:
-        if (card.equip == null) return false;
-        break;
-      case CardType.domain:
-        break;
-      default:
-        break;
-    }
-
-    for (final ability in card.abilities) {
-      for (final effect in ability.effects) {
-        if (effect.op.isEmpty) return false;
-      }
-    }
-
-    return true;
-  }
 }
