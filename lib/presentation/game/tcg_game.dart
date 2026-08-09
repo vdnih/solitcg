@@ -58,6 +58,8 @@ class TCGGame extends FlameGame {
       final card = await CardRepository.loadCard(cardId);
       if (card != null) {
         cards.add(card);
+      } else {
+        gameState.addToLog('Warning: Unknown card ID "$cardId" in deck, skipped.');
       }
     }
 

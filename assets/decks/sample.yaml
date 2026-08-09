@@ -1,0 +1,43 @@
+id: sample_mahou_sho
+name: サンプルデッキ＿魔法省
+cards:
+  - id: activated_artifact
+    count: 4
+  - id: atf_crystal_001
+    count: 4
+  - id: dmn_mahou_001
+    count: 4
+  - id: mon_crystal_looters_001
+    count: 4
+  - id: mon_akuma_001
+    count: 4
+  - id: mon_robot_001
+    count: 4
+  - id: simple_draw_001
+    count: 4
+  - id: spl_construction_plan_001
+    count: 4
+  - id: spl_mining_gem_001
+    count: 4
+  - id: spl_typhoon
+    count: 4
+  - id: atf_crystal_002
+    count: 1
+  - id: mon_warrior_001
+    count: 1
+  - id: spl_haku
+    count: 1
+  - id: spl_hatsu
+    count: 1
+  - id: spl_chun
+    count: 1
+  - id: spl_daisangen
+    count: 1
+  - id: atf_van_001
+    count: 1
+  - id: dmn_van_001
+    count: 1
+  - id: mon_van_001
+    count: 1
+  - id: dmn_suiryoku_001
+    count: 1

@@ -1,21 +1,21 @@
 cards:
-  - simple_draw.yaml
-  - artifact_crystal.yaml
-  - monster_basic.yaml
-  - van001.yaml
+  - simple_draw_001.yaml
+  - atf_crystal_001.yaml
+  - mon_warrior_001.yaml
+  - mon_van_001.yaml
   - spl_typhoon.yaml
-  - van_art.yaml
-  - van_domain.yaml
+  - atf_van_001.yaml
+  - dmn_van_001.yaml
   - spl_haku.yaml
   - spl_hatsu.yaml
   - spl_chun.yaml
   - spl_daisangen.yaml
-  - monster_akuma.yaml
-  - artifact_crystal_recycle.yaml
+  - mon_akuma_001.yaml
+  - atf_crystal_002.yaml
   - activated_artifact.yaml
-  - monster_robot.yaml
+  - mon_robot_001.yaml
   - mon_crystal_looters_001.yaml
-  - spl_mining_gem.yaml
+  - spl_mining_gem_001.yaml
   - dmn_suiryoku_001.yaml
   - dmn_mahou_001.yaml
   - spl_construction_plan_001.yaml
