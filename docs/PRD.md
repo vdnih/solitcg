@@ -25,26 +25,34 @@ Flutter/Flame で開発し、Web ブラウザ上で即座にプレイできる�
 
 ### Phase 1 — MVP（実装済み）
 
-| ID | 機能名 | 概要 |
-|---|---|---|
-| F-001 | コアゲームエンジン | GameState（SSoT）、Command パターン、FIFO トリガーキュー |
-| F-002 | YAML カード読み込み | assets/cards/ の YAML を読み込み CardData へパース |
-| F-003 | Flame ボードレンダリング | TCGGame、BoardComponent、CardComponent による盤面描画 |
-| F-004 | ゾーン UI（手札/場/墓地） | 各 GameZone の表示と基本的なカード操作 |
-| F-005 | ドメインカード置換裁定 | 新 on_play → 旧移送 → 旧 on_destroy の順序保証 |
-| F-006 | Firebase Auth（Google ログイン） | Google Sign-In によるプレイヤー認証 |
-| F-007 | Firestore デッキ永続化 | 構築済みデッキのクラウド保存・読み込み |
-| F-008 | デッキビルダー画面 | カード一覧からデッキを構築・保存する UI |
+各機能の実装パス・テストパスは以下の通り。ステータスが 🟡 の項目は、依存パッケージは
+`pubspec.yaml` に宣言されているが `lib/` からは未接続であることを示す。
+
+| ID | 機能名 | 状態 | 実装パス | テストパス |
+|---|---|---|---|---|
+| F-001 | コアゲームエンジン | 🟢 | `lib/core/game_state.dart`<br>`lib/domain/commands/`<br>`lib/domain/services/trigger_service.dart` | `test/domain/commands/`<br>`test/domain/models/` |
+| F-002 | YAML カード読み込み | 🟢 | `lib/data/repositories/card_repository.dart` | `test/data/card_repository_test.dart`<br>`test/data/card_asset_loading_test.dart` |
+| F-003 | Flame ボードレンダリング | 🟢 | `lib/presentation/game/tcg_game.dart`<br>`lib/presentation/components/` | `test/presentation/`（BoardLayout/BoardScrollController のみ。Flame コンポーネント自体のテストは未整備） |
+| F-004 | ゾーン UI（手札/場/墓地） | 🟢 | `lib/presentation/components/board_component.dart` | （ウィジェットテスト未整備） |
+| F-005 | ドメインカード置換裁定 | 🟢 | `lib/domain/services/field_rule.dart` | `test/domain/services/` |
+| F-006 | Firebase Auth（Google ログイン） | 🟡 未接続 | `lib/firebase_options.dart`（設定のみ） | — |
+| F-007 | デッキ永続化 | 🟢 ※ | `lib/data/repositories/deck_repository.dart` | （手動テストのみ） |
+| F-008 | デッキビルダー画面 | 🟢 | `lib/ui/screens/deck_builder_screen.dart`<br>`lib/providers/deck_provider.dart` | （ウィジェットテスト未整備） |
+
+> ※ F-007 は当初 Firestore 連携を想定していたが、実際の永続化は
+> `DeckRepository` による localStorage（Web）/ ローカルファイル（ネイティブ）で行っている。
+> `cloud_firestore` パッケージは宣言されているが未接続。
 
 ### Phase 2 — ポスト MVP（計画中）
 
-| ID | 機能名 | 概要 |
-|---|---|---|
-| F-009 | パズルモード | 固定初期状態で「詰めソリティア」を楽しむモード |
-| F-010 | ランダム/シャッフルモード | デッキをシャッフルして N 回試行し成功率を表示 |
-| F-011 | カードアニメーション | プレイ・破壊・ドローの視覚演出 |
-| F-012 | カードプール拡充 | より多様な効果を持つカードを追加（10+ 枚） |
-| F-013 | リプレイシステム | 入力ログの保存と再生 |
+| ID | 機能名 | 状態 | 概要 |
+|---|---|---|---|
+| F-009 | パズルモード | ⚪ | 固定初期状態で「詰めソリティア」を楽しむモード |
+| F-010 | ランダム/シャッフルモード | ⚪ | デッキをシャッフルして N 回試行し成功率を表示 |
+| F-011 | カードアニメーション | ⚪ | プレイ・破壊・ドローの視覚演出 |
+| F-012 | カードプール拡充 | 🟢 | `assets/cards/dmn_mahou_001.yaml` 等、20 種類のカードを実装済み |
+| F-013 | リプレイシステム | ⚪ | 入力ログの保存と再生 |
+| F-014 | カード画像 | ⚪ | `assets/images/cards/` は `.gitkeep` のみで未着手。現状は全カードがグラデーション矩形で代替表示される |
 
 ### Phase 3 — 将来構想（スコープ外）
 
@@ -73,4 +81,5 @@ Flutter/Flame で開発し、Web ブラウザ上で即座にプレイできる�
 
 | バージョン | 日付 | 変更内容 |
 |---|---|---|
+| 1.1 | 2026-08-09 | `feature_registry.md` を統合。F-006/F-007 の Firebase 接続状況を実態に修正 |
 | 1.0 | 2026-04-06 | 初版作成（ドキュメント体系整備に伴い CLAUDE.md から分離） |

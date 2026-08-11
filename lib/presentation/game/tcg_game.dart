@@ -131,7 +131,10 @@ class TCGGame extends FlameGame {
       gameState.addToLog('Trigger resolution failed: ${resolveResult.error}');
     }
 
-    // ゲーム状態の変更は、リアクティブにUIコンポーネントに通知される
+    // GameState 自体には変更通知の仕組みがない。Flutter 側は
+    // actionLogNotifier/choiceRequest/selectedCard/gameOverNotifier の
+    // 4つの ValueNotifier 経由で更新を受け取り、Flame 側（BoardComponent）は
+    // 毎フレーム update() で GameState を再読み込みして差分を検出している。
   }
 
   /// プレイヤーがカード選択を確定し、ChoiceRequest を解決してトリガー解決を再開する。

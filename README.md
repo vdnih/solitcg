@@ -22,7 +22,6 @@ GameState が Single Source of Truth として全ゲーム状態を管理し、�
 | [TESTING_POLICY.md](docs/TESTING_POLICY.md) | テスト方針 |
 | [CARD_YAML_SPEC.md](docs/CARD_YAML_SPEC.md) | カード定義 YAML スキーマ |
 | [GAME_RULES.md](docs/GAME_RULES.md) | プレイヤー向けゲームルール |
-| [feature_registry.md](docs/feature_registry.md) | 機能 ID とコード/テストパスの対応表 |
 | [adr/](docs/adr/) | Architecture Decision Records |
 
 ## はじめに
@@ -59,7 +58,7 @@ flutter test
 ### ビルド（Web）
 
 ```bash
-flutter build web --web-renderer canvaskit
+flutter build web --release
 ```
 
 ## ディレクトリ構造
