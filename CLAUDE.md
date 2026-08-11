@@ -53,3 +53,4 @@ flutter run -d chrome                # ローカル実行
   - `docs: SPEC.md にトリガー解決ルールを追記`
   - `fix: ドメイン置換時の on_destroy 発火順序を修正`
 - `main` ブランチへの push・merge は禁止（人間のみが実行する）。
+- PR のマージは Squash and merge（詳細は `projects/CLAUDE.md`）
