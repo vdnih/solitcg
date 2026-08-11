@@ -1,7 +1,5 @@
 import '../../core/game_state.dart';
-import '../models/card_data.dart';
 import '../models/game_result.dart';
-import '../services/trigger_service.dart';
 import './card_effect_command.dart';
 
 /// カードを引く効果を表すコマンド。

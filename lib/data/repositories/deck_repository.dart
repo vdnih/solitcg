@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 import 'package:universal_html/html.dart' as html;
+import 'package:yaml/yaml.dart';
 
 import '../../domain/models/card_data.dart';
 import '../../domain/models/deck.dart';
@@ -12,56 +14,25 @@ import '../../domain/models/deck_rules.dart';
 class DeckRepository {
   static const String deckFileName = 'decks.json';
   static const String localStorageKey = 'solitcg_decks';
-  
-  /// サンプルデッキ＿魔法省（読み取り専用）
-  static Deck get sampleDeckMahou {
-    const cardIds = [
-      'activated_artifact',
-      'activated_artifact',
-      'activated_artifact',
-      'activated_artifact',
-      'atf_crystal_001',
-      'atf_crystal_001',
-      'atf_crystal_001',
-      'atf_crystal_001',
-      'dmn_mahou_001',
-      'dmn_mahou_001',
-      'dmn_mahou_001',
-      'dmn_mahou_001',
-      'mon_crystal_looters_001',
-      'mon_crystal_looters_001',
-      'mon_crystal_looters_001',
-      'mon_crystal_looters_001',
-      'mon_akuma_001',
-      'mon_akuma_001',
-      'mon_akuma_001',
-      'mon_akuma_001',
-      'mon_robot_001',
-      'mon_robot_001',
-      'mon_robot_001',
-      'mon_robot_001',
-      'simple_draw_001',
-      'simple_draw_001',
-      'simple_draw_001',
-      'simple_draw_001',
-      'spl_construction_plan_001',
-      'spl_construction_plan_001',
-      'spl_construction_plan_001',
-      'spl_construction_plan_001',
-      'spl_mining_gem_001',
-      'spl_mining_gem_001',
-      'spl_mining_gem_001',
-      'spl_mining_gem_001',
-      'spl_typhoon',
-      'spl_typhoon',
-      'spl_typhoon',
-      'spl_typhoon',
-    ];
+  static const String sampleDeckAssetPath = 'assets/decks/sample.yaml';
+
+  /// サンプルデッキ＿魔法省（読み取り専用）を assets/decks/sample.yaml から読み込む。
+  static Future<Deck> loadSampleDeckMahou() async {
+    final yamlContent = await rootBundle.loadString(sampleDeckAssetPath);
+    final doc = loadYaml(yamlContent) as Map;
+
+    final cardIds = <String>[];
+    for (final entry in doc['cards'] as List) {
+      final id = entry['id'] as String;
+      final count = entry['count'] as int;
+      cardIds.addAll(List.filled(count, id));
+    }
+
     return Deck(
-      id: 'sample_mahou_sho',
-      name: 'サンプルデッキ＿魔法省',
+      id: doc['id'] as String,
+      name: doc['name'] as String,
       type: DeckType.main,
-      cardIds: List<String>.from(cardIds),
+      cardIds: cardIds,
       isReadOnly: true,
     );
   }
@@ -116,7 +87,7 @@ class DeckRepository {
       }
       
       if (jsonData != null && jsonData.isNotEmpty) {
-        final Map<String, dynamic> decodedJson = jsonDecode(jsonData);
+        final decodedJson = jsonDecode(jsonData) as Map<String, dynamic>;
         return DeckCollection.fromJson(decodedJson);
       }
       

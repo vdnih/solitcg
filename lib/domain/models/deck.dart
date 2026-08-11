@@ -30,7 +30,7 @@ class Deck {
   
   /// カードを削除
   bool removeCard(String cardId) {
-    int index = cardIds.indexOf(cardId);
+    final index = cardIds.indexOf(cardId);
     if (index >= 0) {
       cardIds.removeAt(index);
       return true;
@@ -65,10 +65,10 @@ class Deck {
     }
     
     return Deck(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] as String,
+      name: json['name'] as String,
       type: deckType,
-      cardIds: List<String>.from(json['cardIds']),
+      cardIds: List<String>.from(json['cardIds'] as Iterable),
     );
   }
 }
@@ -84,7 +84,7 @@ class DeckCollection {
   
   /// デッキを削除
   bool removeDeck(String deckId) {
-    int index = decks.indexWhere((deck) => deck.id == deckId);
+    final index = decks.indexWhere((deck) => deck.id == deckId);
     if (index >= 0) {
       decks.removeAt(index);
       return true;
@@ -110,11 +110,11 @@ class DeckCollection {
   
   /// JSONからコレクションを生成
   static DeckCollection fromJson(Map<String, dynamic> json) {
-    DeckCollection collection = DeckCollection();
+    final collection = DeckCollection();
     
     if (json['decks'] != null) {
-      for (var deckJson in json['decks']) {
-        collection.decks.add(Deck.fromJson(deckJson));
+      for (final deckJson in json['decks'] as Iterable) {
+        collection.decks.add(Deck.fromJson(deckJson as Map<String, dynamic>));
       }
     }
     

@@ -46,3 +46,8 @@ app.*.map.json
 
 # Claude Code local settings
 .claude/settings.local.json
+.claude/worktrees/
+.claire/
+
+# Local environment (Bedrock/model config etc.)
+.env

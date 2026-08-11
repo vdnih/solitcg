@@ -1,7 +1,6 @@
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
-import '../models/choice_request.dart';
 import '../models/game_result.dart';
 import '../models/trigger.dart';
 import '../commands/operation_executor.dart';
@@ -33,8 +32,10 @@ class TriggerService {
   /// キュー内のトリガーを順に解決する。
   /// UI更新コールバックを挟みながら非同期で処理する。
   /// ループ防止のため最大100回まで実行する。
+  /// [stepDelay] はトリガー解決前に待機する時間。テストでは `Duration.zero` を渡す。
   static Future<GameResult> resolveAll(
-      GameState state, Function onUpdate) async {
+      GameState state, Function onUpdate,
+      {Duration stepDelay = const Duration(seconds: 1)}) async {
     final logs = <String>[];
     int iterations = 0;
     const maxIterations = 100;
@@ -48,7 +49,7 @@ class TriggerService {
 
       // 解決前にUIを更新して待機
       onUpdate();
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(stepDelay);
 
       final trigger = state.triggerQueue.removeFirst();
       logs.add('Resolving: ${trigger.source.card.name}');
@@ -81,30 +82,32 @@ class TriggerService {
 
   /// 単一のトリガーを解決する。
   static GameResult _resolveTrigger(GameState state, Trigger trigger) {
-    final logs = <String>[];
-
     if (trigger.ability.pre != null && trigger.ability.pre!.isNotEmpty) {
-      // すべての事前条件をチェック
-      bool allPreConditionsMet = true;
       for (final condition in trigger.ability.pre!) {
         final conditionResult =
           ExpressionEvaluator.evaluate(state, condition, self: trigger.source);
         if (!conditionResult) {
-          allPreConditionsMet = false;
-          break;
+          return GameResult.success(logs: ['Pre-condition failed, skipping effect']);
         }
-      }
-
-      if (!allPreConditionsMet) {
-        logs.add('Pre-condition failed, skipping effect');
-        return GameResult.success(logs: logs);
       }
     }
 
-    final effects = trigger.ability.effects;
+    return runEffects(state, trigger.ability.effects, source: trigger.source);
+  }
+
+  /// 一連の EffectStep を順に実行する。
+  ///
+  /// プレイヤーの選択待ちで中断した場合は、残り effect を
+  /// [GameState.choiceRequest] の pendingEffects に格納して pending を返す。
+  /// アビリティ解決（[_resolveTrigger]）と選択解決後の残り effect 実行
+  /// （[ChoiceResolver.applySelection]）の両方から呼ばれる共通ロジック。
+  static GameResult runEffects(
+      GameState state, List<EffectStep> effects, {CardInstance? source}) {
+    final logs = <String>[];
+
     for (int i = 0; i < effects.length; i++) {
       final effect = effects[i];
-      final result = OperationExecutor.executeOperation(state, effect, source: trigger.source);
+      final result = OperationExecutor.executeOperation(state, effect, source: source);
       logs.addAll(result.logs);
 
       if (result.awaitingChoice) {
@@ -112,15 +115,7 @@ class TriggerService {
         final remaining = effects.skip(i + 1).toList();
         if (remaining.isNotEmpty) {
           final current = state.choiceRequest.value!;
-          state.choiceRequest.value = ChoiceRequest(
-            type: current.type,
-            count: current.count,
-            candidates: current.candidates,
-            sourceZone: current.sourceZone,
-            targetZone: current.targetZone,
-            message: current.message,
-            pendingEffects: remaining,
-          );
+          state.choiceRequest.value = current.withPendingEffects(remaining);
         }
         return GameResult.pending(logs: logs);
       }

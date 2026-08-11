@@ -56,7 +56,7 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   // デッキコレクションの読み込み
   Future<void> loadDecks() async {
     final loaded = await DeckRepository.loadDecks();
-    final sample = DeckRepository.sampleDeckMahou;
+    final sample = await DeckRepository.loadSampleDeckMahou();
     state = DeckCollection()..decks = [sample, ...loaded.decks];
   }
   
@@ -127,7 +127,7 @@ class DeckCollectionNotifier extends StateNotifier<DeckCollection> {
   // デフォルトデッキの作成
   Future<void> createDefaultDecks(List<CardData> allCards) async {
     final defaultCollection = await DeckRepository.createDefaultDecks(allCards);
-    final sample = DeckRepository.sampleDeckMahou;
+    final sample = await DeckRepository.loadSampleDeckMahou();
     state = DeckCollection()..decks = [sample, ...defaultCollection.decks];
     _saveDecks();
   }

@@ -40,6 +40,27 @@ abilities:                    # 任意。0個以上
 
 > `priority` フィールドは廃止。同時トリガーはプレイヤーが投入順を選択する。
 
+### 1.1 カードID命名規則
+
+新規カードの `id` は `<type3文字>_<name>_<連番3桁>` 形式を推奨する（例: `mon_warrior_001`）。
+
+| type | プレフィックス | 例 |
+|---|---|---|
+| monster | `mon_` | `mon_warrior_001` |
+| spell | `spl_` | `spl_mining_gem_001` |
+| arcane | `arc_` | - |
+| artifact | `atf_` | `atf_crystal_001` |
+| domain | `dmn_` | `dmn_van_001` |
+| ritual | `rit_` | - |
+| equip | `eqp_` | - |
+| relic | `rlc_` | - |
+
+* 連番はカード名単位（同名カードのバリエーション違い）で振る。3桁でゼロ埋め。
+* `assets/cards/index.yaml` のエントリ順とファイル名は一致させる。
+* 既存カードの一部（`activated_artifact.yaml` / `spl_chun.yaml` / `spl_daisangen.yaml` /
+  `spl_haku.yaml` / `spl_hatsu.yaml` / `spl_typhoon.yaml` / `mon_crystal_looters_001.yaml`）は
+  この規則の制定前に作られ、ゲーム内で参照済みのため未リネーム。新規カードのみ本規則に従う。
+
 ---
 
 ## 2. `type`ごとのルール
@@ -86,10 +107,12 @@ pre:
 
 利用可能な参照例：
 
-* ゾーン数：`hand.count`, `deck.count`, `grave.count`
+* ゾーン数：`hand.count`, `deck.count`, `board.count`, `grave.count`
+* ドメイン・ライフ：`domain.exists`, `player.life`, `opponent.life`
 * タグ/タイプ数：`count(type:'artifact', zone:'board:self')`, `count(tag:'dragon', zone:'hand:self')`
-* カウンタ：`spells_cast_this_turn`
-* 比較演算：`> >= < <= == != && || !`
+* カード固有カウンタ：`self.counter('key')`（`add_counter`/`remove_counter` op で操作。§6.6 参照）
+* 比較演算子（1式につき1つのみ）：`> >= < <= == !=`。`&&`/`||`/前置 `!` は非対応 — 複数条件の
+  AND は `pre` に式を複数並べることで表現する。
 
 ---
 
@@ -145,18 +168,34 @@ pre:
 ### 6.4 勝敗条件
 
 ```yaml
-- { op: win }                                          # 無条件勝利
-- { op: win_if, expr: "spells_cast_this_turn >= 7" }   # 条件付き勝利
-- { op: lose_if, expr: "hand.count == 0 && deck.count == 0" }
+- { op: win }                                # 無条件勝利
+- { op: win_if, expr: "hand.count == 0" }    # 条件付き勝利
+- { op: lose_if, expr: "deck.count == 0" }   # 条件付き敗北
 ```
+
+> `lose_if`/`win_if` の `expr` は比較演算子を1つだけ含む単一式（§4 参照）。
+> `hand.count == 0 && deck.count == 0` のような複合条件は書けない。
 
 ### 6.5 ドメイン操作
 
 ```yaml
-- { op: set_domain, card: "dom_echo_hall" }
+- { op: set_domain, card: "dmn_echo_hall_001" }
 ```
 
-* 新ドメインの `on_play` → 旧ドメイン移送 → 旧 `on_destroy` の順で自動処理（詳細は `SPEC.md §6`）。
+* **未実装**: `set_domain` op は常に failure を返すスタブ実装（カードDB検索ロジック未実装）。
+  現状、ドメインカードは手札から直接プレイすることでのみ場に出せる
+  （新ドメインの `on_play` → 旧ドメイン移送 → 旧 `on_destroy` の順で自動処理。詳細は `SPEC.md §6`）。
+
+### 6.6 カウンター操作
+
+```yaml
+- { op: add_counter, key: "stack", amount: 1 }     # source カードの metadata[key] に加算
+- { op: remove_counter, key: "stack" }             # source カードの metadata[key] を 0 にリセット
+```
+
+* `source`（トリガー発生元カード）の `metadata` に per-card のカウンターを保持する。
+* `pre` 式の `self.counter('key')` で参照できる（§4 参照）。
+* `key` 省略時は `'counter'` がデフォルト。`amount` 省略時は `1`。
 
 ---
 
@@ -245,7 +284,7 @@ abilities:
 
 ---
 
-## 8. カード例
+## 9. カード例
 
 ### ドロー＋捨て
 

@@ -1,5 +1,11 @@
 # 🗺️ TCG風ソリティアゲーム "solitcg" インフラアーキテクチャ設計書 (v1.0)
 
+> **現状（2026-08時点）**: 実際に接続・稼働しているのは **Firebase Hosting のみ**。
+> Authentication / Firestore / Storage は `pubspec.yaml` に依存パッケージとして
+> 宣言されているが、`lib/` 配下のコードからは未接続。デッキ永続化は
+> `DeckRepository` による localStorage（Web）/ ローカルファイル（ネイティブ）で
+> 行っている。以下は将来 Firebase 接続を実装する際の設計案として維持している。
+
 ## 1\. 概要
 
 本ドキュメントは、Flutterで開発する「TCG風ソリティアゲーム (solitcg)」のバックエンドインフラのアーキテクチャを定義するものです。
@@ -58,11 +64,15 @@ Web版でのパフォーマンスを重視し、バックエンドロジック�
 ### 3.4. Firebase Hosting (ホスティング)
 
   * **目的**: ゲーム本体（Flutter Webアプリ）の公開。
-  * **ビルド設定**: ゲームの描画性能を優先するため、`flutter build web --web-renderer canvaskit` を標準ビルドコマンドとします。
+  * **ビルド設定**: `flutter build web --release` を標準ビルドコマンドとします（CanvasKit がデフォルトレンダラー）。
 
 ## 4\. セキュリティ設計 (Security Rules)
 
 「Deny-by-default（原則拒否）」を採用し、データの改ざんを防ぎます。
+
+> **注意**: 以下は設計案であり、`firestore.rules` / `storage.rules` は
+> リポジトリにまだ存在しない。Firestore/Storage を実際に接続する際は、
+> 接続前に必ずルールファイルを作成しデプロイすること。
 
 ### 4.1. Firestore ルール
 

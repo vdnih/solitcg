@@ -4,20 +4,13 @@ import 'package:solitcg/domain/models/card_data.dart';
 import 'package:solitcg/domain/models/card_instance.dart';
 import 'package:solitcg/domain/services/trigger_service.dart';
 
-// resolveAll は内部で await Future.delayed(1s) を含むため、
-// 各テストは最小限のトリガー数（1〜2件）に絞る。
+// resolveAll はデフォルトで各トリガー解決前に 1s 待機するため、
+// テストでは stepDelay: Duration.zero を渡して待機をスキップする。
 
 CardInstance _makeCard(String id, CardType type) {
   return CardInstance(
     card: CardData(id: id, name: id, type: type),
     instanceId: id,
-  );
-}
-
-Ability _makeWinAbility() {
-  return Ability(
-    when: TriggerWhen.onPlay,
-    effects: [const EffectStep(op: 'win', params: {})],
   );
 }
 
@@ -69,7 +62,7 @@ void main() {
       final ability = _makeWinAbilityWithPre('hand.count >= 7');
 
       TriggerService.enqueueAbility(state, card, ability);
-      await TriggerService.resolveAll(state, noopUpdate);
+      await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       expect(state.gameWon, isTrue);
     }, timeout: const Timeout(Duration(seconds: 5)));
@@ -79,7 +72,7 @@ void main() {
       final ability = _makeWinAbilityWithPre('hand.count >= 7');
 
       TriggerService.enqueueAbility(state, card, ability);
-      await TriggerService.resolveAll(state, noopUpdate);
+      await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       expect(state.gameWon, isFalse);
     }, timeout: const Timeout(Duration(seconds: 5)));
@@ -96,7 +89,7 @@ void main() {
       TriggerService.enqueueAbility(state, card1, ability1);
       TriggerService.enqueueAbility(state, card2, ability2);
 
-      final result = await TriggerService.resolveAll(state, noopUpdate);
+      final result = await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       // FIFO: c1 が c2 より先にログに現れる
       final resolvingLogs = result.logs.where((l) => l.contains('Resolving:')).toList();
@@ -108,7 +101,7 @@ void main() {
   // ----------------------------------------------------------------
   group('TriggerService.resolveAll — キューが空', () {
     test('キューが空の場合は即座に success を返す', () async {
-      final result = await TriggerService.resolveAll(state, noopUpdate);
+      final result = await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       expect(result.success, isTrue);
     }, timeout: const Timeout(Duration(seconds: 3)));
@@ -140,7 +133,7 @@ void main() {
       );
 
       TriggerService.enqueueAbility(state, card, ability);
-      final result = await TriggerService.resolveAll(state, noopUpdate);
+      final result = await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       expect(result.awaitingChoice, isTrue);
     }, timeout: const Timeout(Duration(seconds: 5)));
@@ -168,7 +161,7 @@ void main() {
       );
 
       TriggerService.enqueueAbility(state, card, ability);
-      await TriggerService.resolveAll(state, noopUpdate);
+      await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       expect(state.choiceRequest.value, isNotNull);
     }, timeout: const Timeout(Duration(seconds: 5)));
@@ -202,7 +195,7 @@ void main() {
       );
 
       TriggerService.enqueueAbility(state, card, ability);
-      await TriggerService.resolveAll(state, noopUpdate);
+      await TriggerService.resolveAll(state, noopUpdate, stepDelay: Duration.zero);
 
       // 最初の discard 選択待ち中に、move effect が pendingEffects に格納される
       expect(state.choiceRequest.value?.pendingEffects.length, 1);

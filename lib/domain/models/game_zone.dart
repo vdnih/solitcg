@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import './card_instance.dart';
 
 /// ゲーム内でカードが存在する領域。
@@ -26,10 +28,20 @@ class GameZone {
 
   List<CardInstance> where(bool Function(CardInstance) test) => cards.where(test).toList();
   CardInstance? firstWhere(bool Function(CardInstance) test) {
-    try {
-      return cards.firstWhere(test);
-    } catch (e) {
-      return null;
+    for (final card in cards) {
+      if (test(card)) return card;
+    }
+    return null;
+  }
+
+  /// Fisher-Yates アルゴリズムでゾーン内のカードをシャッフルする。
+  void shuffle({Random? random}) {
+    final rng = random ?? Random();
+    for (int i = cards.length - 1; i > 0; i--) {
+      final j = rng.nextInt(i + 1);
+      final temp = cards[i];
+      cards[i] = cards[j];
+      cards[j] = temp;
     }
   }
 }

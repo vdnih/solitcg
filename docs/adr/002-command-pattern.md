@@ -30,6 +30,16 @@ switch/if チェーンをゲームループに直書きすると、新しい op 
 - op の種類が増えるにつれてクラス数が増加する。
 - ファクトリの `op` 文字列と YAML の定義を常に同期して維持する必要がある。
 
+> **実装の実態（2026-08 時点）**: 上記の「各 op を独立した具象クラスとして実装」は
+> 実現していない。実際には `draw` のみが `DrawCardCommand` サブクラスを持ち、
+> 残り 13 op（destroy / discard / move / search / modify_stat / win / win_if /
+> lose_if / add_counter / remove_counter / summon / set_domain 等）は
+> `OperationExecutor.executeOperation` 内の switch 文による静的メソッドディスパッチで
+> 実装されている。理由は、MVP 期間中は op 数が少なくクラス化のオーバーヘッドが
+> 見合わなかったため。新しい op を追加する際は、既定でこの静的ディスパッチ方式に従うこと
+> （`CLAUDE.md` 参照）。`CardEffectCommand` サブクラスへの回帰は本 ADR の元々の狙い
+> （独立テスト容易性・リプレイ対応）が必要になった時点で再検討する。
+
 ## References
 
 - `lib/domain/commands/card_effect_command.dart`

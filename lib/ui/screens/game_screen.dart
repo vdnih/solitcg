@@ -7,6 +7,7 @@ import '../../domain/models/choice_request.dart';
 import '../../domain/models/deck.dart';
 import '../../presentation/game/tcg_game.dart';
 import '../../routes.dart';
+import '../theme/game_theme.dart';
 import '../widgets/card_detail_panel.dart';
 import '../widgets/choice_overlay.dart';
 import '../widgets/game_over_overlay.dart';
@@ -69,7 +70,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: GameTheme.boardBg,
       body: Stack(
         children: [
           Listener(
@@ -86,7 +87,7 @@ class _GameScreenState extends State<GameScreen> {
               game: _game,
               loadingBuilder: (context) => const Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFFFFD700),
+                  color: GameTheme.selectionGlow,
                 ),
               ),
               errorBuilder: (context, error) => Center(
@@ -95,17 +96,6 @@ class _GameScreenState extends State<GameScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-              overlayBuilderMap: {
-                'pause': (context, TCGGame game) => Center(
-                  child: Container(
-                    color: Colors.black54,
-                    child: const Text(
-                      '一時停止中',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
-                    ),
-                  ),
-                ),
-              },
             ),
           ),
           // カード選択オーバーレイ（ChoiceRequest 発生時に表示）

@@ -1,15 +1,12 @@
-import 'dart:math';
-
 import 'package:flame/game.dart';
 
 import '../../core/game_state.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../domain/models/card_data.dart';
 import '../../domain/models/card_instance.dart';
-import '../../domain/models/choice_request.dart';
+import '../../domain/models/card_selection_state.dart';
 import '../../domain/models/deck.dart';
-import '../../domain/models/game_zone.dart';
-import '../../domain/commands/operation_executor.dart';
+import '../../domain/services/choice_resolver.dart';
 import '../../domain/services/field_rule.dart';
 import '../../domain/services/trigger_service.dart';
 import '../components/board_component.dart';
@@ -62,6 +59,8 @@ class TCGGame extends FlameGame {
       final card = await CardRepository.loadCard(cardId);
       if (card != null) {
         cards.add(card);
+      } else {
+        gameState.addToLog('Warning: Unknown card ID "$cardId" in deck, skipped.');
       }
     }
 
@@ -97,14 +96,7 @@ class TCGGame extends FlameGame {
 
   /// デッキのカードをランダムにシャッフルします。
   void _shuffleDeck() {
-    final random = Random();
-    // Fisher-Yates シャッフルアルゴリズム
-    for (int i = gameState.deck.count - 1; i > 0; i--) {
-      final j = random.nextInt(i + 1);
-      final temp = gameState.deck.cards[i];
-      gameState.deck.cards[i] = gameState.deck.cards[j];
-      gameState.deck.cards[j] = temp;
-    }
+    gameState.deck.shuffle();
   }
 
   /// 指定されたインデックスの手札のカードをプレイします。
@@ -139,126 +131,25 @@ class TCGGame extends FlameGame {
       gameState.addToLog('Trigger resolution failed: ${resolveResult.error}');
     }
 
-    // ゲーム状態の変更は、リアクティブにUIコンポーネントに通知される
-  }
-
-  /// ドローフェイズを実行します。
-  ///
-  /// activated 使用済みフラグをリセットし、デッキから1枚引きます。
-  void drawPhase() {
-    if (gameState.isGameOver) return;
-
-    // activated の1ターン1度制限をリセット
-    gameState.activatedThisTurn.clear();
-
-    if (gameState.deck.isEmpty) {
-      gameState.addToLog('デッキが0枚です。ターン終了時に勝利判定を行います。');
-      return;
-    }
-
-    final card = gameState.deck.removeAt(0);
-    if (card != null) {
-      gameState.hand.add(card);
-      gameState.addToLog('ドロー: ${card.card.name}');
-    }
+    // GameState 自体には変更通知の仕組みがない。Flutter 側は
+    // actionLogNotifier/choiceRequest/selectedCard/gameOverNotifier の
+    // 4つの ValueNotifier 経由で更新を受け取り、Flame 側（BoardComponent）は
+    // 毎フレーム update() で GameState を再読み込みして差分を検出している。
   }
 
   /// プレイヤーがカード選択を確定し、ChoiceRequest を解決してトリガー解決を再開する。
   ///
   /// [selected] には ChoiceRequest.candidates の中からプレイヤーが選んだカードを渡す。
+  /// 実際の選択適用ロジックは [ChoiceResolver] に委譲する。
   Future<void> resolveChoice(List<CardInstance> selected) async {
-    final request = gameState.choiceRequest.value;
-    if (request == null) return;
+    final result = ChoiceResolver.applySelection(gameState, selected);
+    gameState.addAllToLog(result.logs);
 
-    Map<dynamic, dynamic> dummyUpdate() => {};
-
-    switch (request.type) {
-      case ChoiceType.discard:
-        for (final card in selected) {
-          gameState.hand.remove(card);
-          gameState.grave.add(card);
-          for (final ability in card.card.abilities) {
-            if (ability.when == TriggerWhen.onDiscard) {
-              TriggerService.enqueueAbility(gameState, card, ability);
-            }
-          }
-        }
-        gameState.addToLog('Player discarded ${selected.length} card(s)');
-      case ChoiceType.move:
-        final destination = _getZoneByName(request.targetZone ?? 'hand');
-        final source = _getZoneByName(request.sourceZone);
-        if (source != null && destination != null) {
-          for (final card in selected) {
-            source.remove(card);
-            destination.add(card);
-          }
-          gameState.addToLog('Player moved ${selected.length} card(s) to ${request.targetZone}');
-        }
-      case ChoiceType.destroy:
-        for (final card in selected) {
-          gameState.board.remove(card);
-          gameState.grave.add(card);
-          for (final ability in card.card.abilities) {
-            if (ability.when == TriggerWhen.onDestroy) {
-              TriggerService.enqueueAbility(gameState, card, ability);
-            }
-          }
-        }
-        gameState.addToLog('Player destroyed ${selected.length} card(s)');
-    }
-
-    // 残り effect を保存してから ChoiceRequest をクリア
-    final pendingEffects = request.pendingEffects;
-    gameState.choiceRequest.value = null;
-
-    // 中断されたアビリティの残り effect を順次実行
-    for (int i = 0; i < pendingEffects.length; i++) {
-      final effect = pendingEffects[i];
-      final result = OperationExecutor.executeOperation(gameState, effect);
-      gameState.addAllToLog(result.logs);
-
-      if (result.awaitingChoice) {
-        // さらに選択が必要 → 残り effect を新しい choiceRequest に付与して中断
-        final further = pendingEffects.skip(i + 1).toList();
-        if (further.isNotEmpty) {
-          final current = gameState.choiceRequest.value!;
-          gameState.choiceRequest.value = ChoiceRequest(
-            type: current.type,
-            count: current.count,
-            candidates: current.candidates,
-            sourceZone: current.sourceZone,
-            targetZone: current.targetZone,
-            message: current.message,
-            pendingEffects: further,
-          );
-        }
-        return; // 次の選択を待つ
-      }
-
-      if (!result.success) {
-        gameState.addToLog('Effect failed after choice: ${effect.op}');
-        break;
-      }
-    }
-
-    // 全 effect 完了 → トリガーキューの残りを再開
-    if (gameState.choiceRequest.value == null) {
+    // 選択待ちに戻っていなければ、トリガーキューの残りを再開する
+    if (!result.awaitingChoice && gameState.choiceRequest.value == null) {
+      Map<dynamic, dynamic> dummyUpdate() => {};
       final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
       gameState.addAllToLog(resolveResult.logs);
-    }
-  }
-
-  /// ゾーン名からゾーンオブジェクトを解決するヘルパー。
-  GameZone? _getZoneByName(String? name) {
-    if (name == null) return null;
-    switch (name.toLowerCase()) {
-      case 'hand': return gameState.hand;
-      case 'deck': return gameState.deck;
-      case 'board': return gameState.board;
-      case 'domain': return gameState.domain;
-      case 'grave': return gameState.grave;
-      case 'extra': return gameState.extra;
-      default: return null;
     }
   }
 
@@ -310,5 +201,50 @@ class TCGGame extends FlameGame {
     if (!resolveResult.success) {
       gameState.addToLog('トリガー解決に失敗しました: ${resolveResult.error}');
     }
+  }
+
+  /// 手札カードがタップされたときの選択/プレイ判定を行う。
+  ///
+  /// 既に選択中のカードを再タップした場合はプレイを実行し、
+  /// それ以外の場合は選択状態にする。`BoardComponent` から委譲される。
+  void onHandCardTapped(CardInstance card) {
+    final sel = gameState.selectedCard.value;
+    final idx =
+        gameState.hand.cards.indexWhere((c) => c.instanceId == card.instanceId);
+    if (idx == -1) return;
+
+    if (sel?.card.instanceId == card.instanceId) {
+      gameState.selectCard(null);
+      playCardFromHand(idx);
+    } else {
+      gameState.selectCard(CardSelectionState(
+        card: card,
+        zone: SelectionZone.hand,
+        handIndex: idx,
+      ));
+    }
+  }
+
+  /// ボードカードがタップされたときの選択/起動判定を行う。
+  ///
+  /// activated 能力を持つカードを選択中に再タップした場合は発動し、
+  /// それ以外の場合は選択状態にする。`BoardComponent` から委譲される。
+  void onBoardCardTapped(CardInstance card) {
+    final sel = gameState.selectedCard.value;
+    final hasActivated =
+        card.card.abilities.any((a) => a.when == TriggerWhen.activated);
+
+    if (hasActivated && sel?.card.instanceId == card.instanceId) {
+      gameState.selectCard(null);
+      activateCardOnBoard(card);
+    } else {
+      gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
+    }
+  }
+
+  /// ドメインカードがタップされたときの選択判定を行う。
+  /// `BoardComponent` から委譲される。
+  void onDomainCardTapped(CardInstance card) {
+    gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
   }
 }
