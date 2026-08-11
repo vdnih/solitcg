@@ -38,75 +38,67 @@ class _TagSelectorDialogState extends State<TagSelectorDialog> {
 
     return AlertDialog(
       title: const Text('タグを選択'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 検索フィールド
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'タグを検索',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // すべてのタグをクリアするオプション
-            ListTile(
-              title: const Text('すべて表示（タグなし）'),
-              leading: Radio<String?>(
-                value: null,
-                groupValue: _selectedTag,
+      content: RadioGroup<String?>(
+        groupValue: _selectedTag,
+        onChanged: (value) {
+          setState(() {
+            _selectedTag = value;
+          });
+        },
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 検索フィールド
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'タグを検索',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
                 onChanged: (value) {
                   setState(() {
-                    _selectedTag = value;
+                    _searchQuery = value;
                   });
                 },
               ),
-              onTap: () {
-                setState(() {
-                  _selectedTag = null;
-                });
-              },
-            ),
 
-            const Divider(),
+              const SizedBox(height: 16),
 
-            // タグリスト
-            Expanded(
-              child: ListView.builder(
-                itemCount: filteredTags.length,
-                itemBuilder: (context, index) {
-                  final tag = filteredTags[index];
-                  return ListTile(
-                    title: Text(tag),
-                    leading: Radio<String?>(
-                      value: tag,
-                      groupValue: _selectedTag,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedTag = value;
-                        });
-                      },
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _selectedTag = tag;
-                      });
-                    },
-                  );
+              // すべてのタグをクリアするオプション
+              ListTile(
+                title: const Text('すべて表示（タグなし）'),
+                leading: const Radio<String?>(value: null),
+                onTap: () {
+                  setState(() {
+                    _selectedTag = null;
+                  });
                 },
               ),
-            ),
-          ],
+
+              const Divider(),
+
+              // タグリスト
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredTags.length,
+                  itemBuilder: (context, index) {
+                    final tag = filteredTags[index];
+                    return ListTile(
+                      title: Text(tag),
+                      leading: Radio<String?>(value: tag),
+                      onTap: () {
+                        setState(() {
+                          _selectedTag = tag;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
