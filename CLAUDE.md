@@ -30,7 +30,7 @@ flutter run -d chrome                # ローカル実行
 ## 技術スタック上の注意点
 
 - **Firebase**: `firebase_auth` / `google_sign_in` / `cloud_firestore` / `firebase_storage` は依存関係として宣言されているが **`lib/` からは未接続**。デッキ永続化は `DeckRepository` による localStorage（Web）/ ローカルファイル（ネイティブ）で行っている。Firestore を使うコードを書かないこと。
-- **状態管理**: `GameState`（`lib/core/game_state.dart`）が SSoT。カードゾーン（手札・場等）は `ValueNotifier` 化されておらず、Flutter 側 4 つの `ValueNotifier`（`actionLogNotifier`/`choiceRequest`/`selectedCard`/`gameOverNotifier`）と、Flame 側は `BoardComponent.update()` の毎フレームポーリング差分で反映している。
+- **状態管理**: `GameState`（`lib/core/game_state.dart`）が SSoT。カードゾーン（手札・場等）は `ValueNotifier` 化されていない。Flutter 側は個別の `ValueNotifier`、Flame 側は `BoardComponent.update()` の毎フレームポーリング差分で反映している（全体がリアクティブではないので、新規UIが自動更新されると思わないこと）。
 - `freezed` / `json_serializable` / `build_runner` / `mocktail` は依存関係になく未使用。
 
 ## 判断に迷ったときのデフォルト方針
@@ -45,12 +45,10 @@ flutter run -d chrome                # ローカル実行
 
 ## Git 運用ルール
 
-- 作業ブランチ: `claude/` プレフィックス（例: `claude/feature-name`）。ブランチの作成・切替・マージは人間が行う。
-- commit は論理的な作業単位ごとに行う（1 機能 or 1 修正 = 1 commit）。
+- 作業ブランチ: `claude/` プレフィックス（例: `claude/feature-name`）
+- commit は論理的な作業単位ごとに行う（1 機能 or 1 修正 = 1 commit）
 - commit メッセージ規約:
   - `feat: デッキビルダー画面に検索機能を追加`
   - `test: DrawCardCommand のユニットテストを追加`
   - `docs: SPEC.md にトリガー解決ルールを追記`
   - `fix: ドメイン置換時の on_destroy 発火順序を修正`
-- `main` ブランチへの push・merge は禁止（人間のみが実行する）。
-- PR のマージは Squash and merge（詳細は `projects/CLAUDE.md`）
