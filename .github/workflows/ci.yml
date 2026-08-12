@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  analyze_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 既存の deploy workflow と同じバージョンに固定する（このリポジトリでは
+      # まだ 3.38.5 のまま）。他プロダクト(my_career_app)で 3.38.5 → 3.44.x の
+      # 移行時にウィジェットテストが壊れた実例があるため、バージョン更新は
+      # 独立したタスクとして慎重に行う。
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.38.5
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
