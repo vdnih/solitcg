@@ -51,3 +51,6 @@ app.*.map.json
 
 # Local environment (Bedrock/model config etc.)
 .env
+
+# Claude Code のローカル作業ツリー
+.claude/worktrees/
