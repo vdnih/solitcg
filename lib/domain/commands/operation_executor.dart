@@ -52,7 +52,8 @@ class OperationExecutor {
     }
   }
 
-  static GameResult _executeRequire(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeRequire(
+      GameState state, Map<String, dynamic> params) {
     final expr = params['expr'] as String?;
     if (expr == null) {
       return GameResult.failure('require: missing expr parameter');
@@ -60,7 +61,8 @@ class OperationExecutor {
 
     final result = ExpressionEvaluator.evaluate(state, expr);
     if (!result) {
-      return GameResult.failure('Requirement not met: $expr', logs: ['Require failed: $expr']);
+      return GameResult.failure('Requirement not met: $expr',
+          logs: ['Require failed: $expr']);
     }
 
     return GameResult.success(logs: ['Require passed: $expr']);
@@ -78,7 +80,8 @@ class OperationExecutor {
       return GameResult.failure('discard: only supports from="hand" currently');
     }
 
-    final candidates = state.hand.where((card) => _matchesFilter(card, filter)).toList();
+    final candidates =
+        state.hand.where((card) => _matchesFilter(card, filter)).toList();
 
     if (candidates.length < count) {
       return GameResult.failure(
@@ -87,7 +90,8 @@ class OperationExecutor {
     }
 
     // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-    if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
+    if ((selection == 'choose' || filter.isNotEmpty) &&
+        candidates.length > count) {
       return _requestChoice(
         state,
         type: ChoiceType.discard,
@@ -109,7 +113,8 @@ class OperationExecutor {
     return GameResult.success(logs: logs);
   }
 
-  static GameResult _executeSearch(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeSearch(
+      GameState state, Map<String, dynamic> params) {
     final fromZone = params['from'] as String? ?? 'deck';
     final toZone = params['to'] as String? ?? 'hand';
     final filter = _parseFilter(params['filter']);
@@ -117,14 +122,15 @@ class OperationExecutor {
     final useRandom = params['random'] as bool? ?? false;
     final logs = <String>[];
 
-    final source = ZoneResolver.byName(state,fromZone);
-    final destination = ZoneResolver.byName(state,toZone);
+    final source = ZoneResolver.byName(state, fromZone);
+    final destination = ZoneResolver.byName(state, toZone);
 
     if (source == null || destination == null) {
       return GameResult.failure('Invalid zone in search operation');
     }
 
-    final matchingCards = source.where((card) => _matchesFilter(card, filter)).toList();
+    final matchingCards =
+        source.where((card) => _matchesFilter(card, filter)).toList();
     if (useRandom) {
       matchingCards.shuffle(Random());
     }
@@ -139,7 +145,8 @@ class OperationExecutor {
       _shuffleDeck(state);
     }
 
-    logs.add('Searched $fromZone for ${cardsToMove.length} cards, added to $toZone');
+    logs.add(
+        'Searched $fromZone for ${cardsToMove.length} cards, added to $toZone');
     return GameResult.success(logs: logs);
   }
 
@@ -157,18 +164,26 @@ class OperationExecutor {
       return GameResult.failure('move: missing from or to parameter');
     }
 
-    final source = ZoneResolver.byName(state,fromZone);
-    final destination = ZoneResolver.byName(state,toZone);
+    if (target != 'any' && target != 'bottom') {
+      return GameResult.failure(
+          'move: invalid target "$target" (expected "any" or "bottom")');
+    }
+
+    final source = ZoneResolver.byName(state, fromZone);
+    final destination = ZoneResolver.byName(state, toZone);
 
     if (source == null || destination == null) {
       return GameResult.failure('Invalid zone in move operation');
     }
 
-    final candidates = source.where((card) => _matchesFilter(card, filter)).toList();
-    final ordered = (target == 'bottom') ? candidates.reversed.toList() : candidates;
+    final candidates =
+        source.where((card) => _matchesFilter(card, filter)).toList();
+    final ordered =
+        (target == 'bottom') ? candidates.reversed.toList() : candidates;
 
     // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-    if ((selection == 'choose' || filter.isNotEmpty) && ordered.length > count) {
+    if ((selection == 'choose' || filter.isNotEmpty) &&
+        ordered.length > count) {
       return _requestChoice(
         state,
         type: ChoiceType.move,
@@ -194,23 +209,14 @@ class OperationExecutor {
 
   static GameResult _executeDestroy(
       GameState state, Map<String, dynamic> params, CardInstance? sourceCard) {
-    final targetRaw = params['target'] as String? ?? 'board';
-    var filter = _parseFilter(params['filter']);
-    var selection = params['selection'] as String?;
+    final target = params['target'] as String? ?? 'board';
+    final filter = _parseFilter(params['filter']);
+    final selection = params['selection'] as String?;
     final count = params['count'] as int? ?? 1;
     final logs = <String>[];
 
-    // "choose:self:artifact" 形式のtargetをパース
-    String target = targetRaw;
-    if (targetRaw.contains(':')) {
-      final parts = targetRaw.split(':');
-      if (parts[0] == 'choose') {
-        selection = 'choose';
-        if (parts.length >= 3 && parts[2].isNotEmpty) {
-          filter = {'type': parts[2]};
-        }
-        target = 'board';
-      }
+    if (ZoneResolver.byName(state, target) == null) {
+      return GameResult.failure('destroy: invalid target zone "$target"');
     }
 
     if (target == 'domain' && state.hasDomain) {
@@ -220,14 +226,16 @@ class OperationExecutor {
       logs.add('Destroyed domain card: ${domainCard.card.name}');
       return GameResult.success(logs: logs);
     } else if (state.board.isNotEmpty) {
-      final candidates = state.board.where((card) => _matchesFilter(card, filter)).toList();
+      final candidates =
+          state.board.where((card) => _matchesFilter(card, filter)).toList();
 
       if (candidates.isEmpty) {
         return GameResult.failure('No valid target to destroy');
       }
 
       // selection: choose 指定、または filter 指定かつ候補が count より多い場合はプレイヤーに選択を委ねる
-      if ((selection == 'choose' || filter.isNotEmpty) && candidates.length > count) {
+      if ((selection == 'choose' || filter.isNotEmpty) &&
+          candidates.length > count) {
         return _requestChoice(
           state,
           type: ChoiceType.destroy,
@@ -260,7 +268,8 @@ class OperationExecutor {
     return GameResult.success(logs: ['VICTORY']);
   }
 
-  static GameResult _executeWinIf(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeWinIf(
+      GameState state, Map<String, dynamic> params) {
     final expr = params['expr'] as String?;
     if (expr == null) {
       return GameResult.failure('win_if: missing expr parameter');
@@ -276,7 +285,8 @@ class OperationExecutor {
     return GameResult.success(logs: ['Win condition not met: $expr']);
   }
 
-  static GameResult _executeLoseIf(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeLoseIf(
+      GameState state, Map<String, dynamic> params) {
     final expr = params['expr'] as String?;
     if (expr == null) {
       return GameResult.failure('lose_if: missing expr parameter');
@@ -309,18 +319,21 @@ class OperationExecutor {
     return GameResult.success(logs: logs);
   }
 
-  static GameResult _executeSummon(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeSummon(
+      GameState state, Map<String, dynamic> params) {
     return GameResult.failure('summon: not implemented yet');
   }
 
-  static GameResult _executeSetDomain(GameState state, Map<String, dynamic> params) {
+  static GameResult _executeSetDomain(
+      GameState state, Map<String, dynamic> params) {
     final cardId = params['card'] as String?;
     if (cardId == null) {
       return GameResult.failure('set_domain: missing card parameter');
     }
 
     // この部分は実際にはカードDBから該当カードを探す実装を行う
-    return GameResult.failure('set_domain: implementation requires card database lookup');
+    return GameResult.failure(
+        'set_domain: implementation requires card database lookup');
   }
 
   static GameResult _executeAddCounter(
@@ -408,11 +421,13 @@ class OperationExecutor {
       message: message,
       sourceCard: source,
     );
-    return GameResult.pending(logs: ['Awaiting player choice for ${type.name}']);
+    return GameResult.pending(
+        logs: ['Awaiting player choice for ${type.name}']);
   }
 
   /// カードを墓地へ送り、該当する [when] のアビリティをトリガーキューに積む共通ヘルパー。
-  static void _sendToGrave(GameState state, CardInstance card, TriggerWhen when) {
+  static void _sendToGrave(
+      GameState state, CardInstance card, TriggerWhen when) {
     state.grave.add(card);
     for (final ability in card.card.abilities) {
       if (ability.when == when) {
