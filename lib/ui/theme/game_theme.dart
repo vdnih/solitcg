@@ -37,18 +37,10 @@ class GameTheme {
     switch (type) {
       case CardType.monster:
         return [const Color(0xFF5C3317), const Color(0xFF9B6B3A)];
-      case CardType.ritual:
-        return [const Color(0xFF3B1F5E), const Color(0xFF7C4DA0)];
       case CardType.spell:
         return [const Color(0xFF1A4731), const Color(0xFF2E8B57)];
-      case CardType.arcane:
-        return [const Color(0xFF0F3D3D), const Color(0xFF1F7A7A)];
       case CardType.artifact:
         return [const Color(0xFF5C3D00), const Color(0xFFB07D20)];
-      case CardType.relic:
-        return [const Color(0xFF5C2200), const Color(0xFFB04820)];
-      case CardType.equip:
-        return [const Color(0xFF4A4A00), const Color(0xFF9A9A00)];
       case CardType.domain:
         return [const Color(0xFF0F2A5C), const Color(0xFF1F5CA0)];
     }
@@ -59,18 +51,10 @@ class GameTheme {
     switch (type) {
       case CardType.monster:
         return 'モンスター';
-      case CardType.ritual:
-        return 'リチュアル';
       case CardType.spell:
         return 'スペル';
-      case CardType.arcane:
-        return 'アルカナ';
       case CardType.artifact:
         return 'アーティファクト';
-      case CardType.relic:
-        return 'レリック';
-      case CardType.equip:
-        return '装備';
       case CardType.domain:
         return 'ドメイン';
     }
@@ -81,18 +65,10 @@ class GameTheme {
     switch (type) {
       case CardType.monster:
         return const Color(0xFFB07D40);
-      case CardType.ritual:
-        return const Color(0xFF9B6BBF);
       case CardType.spell:
         return const Color(0xFF3DBF7A);
-      case CardType.arcane:
-        return const Color(0xFF3DBFBF);
       case CardType.artifact:
         return const Color(0xFFCFA040);
-      case CardType.relic:
-        return const Color(0xFFCF6040);
-      case CardType.equip:
-        return const Color(0xFFCFCF40);
       case CardType.domain:
         return const Color(0xFF4080CF);
     }
