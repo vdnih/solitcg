@@ -20,8 +20,8 @@ class CardDetailPanel extends StatelessWidget {
     required this.onDismiss,
   });
 
-  bool get _hasActivated => selection.card.card.abilities
-      .any((a) => a.when == TriggerWhen.activated);
+  bool get _hasActivated =>
+      selection.card.card.abilities.any((a) => a.when == TriggerWhen.activated);
 
   bool get _canAct {
     if (selection.zone == SelectionZone.hand) return true;
@@ -40,41 +40,41 @@ class CardDetailPanel extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xF0161B22),
-            border: const Border(
-              top: BorderSide(color: GameTheme.zoneBorder, width: 1),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.6),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
+        decoration: BoxDecoration(
+          color: const Color(0xF0161B22),
+          border: const Border(
+            top: BorderSide(color: GameTheme.zoneBorder, width: 1),
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _CardArtwork(card: selection.card.card),
-                  const SizedBox(width: 16),
-                  Expanded(child: _CardInfo(instance: selection.card)),
-                  const SizedBox(width: 12),
-                  _ActionButtons(
-                    canAct: _canAct,
-                    actionLabel: _actionLabel,
-                    onConfirm: () => onConfirm(selection),
-                    onDismiss: onDismiss,
-                  ),
-                ],
-              ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.6),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CardArtwork(card: selection.card.card),
+                const SizedBox(width: 16),
+                Expanded(child: _CardInfo(instance: selection.card)),
+                const SizedBox(width: 12),
+                _ActionButtons(
+                  canAct: _canAct,
+                  actionLabel: _actionLabel,
+                  onConfirm: () => onConfirm(selection),
+                  onDismiss: onDismiss,
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }
@@ -130,18 +130,10 @@ class _CardArtwork extends StatelessWidget {
     switch (type) {
       case CardType.monster:
         return '⚔';
-      case CardType.ritual:
-        return '✦';
       case CardType.spell:
         return '✦';
-      case CardType.arcane:
-        return '✧';
       case CardType.artifact:
         return '⬡';
-      case CardType.relic:
-        return '◈';
-      case CardType.equip:
-        return '🛡';
       case CardType.domain:
         return '◉';
     }
@@ -177,10 +169,12 @@ class _CardInfo extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: GameTheme.cardAccentColor(card.type).withValues(alpha: 0.2),
+                color:
+                    GameTheme.cardAccentColor(card.type).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: GameTheme.cardAccentColor(card.type).withValues(alpha: 0.5),
+                  color: GameTheme.cardAccentColor(card.type)
+                      .withValues(alpha: 0.5),
                 ),
               ),
               child: Text(
@@ -202,7 +196,8 @@ class _CardInfo extends StatelessWidget {
             children: card.tags
                 .map(
                   (tag) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFF21262D),
                       borderRadius: BorderRadius.circular(4),
@@ -263,7 +258,8 @@ class _CardInfo extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFFBBF24).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.5)),
+              border: Border.all(
+                  color: const Color(0xFFFBBF24).withValues(alpha: 0.5)),
             ),
             child: Text(
               'カウンター×${e.value}',
@@ -333,9 +329,11 @@ class _StatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _StatBadge(label: 'ATK', value: stats.atk, color: const Color(0xFFEF4444)),
+        _StatBadge(
+            label: 'ATK', value: stats.atk, color: const Color(0xFFEF4444)),
         const SizedBox(width: 6),
-        _StatBadge(label: 'DEF', value: stats.def, color: const Color(0xFF3B82F6)),
+        _StatBadge(
+            label: 'DEF', value: stats.def, color: const Color(0xFF3B82F6)),
         const SizedBox(width: 6),
         _StatBadge(label: 'HP', value: stats.hp, color: GameTheme.hudLifeColor),
       ],
@@ -347,7 +345,8 @@ class _StatBadge extends StatelessWidget {
   final String label;
   final int value;
   final Color color;
-  const _StatBadge({required this.label, required this.value, required this.color});
+  const _StatBadge(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

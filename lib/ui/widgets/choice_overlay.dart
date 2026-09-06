@@ -64,7 +64,8 @@ class _ChoiceOverlayState extends State<ChoiceOverlay> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
-                  widget.request.message ?? 'カードを${widget.request.count}枚選んでください',
+                  widget.request.message ??
+                      'カードを${widget.request.count}枚選んでください',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -219,7 +220,10 @@ class _CandidateCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.8)
+                    ],
                   ),
                 ),
                 child: Text(
@@ -276,18 +280,10 @@ class _CandidateCard extends StatelessWidget {
     switch (type) {
       case CardType.monster:
         return '⚔';
-      case CardType.ritual:
-        return '✦';
       case CardType.spell:
         return '✦';
-      case CardType.arcane:
-        return '✧';
       case CardType.artifact:
         return '⬡';
-      case CardType.relic:
-        return '◈';
-      case CardType.equip:
-        return '🛡';
       case CardType.domain:
         return '◉';
     }

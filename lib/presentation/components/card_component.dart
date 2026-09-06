@@ -12,7 +12,8 @@ import '../../ui/theme/game_theme.dart';
 ///
 /// 描画は毎フレーム行われ、選択グローは GameState.selectedCard を参照して自動更新される。
 /// カード画像がある場合は Sprite としてレンダリングし、ない場合はグラデーション矩形で代替する。
-class CardComponent extends PositionComponent with TapCallbacks, HasGameReference<TCGGame> {
+class CardComponent extends PositionComponent
+    with TapCallbacks, HasGameReference<TCGGame> {
   /// 描画対象のカードインスタンス。
   final CardInstance card;
 
@@ -65,7 +66,8 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
         outerRRect,
         material.Paint()
           ..color = GameTheme.selectionGlow.withValues(alpha: 0.5)
-          ..maskFilter = const material.MaskFilter.blur(material.BlurStyle.outer, 8),
+          ..maskFilter =
+              const material.MaskFilter.blur(material.BlurStyle.outer, 8),
       );
     }
 
@@ -94,7 +96,8 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
     // カード画像 or プレースホルダー（上部 55%）
     const imageTop = 18.0;
     final imageHeight = size.y * 0.52;
-    final imageRect = material.Rect.fromLTWH(3, imageTop, size.x - 6, imageHeight);
+    final imageRect =
+        material.Rect.fromLTWH(3, imageTop, size.x - 6, imageHeight);
 
     if (_sprite != null) {
       _sprite!.render(
@@ -107,7 +110,10 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
       final placeholderShader = ui.Gradient.linear(
         ui.Offset(imageRect.left, imageRect.top),
         ui.Offset(imageRect.right, imageRect.bottom),
-        [gradColors[1].withValues(alpha: 0.5), gradColors[0].withValues(alpha: 0.3)],
+        [
+          gradColors[1].withValues(alpha: 0.5),
+          gradColors[0].withValues(alpha: 0.3)
+        ],
       );
       canvas.drawRect(
         imageRect,
@@ -152,8 +158,8 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
     namePainter.layout(maxWidth: size.x - 8);
     namePainter.paint(canvas, const material.Offset(4, 4));
 
-    // モンスター・リチュアルのステータス
-    if (card.card.type == CardType.monster || card.card.type == CardType.ritual) {
+    // モンスターのステータス
+    if (card.card.type == CardType.monster) {
       final s = card.stats;
       _drawStatsBadge(canvas, 'ATK ${s.atk}', size.y - 38);
       _drawStatsBadge(canvas, 'DEF ${s.def}', size.y - 26);
@@ -180,7 +186,8 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
         .where((e) => e.value is int && (e.value as int) > 0)
         .toList();
     if (counters.isNotEmpty) {
-      final totalCount = counters.fold<int>(0, (sum, e) => sum + (e.value as int));
+      final totalCount =
+          counters.fold<int>(0, (sum, e) => sum + (e.value as int));
       final counterPainter = material.TextPainter(
         text: material.TextSpan(
           text: '・$totalCount',
@@ -231,18 +238,10 @@ class CardComponent extends PositionComponent with TapCallbacks, HasGameReferenc
     switch (type) {
       case CardType.monster:
         return '⚔';
-      case CardType.ritual:
-        return '✦';
       case CardType.spell:
         return '✦';
-      case CardType.arcane:
-        return '✧';
       case CardType.artifact:
         return '⬡';
-      case CardType.relic:
-        return '◈';
-      case CardType.equip:
-        return '🛡';
       case CardType.domain:
         return '◉';
     }

@@ -4,7 +4,8 @@ import 'package:solitcg/domain/models/card_data.dart';
 import 'package:solitcg/domain/models/card_instance.dart';
 import 'package:solitcg/domain/services/field_rule.dart';
 
-CardInstance _makeCard(String id, CardType type, {List<Ability> abilities = const []}) {
+CardInstance _makeCard(String id, CardType type,
+    {List<Ability> abilities = const []}) {
   return CardInstance(
     card: CardData(id: id, name: id, type: type, abilities: abilities),
     instanceId: id,
@@ -48,18 +49,6 @@ void main() {
 
       expect(state.triggerQueue.length, 1);
     });
-  });
-
-  // ----------------------------------------------------------------
-  group('FieldRule.playCard — arcane', () {
-    test('arcane をプレイすると grave に移動する', () {
-      final card = _makeCard('a1', CardType.arcane);
-
-      FieldRule.playCard(state, card);
-
-      expect(state.grave.count, 1);
-    });
-
   });
 
   // ----------------------------------------------------------------
@@ -124,7 +113,8 @@ void main() {
 
     test('既存ドメインの on_destroy アビリティがキューに積まれる', () {
       final onDestroyAbility = _makeAbility(TriggerWhen.onDestroy);
-      final oldDomain = _makeCard('d_old', CardType.domain, abilities: [onDestroyAbility]);
+      final oldDomain =
+          _makeCard('d_old', CardType.domain, abilities: [onDestroyAbility]);
       final newDomain = _makeCard('d_new', CardType.domain);
       state.domain.add(oldDomain);
 
@@ -146,7 +136,8 @@ void main() {
   group('FieldRule.playCard — on_spell_played domain 通知', () {
     test('spell をプレイすると domain の onSpellPlayed アビリティがキューに積まれる', () {
       final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
-      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
+      final domain =
+          _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
       state.domain.add(domain);
 
       final spell = _makeCard('s1', CardType.spell);
@@ -163,24 +154,13 @@ void main() {
       expect(state.triggerQueue.length, 0);
     });
 
-    test('arcane をプレイしても domain の onSpellPlayed が通知される', () {
-      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
-      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
-      state.domain.add(domain);
-
-      final arcane = _makeCard('a1', CardType.arcane);
-      FieldRule.playCard(state, arcane);
-
-      expect(state.triggerQueue.length, 1);
-      expect(state.triggerQueue.first.ability.when, TriggerWhen.onSpellPlayed);
-    });
-
     test('spell の on_play と domain の onSpellPlayed が両方キューに積まれる', () {
       final onPlayAbility = _makeAbility(TriggerWhen.onPlay);
       final spell = _makeCard('s1', CardType.spell, abilities: [onPlayAbility]);
 
       final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
-      final domain = _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
+      final domain =
+          _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]);
       state.domain.add(domain);
 
       FieldRule.playCard(state, spell);

@@ -9,18 +9,10 @@ class CardRepository {
     switch (value.toLowerCase()) {
       case 'monster':
         return CardType.monster;
-      case 'ritual':
-        return CardType.ritual;
       case 'spell':
         return CardType.spell;
-      case 'arcane':
-        return CardType.arcane;
-      case 'equip':
-        return CardType.equip;
       case 'artifact':
         return CardType.artifact;
-      case 'relic':
-        return CardType.relic;
       case 'domain':
         return CardType.domain;
       default:
@@ -50,28 +42,17 @@ class CardRepository {
   static Stats? _parseStats(dynamic statsData) {
     if (statsData == null) return null;
     if (statsData is! Map) return null;
-    
+
     final atk = statsData['atk'] as int? ?? 0;
     final def = statsData['def'] as int? ?? 0;
     final hp = statsData['hp'] as int? ?? 0;
     return Stats(atk: atk, def: def, hp: hp);
   }
 
-  static EquipConfig? _parseEquipConfig(dynamic equipData) {
-    if (equipData == null) return null;
-    if (equipData is! Map) return null;
-    
-    final validTargets = equipData['valid_targets'];
-    if (validTargets is List) {
-      return EquipConfig(validTargets: validTargets.cast<String>());
-    }
-    return null;
-  }
-
   static DomainConfig? _parseDomainConfig(dynamic domainData) {
     if (domainData == null) return null;
     if (domainData is! Map) return null;
-    
+
     final unique = domainData['unique'] as bool? ?? true;
     return DomainConfig(unique: unique);
   }
@@ -79,7 +60,7 @@ class CardRepository {
   static List<EffectStep> _parseEffects(dynamic effectsData) {
     if (effectsData == null) return [];
     if (effectsData is! List) return [];
-    
+
     final effects = <EffectStep>[];
     for (final effectData in effectsData) {
       if (effectData is Map) {
@@ -97,7 +78,7 @@ class CardRepository {
   static List<Ability> _parseAbilities(dynamic abilitiesData) {
     if (abilitiesData == null) return [];
     if (abilitiesData is! List) return [];
-    
+
     final abilities = <Ability>[];
     for (final abilityData in abilitiesData) {
       if (abilityData is Map) {
@@ -109,7 +90,7 @@ class CardRepository {
           if (preData is List) {
             pre = preData.cast<String>();
           }
-          
+
           final effects = _parseEffects(abilityData['effect']);
           final oncePerTurn = abilityData['once_per_turn'] as bool? ?? true;
 
@@ -140,14 +121,13 @@ class CardRepository {
         return null;
       }
 
-      final tags = doc['tags'] is List 
-          ? (doc['tags'] as List).cast<String>() 
+      final tags = doc['tags'] is List
+          ? (doc['tags'] as List).cast<String>()
           : <String>[];
       final text = doc['text'] as String? ?? '';
       final version = doc['version'] as int? ?? 1;
-      
+
       final stats = _parseStats(doc['stats']);
-      final equip = _parseEquipConfig(doc['equip']);
       final domain = _parseDomainConfig(doc['domain']);
       final abilities = _parseAbilities(doc['abilities']);
       final image = doc['image'] as String?;
@@ -160,7 +140,6 @@ class CardRepository {
         text: text,
         version: version,
         stats: stats,
-        equip: equip,
         domain: domain,
         abilities: abilities,
         image: image,
@@ -183,7 +162,8 @@ class CardRepository {
   /// index.yaml からカードファイル一覧を取得する。
   static Future<List<String>> loadCardIndex() async {
     try {
-      final yamlContent = await rootBundle.loadString('assets/cards/index.yaml');
+      final yamlContent =
+          await rootBundle.loadString('assets/cards/index.yaml');
       final doc = loadYaml(yamlContent);
       if (doc is Map && doc['cards'] is List) {
         return (doc['cards'] as List).cast<String>();
@@ -201,10 +181,10 @@ class CardRepository {
     if (_cache.containsKey(id)) {
       return _cache[id];
     }
-    
+
     // キャッシュにない場合は全カードを読み込んでキャッシュを構築
     await loadAllCards();
-    
+
     return _cache[id];
   }
 
