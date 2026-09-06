@@ -13,7 +13,7 @@ stats:
 
 abilities:
   # 召喚条件：自分の場にアーティファクトが1枚以上存在する場合のみ召喚可能
-  - when: onPlay
+  - when: on_play
     pre:
       - "count(type:'artifact', zone:'board:self') >= 1"
     effect: []
@@ -27,6 +27,6 @@ abilities:
       - "count(type:'artifact', zone:'board:self') >= 1"
     effect:
       # 1. 自分の場のアーティファクトを選択して破壊
-      - { op: destroy, target: "choose:self:artifact", count: 1 }
+      - { op: destroy, target: board, filter: { type: "artifact" }, selection: choose, count: 1 }
       # 2. カードを1枚引く
       - { op: draw, count: 1 }
