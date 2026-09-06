@@ -1,7 +1,11 @@
-# docs/CARD_YAML_SPEC.md（v0.6.0）
+# docs/CARD_YAML_SPEC.md（v0.7.0）
 
 この文書は、**SoliTCG** の **カード定義ファイル（YAML）** の仕様です。
 エンジンはこの形式の YAML を読み込み、カードの挙動を決定します。
+
+> v0.7.0 での主な変更点（`docs/adr/006-engine-schema-reconciliation.md` の裁定に基づく）:
+> カードタイプを4種に統合、ターゲット記法を廃止し `filter` に一本化、
+> カードID命名規則から type プレフィックスの要求を撤廃。
 
 ---
 
@@ -10,56 +14,49 @@
 * 文字コードは **UTF-8**。拡張子は **`.yaml`**。
 * 1ファイル＝1枚のカード定義。
 * 予約語・列挙値は **小文字** で統一。
-* 不正キーや型違いは読み込み時にエラーとすることを推奨。
+* 不正キーや型違いは読み込み時にエラーとすることを推奨（現状はパーサが警告なしにスキップする。
+  厳格化は Issue E-7 で対応予定）。
 
 ---
 
 ## 1. トップレベルスキーマ
 
 ```yaml
-id: string                    # 必須。一意ID（英数字/アンダースコア推奨）
+id: string                    # 必須。一意ID（スネークケース推奨）
 name: string                  # 必須。表示名
-type: monster | ritual | spell | arcane | equip | artifact | relic | domain   # 必須
+type: monster | spell | artifact | domain   # 必須
 tags: [string, ...]           # 任意。検索・相互作用用タグ
 text: string                  # 必須。プレイヤー向け説明（自由記述）
 version: integer              # 必須。カードデータの版番号
 
-# monster / ritual のみ。hp 必須、atk / def は任意（効果参照用）
+# monster のみ。hp 必須、atk / def は任意（効果参照用）
 stats:
   atk: integer (>=0)          # 攻撃力（任意。効果の参照値として使用）
   def: integer (>=0)          # 防御力（任意。効果の参照値として使用）
   hp:  integer (>=0)          # 必須。hp <= 0 で即破壊 → on_destroy 発動
+                               # ※ modify_stat op が未実装のため、現状 hp は変動しない（表示専用）
 
 abilities:                    # 任意。0個以上
-  - when: on_play | on_destroy | on_discard | activated
+  - when: on_play | on_destroy | on_discard | activated | on_spell_played
     pre: [ "expr", ... ]      # 発動前提（すべてtrue時のみ実行）
     effect:                   # 実行ステップ（配列）
       - { op: operation_name, ...params }
       - ...
 ```
 
-> `priority` フィールドは廃止。同時トリガーはプレイヤーが投入順を選択する。
+> `priority` フィールドは廃止。同時トリガーは発生順（エンキュー順）に自動で解決する。
+> プレイヤーはキューの順序を操作できない（ADR-004）。
 
 ### 1.1 カードID命名規則
 
-新規カードの `id` は `<type3文字>_<name>_<連番3桁>` 形式を推奨する（例: `mon_warrior_001`）。
+* `id` はスネークケース（英数字とアンダースコア）で、全カード中で一意にする。
+* ファイル名は `<id>.yaml`。
+* 連番（例: `_001`）は、同名カードのバリエーションが複数ある場合のみ任意で付ける。
 
-| type | プレフィックス | 例 |
-|---|---|---|
-| monster | `mon_` | `mon_warrior_001` |
-| spell | `spl_` | `spl_mining_gem_001` |
-| arcane | `arc_` | - |
-| artifact | `atf_` | `atf_crystal_001` |
-| domain | `dmn_` | `dmn_van_001` |
-| ritual | `rit_` | - |
-| equip | `eqp_` | - |
-| relic | `rlc_` | - |
-
-* 連番はカード名単位（同名カードのバリエーション違い）で振る。3桁でゼロ埋め。
-* `assets/cards/index.yaml` のエントリ順とファイル名は一致させる。
-* 既存カードの一部（`activated_artifact.yaml` / `spl_chun.yaml` / `spl_daisangen.yaml` /
-  `spl_haku.yaml` / `spl_hatsu.yaml` / `spl_typhoon.yaml` / `mon_crystal_looters_001.yaml`）は
-  この規則の制定前に作られ、ゲーム内で参照済みのため未リネーム。新規カードのみ本規則に従う。
+> 旧規則（`<type3文字>_<name>_<連番3桁>`）は撤廃した。id のプレフィックスを解釈するコードは
+> エンジンに存在せず（`type` は YAML の `type:` フィールドからのみ取得する）、
+> `type:` フィールドとの二重管理になっていたため（ADR-006）。既存カードの `mon_` / `spl_` 等の
+> プレフィックスは、意味を持たない名前の一部としてそのまま残っている。
 
 ---
 
@@ -67,14 +64,12 @@ abilities:                    # 任意。0個以上
 
 | type     | `stats`必須 | 備考 |
 | -------- | --------- | ---- |
-| monster  | 必須（hp のみ必須、atk/def は任意） | hp <= 0 で破壊 |
-| ritual   | 必須（monster 同様） | エクストラ編入可 |
+| monster  | 必須（hp のみ必須、atk/def は任意） | hp <= 0 で破壊（※ modify_stat 未実装のため現状は発火しない） |
 | spell    | 不要 | 使い切り効果カード。プレイ後に墓地へ |
-| arcane   | 不要 | 強力効果カード。プレイ後に墓地へ。エクストラ編入可 |
-| equip    | 不要 | 装備型カード |
 | artifact | 不要 | 永続系 |
-| relic    | 不要 | artifact 互換扱い。エクストラ編入可 |
 | domain   | 不要 | 場全体に影響。同時に1枚制限 |
+
+> 旧 `ritual` / `arcane` / `equip` / `relic` は ADR-006 により廃止した。
 
 ---
 
@@ -85,7 +80,8 @@ abilities:                    # 任意。0個以上
 | `on_play` | 手札からプレイした直後（サーチ・移動では発火しない） |
 | `on_destroy` | hp ≤ 0 または `destroy` op により破壊された直後 |
 | `on_discard` | 手札から捨て札に置かれた直後 |
-| `activated` | プレイヤーが手動で発動。`once_per_turn: true`（省略時デフォルト）でエンジンが1ターン1度を強制。`once_per_turn: false` で無制限。 |
+| `activated` | プレイヤーが手動で発動。`once_per_turn: true`（省略時デフォルト）でエンジンが1ゲーム1度を強制（ゲームは1ターンで完結するため「1ターン」と「1ゲーム」は同義。PDR-001）。`once_per_turn: false` で無制限。 |
+| `on_spell_played` | spell がプレイされるたび（現状は domain カードのみが購読可能） |
 
 > MVP スコープ外（使用不可）: `on_enter` / `static` / `on_draw` / `on_domain_set`
 
@@ -113,6 +109,7 @@ pre:
 * カード固有カウンタ：`self.counter('key')`（`add_counter`/`remove_counter` op で操作。§6.6 参照）
 * 比較演算子（1式につき1つのみ）：`> >= < <= == !=`。`&&`/`||`/前置 `!` は非対応 — 複数条件の
   AND は `pre` に式を複数並べることで表現する。
+* 未知の参照子は例外を握りつぶして `0` と評価される（サイレント不発）。typo に注意すること。
 
 ---
 
@@ -141,7 +138,8 @@ pre:
 
 * `from` / `to` / `target`: `hand | deck | grave | board | domain | extra`
 * `count`: 対象枚数。省略時は 1。
-* `filter`: タグ・タイプ・名前でカードを絞り込む（後述「タグシステム」参照）。
+* `filter`: タグ・タイプ・名前でカードを絞り込む（後述「タグシステム」参照）。カードを絞り込む
+  手段はこの `filter` に一本化されている（§8 参照）。
 * **複数候補がある場合はプレイヤーが選択 UI で選択できる**。
 
 ### 6.2 手札操作
@@ -154,16 +152,18 @@ pre:
 - { op: discard, from: hand, count: 1, filter: { tag: "burn" } }
 ```
 
+* `discard` は `from: hand` のみ対応する（他ゾーンを指定すると failure になる）。
 * `filter` を指定した場合、一致するカードが `count` 枚を超えるとプレイヤーが選択する。
 * `filter` を省略した場合は先頭から `count` 枚を自動選択（従来動作）。
 
 ### 6.3 ステータス操作
 
 ```yaml
-- { op: modify_stat, target: "choose:self:monster", atk: +500, hp: -1 }
+- { op: modify_stat, target: board, filter: { type: "monster" }, atk: +500, hp: -1 }
 ```
 
-* `hp <= 0` で即破壊 → `on_destroy` 誘発。
+* **現状未実装**（Issue E-5）。`hp <= 0` で即破壊 → `on_destroy` 誘発、という挙動は
+  この op が実装されて初めて成立する。
 
 ### 6.4 勝敗条件
 
@@ -184,7 +184,7 @@ pre:
 
 * **未実装**: `set_domain` op は常に failure を返すスタブ実装（カードDB検索ロジック未実装）。
   現状、ドメインカードは手札から直接プレイすることでのみ場に出せる
-  （新ドメインの `on_play` → 旧ドメイン移送 → 旧 `on_destroy` の順で自動処理。詳細は `SPEC.md §6`）。
+  （新ドメインの `on_play` → 旧ドメイン移送 → 旧 `on_destroy` の順で自動処理。詳細は `SPEC.md` §6）。
 
 ### 6.6 カウンター操作
 
@@ -196,6 +196,15 @@ pre:
 * `source`（トリガー発生元カード）の `metadata` に per-card のカウンターを保持する。
 * `pre` 式の `self.counter('key')` で参照できる（§4 参照）。
 * `key` 省略時は `'counter'` がデフォルト。`amount` 省略時は `1`。
+
+### 6.7 その他
+
+```yaml
+- { op: require, expr: "hand.count >= 1" }
+```
+
+* 式が偽の場合、effect の実行をその場で中断する（failure）。既に実行済みの前段 effect は
+  ロールバックされない点に注意。
 
 ---
 
@@ -216,6 +225,7 @@ tags: [warrior, elite, burn]
 ### filter パラメータ
 
 `discard` / `move` / `destroy` / `search` の各 op は `filter` パラメータを受け付けます。
+カードを絞り込む手段はこの `filter` に一本化されている（§8 参照）。
 
 ```yaml
 filter:
@@ -268,19 +278,12 @@ abilities:
 
 ---
 
-## 8. ターゲット記法
+## 8. カード対象の絞り込み
 
-`"{scope}:{owner}:{selector}"`
-
-* scope: `choose | one | all | random | top | bottom`
-* owner: `self | any`（MVP では対戦相手なし）
-* selector: `monster | ritual | spell | arcane | artifact | relic | domain | any` または `tag=xxx`
-
-例：
-
-* `choose:self:artifact` → 自分の場のアーティファクトからプレイヤーが選択
-* `all:self:monster` → 自分の場のモンスター全て
-* `random:self:any` → 自分の場のカードからランダム
+対象カードを絞り込む手段は `filter` パラメータ（§6.1・§7）に一本化されている。
+旧仕様にあった `"{scope}:{owner}:{selector}"` 形式のターゲット記法は、`destroy` の
+`choose:*:<type>` 以外のパターンが実装されておらず、`filter` と機能が重複していたため
+ADR-006 により廃止した。
 
 ---
 
@@ -304,9 +307,9 @@ abilities:
 ### 消費→効果
 
 ```yaml
-id: ex_arc_001
+id: tenshou_no_higi
 name: 天象の秘儀
-type: arcane
+type: artifact
 text: 自分のアーティファクト2枚を破壊してカードを5枚引く。
 version: 1
 abilities:
@@ -314,7 +317,7 @@ abilities:
     pre:
       - "count(type:'artifact', zone:'board:self') >= 2"
     effect:
-      - { op: destroy, target: "choose:self:artifact", count: 2 }
+      - { op: destroy, target: board, filter: { type: "artifact" }, count: 2 }
       - { op: draw, count: 5 }
 ```
 
@@ -335,13 +338,13 @@ abilities:
       - { op: win }
 ```
 
-### activated（1ターン1度）
+### activated（1ゲーム1度）
 
 ```yaml
 id: atf_crystal_001
 name: クリスタルコア
 type: artifact
-text: 1ターンに1度、手札を2枚捨ててカードを3枚引く。
+text: 1ゲームに1度、手札を2枚捨ててカードを3枚引く。
 version: 1
 abilities:
   - when: activated
