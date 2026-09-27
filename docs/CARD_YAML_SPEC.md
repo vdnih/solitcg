@@ -136,7 +136,9 @@ pre:
 - { op: destroy, target: board, filter: { tag: "weak" }, count: 1 }
 ```
 
-* `from` / `to` / `target`: `hand | deck | grave | board | domain | extra`
+* `from` / `to`: `hand | deck | grave | board | domain | extra`
+* `target`（`destroy` のみ）: 破壊対象のゾーン。`board | domain` を指定する（省略時は `board`）。
+  `move` の `target` はゾーン指定ではなく `any | bottom`（`bottom` で移動先の末尾に挿入）。
 * `count`: 対象枚数。省略時は 1。
 * `filter`: タグ・タイプ・名前でカードを絞り込む（後述「タグシステム」参照）。カードを絞り込む
   手段はこの `filter` に一本化されている（§8 参照）。

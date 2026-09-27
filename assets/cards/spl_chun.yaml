@@ -10,5 +10,5 @@ abilities:
     pre:
       - "count(tag:'spl_chun', zone:'hand:self') >= 2"
     effect:
-      - { op: discard, from: hand, count: 2, selection: choose, target: "choose:self:tag=spl_chun" }
+      - { op: discard, from: hand, count: 2, selection: choose, filter: { tag: "spl_chun" } }
       - { op: draw, count: 3 }

@@ -4,7 +4,8 @@ import 'package:solitcg/domain/models/card_data.dart';
 import 'package:solitcg/domain/models/card_instance.dart';
 import 'package:solitcg/domain/commands/operation_executor.dart';
 
-CardInstance _makeCard(String id, CardType type, {List<Ability> abilities = const []}) {
+CardInstance _makeCard(String id, CardType type,
+    {List<Ability> abilities = const []}) {
   return CardInstance(
     card: CardData(id: id, name: id, type: type, abilities: abilities),
     instanceId: id,
@@ -55,7 +56,8 @@ void main() {
     test('count=1 で hand から grave に1枚移動する', () {
       state.hand.add(_makeCard('h1', CardType.spell));
 
-      OperationExecutor.executeOperation(state, _op('discard', {'from': 'hand', 'count': 1}));
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1}));
 
       expect(state.grave.count, 1);
     });
@@ -64,7 +66,8 @@ void main() {
       state.hand.add(_makeCard('h1', CardType.spell));
       state.hand.add(_makeCard('h2', CardType.spell));
 
-      OperationExecutor.executeOperation(state, _op('discard', {'from': 'hand', 'count': 1}));
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1}));
 
       expect(state.hand.count, 1);
     });
@@ -73,7 +76,8 @@ void main() {
       final ability = Ability(when: TriggerWhen.onDiscard, effects: const []);
       state.hand.add(_makeCard('h1', CardType.spell, abilities: [ability]));
 
-      OperationExecutor.executeOperation(state, _op('discard', {'from': 'hand', 'count': 1}));
+      OperationExecutor.executeOperation(
+          state, _op('discard', {'from': 'hand', 'count': 1}));
 
       expect(state.triggerQueue.length, 1);
     });
@@ -153,7 +157,8 @@ void main() {
     test('board のカードが grave に移動する', () {
       state.board.add(_makeCard('b1', CardType.monster));
 
-      OperationExecutor.executeOperation(state, _op('destroy', {'target': 'board'}));
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board'}));
 
       expect(state.grave.count, 1);
     });
@@ -161,7 +166,8 @@ void main() {
     test('board のカードが board から消える', () {
       state.board.add(_makeCard('b1', CardType.monster));
 
-      OperationExecutor.executeOperation(state, _op('destroy', {'target': 'board'}));
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board'}));
 
       expect(state.board.count, 0);
     });
@@ -170,7 +176,8 @@ void main() {
       final ability = Ability(when: TriggerWhen.onDestroy, effects: const []);
       state.board.add(_makeCard('b1', CardType.monster, abilities: [ability]));
 
-      OperationExecutor.executeOperation(state, _op('destroy', {'target': 'board'}));
+      OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'board'}));
 
       expect(state.triggerQueue.length, 1);
     });
@@ -233,8 +240,8 @@ void main() {
   // ----------------------------------------------------------------
   group('未知の op', () {
     test('未定義の op は failure を返す', () {
-      final result = OperationExecutor.executeOperation(
-          state, _op('unknown_op'));
+      final result =
+          OperationExecutor.executeOperation(state, _op('unknown_op'));
 
       expect(result.success, isFalse);
     });
@@ -247,7 +254,12 @@ void main() {
       state.hand.add(_makeTaggedCard('h2', CardType.spell, []));
 
       OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+          state,
+          _op('discard', {
+            'from': 'hand',
+            'count': 1,
+            'filter': {'tag': 'burn'}
+          }));
 
       expect(state.grave.cards.first.card.id, 'h1');
     });
@@ -257,7 +269,12 @@ void main() {
       state.hand.add(_makeTaggedCard('h2', CardType.spell, []));
 
       OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+          state,
+          _op('discard', {
+            'from': 'hand',
+            'count': 1,
+            'filter': {'tag': 'burn'}
+          }));
 
       expect(state.hand.count, 1);
     });
@@ -266,7 +283,12 @@ void main() {
       state.hand.add(_makeTaggedCard('h1', CardType.spell, ['fire']));
 
       final result = OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+          state,
+          _op('discard', {
+            'from': 'hand',
+            'count': 1,
+            'filter': {'tag': 'burn'}
+          }));
 
       expect(result.success, isFalse);
     });
@@ -286,7 +308,12 @@ void main() {
       state.hand.add(_makeTaggedCard('h2', CardType.spell, ['burn']));
 
       OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+          state,
+          _op('discard', {
+            'from': 'hand',
+            'count': 1,
+            'filter': {'tag': 'burn'}
+          }));
 
       expect(state.choiceRequest.value, isNotNull);
     });
@@ -296,7 +323,12 @@ void main() {
       state.hand.add(_makeTaggedCard('h2', CardType.spell, ['burn']));
 
       final result = OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 1, 'filter': {'tag': 'burn'}}));
+          state,
+          _op('discard', {
+            'from': 'hand',
+            'count': 1,
+            'filter': {'tag': 'burn'}
+          }));
 
       expect(result.awaitingChoice, isTrue);
     });
@@ -309,7 +341,13 @@ void main() {
       state.grave.add(_makeTaggedCard('g2', CardType.spell, []));
 
       OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'filter': {'tag': 'token'}
+          }));
 
       expect(state.hand.cards.first.card.id, 'g1');
     });
@@ -319,7 +357,13 @@ void main() {
       state.grave.add(_makeTaggedCard('g2', CardType.spell, []));
 
       OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'filter': {'tag': 'token'}
+          }));
 
       expect(state.grave.count, 1);
     });
@@ -328,7 +372,13 @@ void main() {
       state.grave.add(_makeTaggedCard('g1', CardType.spell, ['fire']));
 
       OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'filter': {'tag': 'token'}
+          }));
 
       expect(state.hand.count, 0);
     });
@@ -338,7 +388,13 @@ void main() {
       state.grave.add(_makeTaggedCard('g2', CardType.spell, ['token']));
 
       OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'filter': {'tag': 'token'}}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'filter': {'tag': 'token'}
+          }));
 
       expect(state.choiceRequest.value, isNotNull);
     });
@@ -351,7 +407,11 @@ void main() {
       state.board.add(_makeTaggedCard('b2', CardType.monster, []));
 
       OperationExecutor.executeOperation(
-          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'filter': {'tag': 'weak'}
+          }));
 
       expect(state.grave.cards.first.card.id, 'b1');
     });
@@ -361,7 +421,11 @@ void main() {
       state.board.add(_makeTaggedCard('b2', CardType.monster, []));
 
       OperationExecutor.executeOperation(
-          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'filter': {'tag': 'weak'}
+          }));
 
       expect(state.board.count, 1);
     });
@@ -370,7 +434,11 @@ void main() {
       state.board.add(_makeTaggedCard('b1', CardType.monster, ['strong']));
 
       final result = OperationExecutor.executeOperation(
-          state, _op('destroy', {'target': 'board', 'filter': {'tag': 'weak'}}));
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'filter': {'tag': 'weak'}
+          }));
 
       expect(result.success, isFalse);
     });
@@ -380,7 +448,12 @@ void main() {
       state.board.add(_makeTaggedCard('b2', CardType.monster, ['weak']));
 
       OperationExecutor.executeOperation(
-          state, _op('destroy', {'target': 'board', 'count': 1, 'filter': {'tag': 'weak'}}));
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'count': 1,
+            'filter': {'tag': 'weak'}
+          }));
 
       expect(state.choiceRequest.value, isNotNull);
     });
@@ -390,9 +463,68 @@ void main() {
       state.board.add(_makeTaggedCard('b2', CardType.monster, ['weak']));
 
       OperationExecutor.executeOperation(
-          state, _op('destroy', {'target': 'board', 'count': 2, 'filter': {'tag': 'weak'}}));
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'count': 2,
+            'filter': {'tag': 'weak'}
+          }));
 
       expect(state.grave.count, 2);
+    });
+
+    test('filter + selection:choose の組み合わせは旧ターゲット記法と同じ結果になる（候補2枚→選択待ち）', () {
+      state.board.add(_makeCard('a1', CardType.artifact));
+      state.board.add(_makeCard('a2', CardType.artifact));
+
+      OperationExecutor.executeOperation(
+          state,
+          _op('destroy', {
+            'target': 'board',
+            'count': 1,
+            'filter': {'type': 'artifact'},
+            'selection': 'choose',
+          }));
+
+      expect(state.choiceRequest.value, isNotNull);
+    });
+  });
+
+  // ----------------------------------------------------------------
+  group('op: destroy/move (廃止されたターゲット記法)', () {
+    test('destroy に旧 "choose:self:artifact" 形式を渡すと failure になり board は変化しない',
+        () {
+      state.board.add(_makeCard('a1', CardType.artifact));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'choose:self:artifact'}));
+
+      expect(result.success, isFalse);
+      expect(state.board.count, 1);
+    });
+
+    test('destroy に未対応のゾーン名を渡すと failure になる', () {
+      state.board.add(_makeCard('b1', CardType.monster));
+
+      final result = OperationExecutor.executeOperation(
+          state, _op('destroy', {'target': 'no_such_zone'}));
+
+      expect(result.success, isFalse);
+    });
+
+    test('move に旧ターゲット記法を渡すと failure になる', () {
+      state.grave.add(_makeCard('g1', CardType.spell));
+
+      final result = OperationExecutor.executeOperation(
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'target': 'choose:self:tag=foo'
+          }));
+
+      expect(result.success, isFalse);
     });
   });
 
@@ -403,7 +535,14 @@ void main() {
       state.deck.add(_makeCard('s1', CardType.spell));
 
       OperationExecutor.executeOperation(
-          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+          state,
+          _op('search', {
+            'from': 'deck',
+            'to': 'hand',
+            'filter': {'type': 'artifact'},
+            'max': 1,
+            'random': true
+          }));
 
       expect(state.hand.count, 1);
     });
@@ -413,7 +552,14 @@ void main() {
       state.deck.add(_makeCard('s1', CardType.spell));
 
       OperationExecutor.executeOperation(
-          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+          state,
+          _op('search', {
+            'from': 'deck',
+            'to': 'hand',
+            'filter': {'type': 'artifact'},
+            'max': 1,
+            'random': true
+          }));
 
       expect(state.deck.cards.any((c) => c.card.id == 'a1'), isFalse);
     });
@@ -423,7 +569,14 @@ void main() {
       state.deck.add(_makeCard('s2', CardType.spell));
 
       OperationExecutor.executeOperation(
-          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+          state,
+          _op('search', {
+            'from': 'deck',
+            'to': 'hand',
+            'filter': {'type': 'artifact'},
+            'max': 1,
+            'random': true
+          }));
 
       expect(state.hand.count, 0);
     });
@@ -434,7 +587,14 @@ void main() {
       state.deck.add(_makeCard('a3', CardType.artifact));
 
       OperationExecutor.executeOperation(
-          state, _op('search', {'from': 'deck', 'to': 'hand', 'filter': {'type': 'artifact'}, 'max': 1, 'random': true}));
+          state,
+          _op('search', {
+            'from': 'deck',
+            'to': 'hand',
+            'filter': {'type': 'artifact'},
+            'max': 1,
+            'random': true
+          }));
 
       expect(state.hand.count, 1);
     });
@@ -447,8 +607,8 @@ void main() {
       state.hand.add(_makeCard('h2', CardType.spell));
       state.hand.add(_makeCard('h3', CardType.spell));
 
-      OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+      OperationExecutor.executeOperation(state,
+          _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
 
       expect(state.choiceRequest.value, isNotNull);
     });
@@ -458,8 +618,8 @@ void main() {
       state.hand.add(_makeCard('h2', CardType.spell));
       state.hand.add(_makeCard('h3', CardType.spell));
 
-      final result = OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+      final result = OperationExecutor.executeOperation(state,
+          _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
 
       expect(result.awaitingChoice, isTrue);
     });
@@ -468,8 +628,8 @@ void main() {
       state.hand.add(_makeCard('h1', CardType.spell));
       state.hand.add(_makeCard('h2', CardType.spell));
 
-      OperationExecutor.executeOperation(
-          state, _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
+      OperationExecutor.executeOperation(state,
+          _op('discard', {'from': 'hand', 'count': 2, 'selection': 'choose'}));
 
       expect(state.grave.count, 2);
     });
@@ -483,7 +643,13 @@ void main() {
       state.grave.add(_makeCard('g3', CardType.spell));
 
       OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'selection': 'choose'
+          }));
 
       expect(state.choiceRequest.value, isNotNull);
     });
@@ -493,7 +659,13 @@ void main() {
       state.grave.add(_makeCard('g2', CardType.spell));
 
       final result = OperationExecutor.executeOperation(
-          state, _op('move', {'from': 'grave', 'to': 'hand', 'count': 1, 'selection': 'choose'}));
+          state,
+          _op('move', {
+            'from': 'grave',
+            'to': 'hand',
+            'count': 1,
+            'selection': 'choose'
+          }));
 
       expect(result.awaitingChoice, isTrue);
     });
