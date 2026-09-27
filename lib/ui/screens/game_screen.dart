@@ -33,7 +33,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _game = TCGGame(initialDeck: widget.deck);
+    _game = TCGGame(initialDeck: widget.deck, seed: _seedFromUrl());
     if (widget.deck == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -45,6 +45,11 @@ class _GameScreenState extends State<GameScreen> {
       });
     }
   }
+
+  /// Web で URL に `?seed=N` が付いていればその seed を返す（手動確認で同じ初期手札を再現するため）。
+  /// 指定が無い・数値でない場合は null（ランダムな seed になる）。
+  static int? _seedFromUrl() =>
+      int.tryParse(Uri.base.queryParameters['seed'] ?? '');
 
   void _toggleOpponentArea() {
     setState(() {

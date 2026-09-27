@@ -24,12 +24,13 @@ import '../components/board_component.dart';
 class TCGGame extends FlameGame {
   /// ゲーム全体の共有状態。信頼できる唯一の情報源 (Single Source of Truth)。
   /// GameScreen の build() が onLoad() より先に呼ばれるため、コンストラクタ時に初期化する。
-  final GameState gameState = GameState();
+  final GameState gameState;
 
   /// ゲームで使用するデッキ
   final Deck? initialDeck;
 
-  TCGGame({this.initialDeck});
+  /// [seed] を指定すると同じデッキで同じシャッフル結果を再現できる（省略時はランダム）。
+  TCGGame({this.initialDeck, int? seed}) : gameState = GameState(seed: seed);
 
   /// ゲームボードコンポーネントへの参照（外部からトグル操作などに使用）
   BoardComponent? boardComponent;
@@ -60,7 +61,8 @@ class TCGGame extends FlameGame {
       if (card != null) {
         cards.add(card);
       } else {
-        gameState.addToLog('Warning: Unknown card ID "$cardId" in deck, skipped.');
+        gameState
+            .addToLog('Warning: Unknown card ID "$cardId" in deck, skipped.');
       }
     }
 
@@ -77,26 +79,11 @@ class TCGGame extends FlameGame {
       ));
     }
 
-    // デッキをシャッフル
-    _shuffleDeck();
+    // デッキをシャッフルし初期手札を配る
+    FieldRule.dealInitialHand(gameState);
 
-    // 初期手札を5枚ドロー
-    for (int i = 0; i < 5; i++) {
-      if (gameState.deck.isNotEmpty) {
-        final card = gameState.deck.removeAt(0);
-        if (card != null) {
-          gameState.hand.add(card);
-        }
-      }
-    }
-
-    gameState
-        .addToLog('Game initialized. ${gameState.hand.count} cards in hand.');
-  }
-
-  /// デッキのカードをランダムにシャッフルします。
-  void _shuffleDeck() {
-    gameState.deck.shuffle();
+    gameState.addToLog('Game initialized (seed: ${gameState.seed}). '
+        '${gameState.hand.count} cards in hand.');
   }
 
   /// 指定されたインデックスの手札のカードをプレイします。
@@ -148,7 +135,8 @@ class TCGGame extends FlameGame {
     // 選択待ちに戻っていなければ、トリガーキューの残りを再開する
     if (!result.awaitingChoice && gameState.choiceRequest.value == null) {
       Map<dynamic, dynamic> dummyUpdate() => {};
-      final resolveResult = await TriggerService.resolveAll(gameState, dummyUpdate);
+      final resolveResult =
+          await TriggerService.resolveAll(gameState, dummyUpdate);
       gameState.addAllToLog(resolveResult.logs);
     }
   }
@@ -238,13 +226,15 @@ class TCGGame extends FlameGame {
       gameState.selectCard(null);
       activateCardOnBoard(card);
     } else {
-      gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
+      gameState.selectCard(
+          CardSelectionState(card: card, zone: SelectionZone.board));
     }
   }
 
   /// ドメインカードがタップされたときの選択判定を行う。
   /// `BoardComponent` から委譲される。
   void onDomainCardTapped(CardInstance card) {
-    gameState.selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
+    gameState
+        .selectCard(CardSelectionState(card: card, zone: SelectionZone.board));
   }
 }

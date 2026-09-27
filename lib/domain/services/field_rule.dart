@@ -6,6 +6,22 @@ import './expression_evaluator.dart';
 import './trigger_service.dart';
 
 class FieldRule {
+  /// 初期手札の枚数
+  static const int initialHandSize = 5;
+
+  /// デッキを [GameState.random] でシャッフルし、初期手札を配る。
+  ///
+  /// 乱数は state の単一 RNG からのみ引くため、同じ seed・同じデッキ順なら結果が一致する。
+  static void dealInitialHand(GameState state) {
+    state.deck.shuffle(random: state.random);
+    for (int i = 0; i < initialHandSize && state.deck.isNotEmpty; i++) {
+      final card = state.deck.removeAt(0);
+      if (card != null) {
+        state.hand.add(card);
+      }
+    }
+  }
+
   static GameResult playDomain(GameState state, CardInstance domainCard) {
     if (domainCard.card.type != CardType.domain) {
       return GameResult.failure('Card is not a domain card');

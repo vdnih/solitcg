@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import '../../core/game_state.dart';
 import '../models/card_data.dart';
 import '../models/card_instance.dart';
@@ -132,7 +130,7 @@ class OperationExecutor {
     final matchingCards =
         source.where((card) => _matchesFilter(card, filter)).toList();
     if (useRandom) {
-      matchingCards.shuffle(Random());
+      matchingCards.shuffle(state.random);
     }
     final cardsToMove = matchingCards.take(maxCount).toList();
 
@@ -398,7 +396,7 @@ class OperationExecutor {
   }
 
   static void _shuffleDeck(GameState state) {
-    state.deck.shuffle();
+    state.deck.shuffle(random: state.random);
   }
 
   /// プレイヤーにカード選択を要求し、選択待ち状態の [GameResult] を返す共通ヘルパー。
