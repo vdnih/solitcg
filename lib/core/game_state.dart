@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import '../domain/models/card_selection_state.dart';
@@ -45,8 +46,18 @@ class GameState {
   int _nextInstanceId = 1;
   int _triggerOrder = 0;
 
-  GameState()
-      : hand = GameZone(type: Zone.hand),
+  /// このゲームの乱数 seed。同じ seed・同じデッキならシャッフル結果とドロー順が一致する。
+  final int seed;
+
+  /// ゲーム内の乱数はすべてこの単一インスタンスから引く（`Random()` を直接生成しない）。
+  final Random random;
+
+  /// [seed] を省略した場合はランダムな seed を採番する。
+  GameState({int? seed}) : this._withSeed(seed ?? Random().nextInt(1 << 31));
+
+  GameState._withSeed(this.seed)
+      : random = Random(seed),
+        hand = GameZone(type: Zone.hand),
         deck = GameZone(type: Zone.deck),
         board = GameZone(type: Zone.board),
         domain = GameZone(type: Zone.domain),
