@@ -74,12 +74,15 @@ class FieldRule {
           }
         }
 
-        // domain カードの on_spell_played アビリティを通知
-        if (state.hasDomain) {
-          final domain = state.currentDomain!;
-          for (final ability in domain.card.abilities) {
+        // domain → board（場に出た順）の on_spell_played アビリティを通知
+        final subscribers = [
+          if (state.hasDomain) state.currentDomain!,
+          ...state.board.cards,
+        ];
+        for (final subscriber in subscribers) {
+          for (final ability in subscriber.card.abilities) {
             if (ability.when == TriggerWhen.onSpellPlayed) {
-              TriggerService.enqueueAbility(state, domain, ability);
+              TriggerService.enqueueAbility(state, subscriber, ability);
             }
           }
         }

@@ -170,6 +170,54 @@ void main() {
   });
 
   // ----------------------------------------------------------------
+  group('FieldRule.playCard — on_spell_played board 通知', () {
+    test('spell をプレイすると board のカードの onSpellPlayed アビリティがキューに積まれる', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      state.board.add(
+          _makeCard('m1', CardType.monster, abilities: [onSpellPlayedAbility]));
+
+      FieldRule.playCard(state, _makeCard('s1', CardType.spell));
+
+      expect(state.triggerQueue.length, 1);
+      expect(state.triggerQueue.first.source.instanceId, 'm1');
+    });
+
+    test('board の購読カードが複数あれば、それぞれのアビリティが積まれる', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      state.board.add(
+          _makeCard('m1', CardType.monster, abilities: [onSpellPlayedAbility]));
+      state.board.add(_makeCard('a1', CardType.artifact,
+          abilities: [onSpellPlayedAbility]));
+
+      FieldRule.playCard(state, _makeCard('s1', CardType.spell));
+
+      expect(state.triggerQueue.map((t) => t.source.instanceId), ['m1', 'a1']);
+    });
+
+    test('domain と board の両方が購読していれば domain → board の順に積まれる', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      state.board.add(
+          _makeCard('m1', CardType.monster, abilities: [onSpellPlayedAbility]));
+      state.domain.add(
+          _makeCard('d1', CardType.domain, abilities: [onSpellPlayedAbility]));
+
+      FieldRule.playCard(state, _makeCard('s1', CardType.spell));
+
+      expect(state.triggerQueue.map((t) => t.source.instanceId), ['d1', 'm1']);
+    });
+
+    test('monster をプレイしても board の onSpellPlayed は積まれない', () {
+      final onSpellPlayedAbility = _makeAbility(TriggerWhen.onSpellPlayed);
+      state.board.add(
+          _makeCard('m1', CardType.monster, abilities: [onSpellPlayedAbility]));
+
+      FieldRule.playCard(state, _makeCard('m2', CardType.monster));
+
+      expect(state.triggerQueue.length, 0);
+    });
+  });
+
+  // ----------------------------------------------------------------
   group('FieldRule.playCardFromHand — エラーケース', () {
     test('無効なインデックス（負数）は failure を返す', () {
       final result = FieldRule.playCardFromHand(state, -1);

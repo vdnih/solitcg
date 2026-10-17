@@ -81,7 +81,7 @@ abilities:                    # 任意。0個以上
 | `on_destroy` | hp ≤ 0 または `destroy` op により破壊された直後 |
 | `on_discard` | 手札から捨て札に置かれた直後 |
 | `activated` | プレイヤーが手動で発動。`once_per_turn: true`（省略時デフォルト）でエンジンが1ゲーム1度を強制（ゲームは1ターンで完結するため「1ターン」と「1ゲーム」は同義。PDR-001）。`once_per_turn: false` で無制限。 |
-| `on_spell_played` | spell がプレイされるたび（現状は domain カードのみが購読可能） |
+| `on_spell_played` | spell がプレイされるたび。domain と場（board）のカードが購読でき、domain → board（場に出た順）の順にキューへ積まれる。手札・墓地のカードは反応しない |
 
 > MVP スコープ外（使用不可）: `on_enter` / `static` / `on_draw` / `on_domain_set`
 
