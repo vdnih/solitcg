@@ -14,11 +14,24 @@ import '../../domain/models/deck_rules.dart';
 class DeckRepository {
   static const String deckFileName = 'decks.json';
   static const String localStorageKey = 'solitcg_decks';
-  static const String sampleDeckAssetPath = 'assets/decks/sample.yaml';
 
-  /// サンプルデッキ＿魔法省（読み取り専用）を assets/decks/sample.yaml から読み込む。
-  static Future<Deck> loadSampleDeckMahou() async {
-    final yamlContent = await rootBundle.loadString(sampleDeckAssetPath);
+  /// 読み取り専用のサンプルデッキ。この順でデッキ一覧の先頭に並ぶ。
+  static const List<String> sampleDeckAssetPaths = [
+    'assets/decks/sample.yaml',
+    'assets/decks/library_seal_giant.yaml',
+    'assets/decks/stargazer_seal_giant.yaml',
+    'assets/decks/dragon_seal_giant.yaml',
+  ];
+
+  /// [sampleDeckAssetPaths] のサンプルデッキ（読み取り専用）をすべて読み込む。
+  static Future<List<Deck>> loadSampleDecks() async {
+    return [
+      for (final path in sampleDeckAssetPaths) await _loadSampleDeck(path),
+    ];
+  }
+
+  static Future<Deck> _loadSampleDeck(String assetPath) async {
+    final yamlContent = await rootBundle.loadString(assetPath);
     final doc = loadYaml(yamlContent) as Map;
 
     final cardIds = <String>[];

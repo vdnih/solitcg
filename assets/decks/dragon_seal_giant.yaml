@@ -1,0 +1,31 @@
+id: sample_dragon_seal_giant
+name: サンプルデッキ＿銀眼巨神
+cards:
+  - id: seal_giant_head
+    count: 1
+  - id: seal_giant_right_arm
+    count: 1
+  - id: seal_giant_left_arm
+    count: 1
+  - id: seal_giant_right_leg
+    count: 1
+  - id: seal_giant_left_leg
+    count: 1
+  - id: sealed_coffer
+    count: 3
+  - id: silver_eyes_dragon
+    count: 4
+  - id: white_legend_stone
+    count: 4
+  - id: high_level_trade
+    count: 4
+  - id: dragon_calling_melody
+    count: 4
+  - id: mass_production_workshop
+    count: 4
+  - id: mon_akuma_001
+    count: 4
+  - id: spl_typhoon
+    count: 4
+  - id: simple_draw_001
+    count: 4

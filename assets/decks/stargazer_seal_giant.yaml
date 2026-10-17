@@ -1,0 +1,31 @@
+id: sample_stargazer_seal_giant
+name: サンプルデッキ＿星詠み巨神
+cards:
+  - id: seal_giant_head
+    count: 1
+  - id: seal_giant_right_arm
+    count: 1
+  - id: seal_giant_left_arm
+    count: 1
+  - id: seal_giant_right_leg
+    count: 1
+  - id: seal_giant_left_leg
+    count: 1
+  - id: sealed_coffer
+    count: 3
+  - id: stargazer_aqua
+    count: 4
+  - id: stargazer_lumina
+    count: 4
+  - id: stargazer_chrono
+    count: 4
+  - id: wheel_of_fortune
+    count: 4
+  - id: stargazer_future_chart
+    count: 4
+  - id: spl_typhoon
+    count: 4
+  - id: mon_akuma_001
+    count: 4
+  - id: simple_draw_001
+    count: 4

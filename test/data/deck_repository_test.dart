@@ -7,14 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:solitcg/data/repositories/card_repository.dart';
 import 'package:solitcg/data/repositories/deck_repository.dart';
 import 'package:solitcg/domain/models/deck.dart';
+import 'package:solitcg/domain/services/deck_validator.dart';
 
 void main() {
   // rootBundle は CachingAssetBundle のためテスト間で内部キャッシュが共有される。
   // 複数の testWidgets に分けて 'flutter/assets' ハンドラを都度差し替えると
   // 2つ目以降の呼び出しがハングするため、1つの test にまとめて検証する。
   testWidgets(
-      'DeckRepository.loadSampleDeckMahou は assets/decks/sample.yaml を読み込み、'
-      'assets/cards の全カードIDを網羅する', (tester) async {
+      'DeckRepository.loadSampleDecks は全サンプルデッキを読み込み、'
+      'どのデッキも実在するカードだけで構成されデッキ構築ルールを満たす', (tester) async {
     tester.binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', (message) async {
       final key = utf8.decode(message!.buffer.asUint8List());
       final file = File(key);
@@ -23,16 +24,27 @@ void main() {
     });
 
     final allCards = await CardRepository.loadAllCards();
-    final deck = await DeckRepository.loadSampleDeckMahou();
+    final decks = await DeckRepository.loadSampleDecks();
 
-    expect(deck.id, 'sample_mahou_sho');
-    expect(deck.type, DeckType.main);
-    expect(deck.isReadOnly, isTrue);
-    expect(deck.cardCount, greaterThanOrEqualTo(40));
+    expect(decks.map((d) => d.id), [
+      'sample_mahou_sho',
+      'sample_library_seal_giant',
+      'sample_stargazer_seal_giant',
+      'sample_dragon_seal_giant',
+    ]);
 
-    final deckCardIds = deck.cardIds.toSet();
-    final allCardIds = allCards.map((c) => c.id).toSet();
-    expect(deckCardIds, allCardIds);
+    for (final deck in decks) {
+      expect(deck.type, DeckType.main, reason: deck.id);
+      expect(deck.isReadOnly, isTrue, reason: deck.id);
+
+      final result = await DeckValidator.validateDeck(deck, allCards);
+      expect(result.errors, isEmpty, reason: deck.id);
+
+      // sample_mahou_sho は 50 枚あり「ちょうど40枚」に違反している（#49 で是正予定）
+      if (deck.id != 'sample_mahou_sho') {
+        expect(deck.cardCount, 40, reason: deck.id);
+      }
+    }
 
     tester.binding.defaultBinaryMessenger.setMockMessageHandler('flutter/assets', null);
   });
