@@ -1,0 +1,15 @@
+id: grimoire_scholar
+name: 魔導書の司書
+type: monster
+tags: [spellcaster]
+text: このカードを召喚したとき、デッキから「grimoire」タグのカードを1枚選んで手札に加える。
+version: 1
+stats:
+  atk: 500
+  def: 400
+  hp: 500
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: move, from: deck, to: hand, filter: { tag: "grimoire" }, count: 1 }

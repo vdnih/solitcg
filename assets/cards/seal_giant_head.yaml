@@ -1,0 +1,21 @@
+id: seal_giant_head
+name: 封印されし巨神
+type: monster
+tags: [seal_giant, seal_giant_head]
+text: 手札に「封印されし巨神の右腕」「封印されし巨神の左腕」「封印されし巨神の右脚」「封印されし巨神の左脚」が揃っている場合のみ召喚できる。召喚したとき、ゲームに勝利する。
+version: 1
+stats:
+  atk: 1000
+  def: 1000
+  hp: 1000
+
+abilities:
+  # 召喚条件と勝利を兼ねる。四肢は手札に残したまま、頭部だけを召喚する
+  - when: on_play
+    pre:
+      - "count(tag:'seal_giant_right_arm', zone:'hand:self') >= 1"
+      - "count(tag:'seal_giant_left_arm', zone:'hand:self') >= 1"
+      - "count(tag:'seal_giant_right_leg', zone:'hand:self') >= 1"
+      - "count(tag:'seal_giant_left_leg', zone:'hand:self') >= 1"
+    effect:
+      - { op: win }

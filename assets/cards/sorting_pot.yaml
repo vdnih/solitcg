@@ -1,0 +1,12 @@
+id: sorting_pot
+name: 選別の壺
+type: spell
+tags: [pot]
+text: デッキの上から2枚を墓地へ送る。その後、カードを1枚引く。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: mill, count: 2 }
+      - { op: draw, count: 1 }

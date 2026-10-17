@@ -1,0 +1,19 @@
+id: white_legend_stone
+name: 白き伝承の石
+type: monster
+tags: [dragon]
+text: このカードが手札から捨てられたとき、または破壊されたとき、デッキから「high_level」タグのモンスターを1体手札に加える。
+version: 1
+stats:
+  atk: 300
+  def: 250
+  hp: 300
+
+abilities:
+  - when: on_discard
+    effect:
+      - { op: search, from: deck, to: hand, filter: { tag: "high_level" }, max: 1 }
+
+  - when: on_destroy
+    effect:
+      - { op: search, from: deck, to: hand, filter: { tag: "high_level" }, max: 1 }

@@ -1,0 +1,11 @@
+id: seal_giant_right_leg
+name: 封印されし巨神の右脚
+type: monster
+tags: [seal_giant, seal_giant_right_leg, vanilla]
+text: 効果を持たない。手札に四肢が揃ったとき、「封印されし巨神」を召喚できるようになる。
+version: 1
+stats:
+  atk: 200
+  def: 300
+  hp: 300
+abilities: []

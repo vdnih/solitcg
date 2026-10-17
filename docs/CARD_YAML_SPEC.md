@@ -154,7 +154,13 @@ pre:
 - { op: discard, from: hand, count: 1, filter: { tag: "burn" } }
 ```
 
+```yaml
+# デッキの上から count 枚を墓地へ送る（on_discard / on_destroy は発火しない）
+- { op: mill, count: 2 }
+```
+
 * `discard` は `from: hand` のみ対応する（他ゾーンを指定すると failure になる）。
+* `mill` はデッキが count 枚未満なら、あるだけ墓地へ送って成功扱いになる。
 * `filter` を指定した場合、一致するカードが `count` 枚を超えるとプレイヤーが選択する。
 * `filter` を省略した場合は先頭から `count` 枚を自動選択（従来動作）。
 

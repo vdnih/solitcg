@@ -1,9 +1,9 @@
 id: mon_warrior_001
 name: ウォリアー
 type: monster
-tags: [warrior, basic]
+tags: [warrior, basic, vanilla]
 text: 基本的な戦士。
-version: 1
+version: 2
 stats:
   atk: 1500
   def: 1200

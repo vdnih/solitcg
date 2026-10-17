@@ -1,0 +1,13 @@
+id: wheel_of_fortune
+name: 運命の転輪
+type: spell
+tags: [stargazer_support]
+text: 自分の場の「stargazer」タグのモンスターを1体選んで破壊する。その後、カードを1枚引く。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      # 破壊できる対象が無ければ destroy が失敗し、ドローも行われない
+      - { op: destroy, target: board, filter: { tag: "stargazer" }, count: 1 }
+      - { op: draw, count: 1 }
