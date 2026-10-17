@@ -118,19 +118,19 @@ void main() {
       );
     });
 
-    test('count(tag:spl_haku, zone:hand:self) は hand に spl_haku タグが2枚で true (>= 2)', () {
-      state.hand.add(_makeCard('h1', CardType.spell, tags: ['spl_haku']));
-      state.hand.add(_makeCard('h2', CardType.spell, tags: ['spl_haku']));
+    test('count(tag:combo, zone:hand:self) は hand に combo タグが2枚で true (>= 2)', () {
+      state.hand.add(_makeCard('h1', CardType.spell, tags: ['combo']));
+      state.hand.add(_makeCard('h2', CardType.spell, tags: ['combo']));
       expect(
-        ExpressionEvaluator.evaluate(state, "count(tag:'spl_haku', zone:'hand:self') >= 2"),
+        ExpressionEvaluator.evaluate(state, "count(tag:'combo', zone:'hand:self') >= 2"),
         isTrue,
       );
     });
 
-    test('count(tag:spl_haku, zone:hand:self) はタグが1枚のとき false (>= 2)', () {
-      state.hand.add(_makeCard('h1', CardType.spell, tags: ['spl_haku']));
+    test('count(tag:combo, zone:hand:self) はタグが1枚のとき false (>= 2)', () {
+      state.hand.add(_makeCard('h1', CardType.spell, tags: ['combo']));
       expect(
-        ExpressionEvaluator.evaluate(state, "count(tag:'spl_haku', zone:'hand:self') >= 2"),
+        ExpressionEvaluator.evaluate(state, "count(tag:'combo', zone:'hand:self') >= 2"),
         isFalse,
       );
     });
