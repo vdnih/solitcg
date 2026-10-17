@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:solitcg/core/game_state.dart';
 import 'package:solitcg/data/repositories/card_repository.dart';
+import 'package:solitcg/domain/models/card_data.dart';
 import 'package:solitcg/domain/models/card_instance.dart';
 import 'package:solitcg/domain/services/choice_resolver.dart';
 import 'package:solitcg/domain/services/field_rule.dart';
 import 'package:solitcg/domain/services/trigger_service.dart';
 
-/// 封印されし巨神と3テーマ（魔導書庫・星詠み・銀眼）のカードが、
+/// 封印されし巨神と4テーマ（魔導書庫・星詠み・銀眼・竹光）のカードが、
 /// assets/cards の実 YAML どおりに動くことを検証する統合テスト。
 
 int _seq = 0;
@@ -334,6 +335,73 @@ void main() {
         'silver_eyes_dragon'
       ]);
       expect(_ids(state.deck.cards), ['mon_warrior_001']);
+    });
+  });
+
+  group('竹光', () {
+    /// クリスタル盗掘団の起動効果（場のアーティファクトを破壊して1枚引く）を発動する。
+    Future<void> activateLooter(CardInstance looter) async {
+      final ability = looter.card.abilities
+          .firstWhere((a) => a.when == TriggerWhen.activated);
+      TriggerService.enqueueAbility(state, looter, ability);
+      await _resolve(state);
+    }
+
+    test('欠けた竹光: 場にモンスターがいなければ出せない', () async {
+      state.hand.addAll(_cards(['chipped_takemitsu']));
+
+      expect(await _play(state, 'chipped_takemitsu'), isFalse);
+
+      state.board.addAll(_cards(['mon_van_001']));
+      expect(await _play(state, 'chipped_takemitsu'), isTrue);
+      expect(_ids(state.board.cards), ['mon_van_001', 'chipped_takemitsu']);
+    });
+
+    test('金箔の竹光: 場に竹光があれば2枚引き、無ければ発動できない', () async {
+      state.hand.addAll(_cards(['gilded_takemitsu']));
+      state.deck.addAll(_cards(['mon_van_001', 'mon_van_001']));
+
+      expect(await _play(state, 'gilded_takemitsu'), isFalse);
+
+      state.board.addAll(_cards(['chipped_takemitsu']));
+      expect(await _play(state, 'gilded_takemitsu'), isTrue);
+      expect(state.hand.count, 2);
+    });
+
+    test('竹光の浪人: 召喚したとき、デッキから竹光のアーティファクトを選んで手札に加える', () async {
+      state.hand.addAll(_cards(['takemitsu_ronin']));
+      state.deck.addAll(_cards(
+          ['gilded_takemitsu', 'chipped_takemitsu', 'eerie_takemitsu']));
+
+      await _play(state, 'takemitsu_ronin');
+      // 金箔の竹光（spell）は候補に含まれない
+      expect(_ids(state.choiceRequest.value!.candidates),
+          ['chipped_takemitsu', 'eerie_takemitsu']);
+      await _choose(state, ['eerie_takemitsu']);
+
+      expect(_ids(state.hand.cards), ['eerie_takemitsu']);
+    });
+
+    test('クリスタル盗掘団で妖しの竹光を破壊すると、1枚引き、竹光カードを選んでサーチできる', () async {
+      final looter = _card('mon_crystal_looters_001');
+      state.board.addAll([looter, _card('eerie_takemitsu')]);
+      state.deck.addAll(_cards(['mon_van_001', 'gilded_takemitsu']));
+
+      await activateLooter(looter);
+
+      expect(_ids(state.hand.cards), ['mon_van_001', 'gilded_takemitsu']);
+      expect(_ids(state.grave.cards), ['eerie_takemitsu']);
+    });
+
+    test('竹光の打ち直し: 墓地の竹光を場に戻す（墓地に竹光のアーティファクトが無ければ発動できない）', () async {
+      state.grave.addAll(_cards(['gilded_takemitsu']));
+      state.hand.addAll(_cards(['takemitsu_reforge']));
+
+      expect(await _play(state, 'takemitsu_reforge'), isFalse);
+
+      state.grave.addAll(_cards(['eerie_takemitsu']));
+      expect(await _play(state, 'takemitsu_reforge'), isTrue);
+      expect(_ids(state.board.cards), ['eerie_takemitsu']);
     });
   });
 }

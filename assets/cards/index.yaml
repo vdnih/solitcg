@@ -40,3 +40,9 @@ cards:
   - white_legend_stone.yaml
   - high_level_trade.yaml
   - dragon_calling_melody.yaml
+  # 竹光（場の竹光を条件にドローし、破壊されてサーチし直すテーマ）
+  - chipped_takemitsu.yaml
+  - gilded_takemitsu.yaml
+  - eerie_takemitsu.yaml
+  - takemitsu_ronin.yaml
+  - takemitsu_reforge.yaml

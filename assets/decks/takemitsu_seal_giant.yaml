@@ -1,0 +1,31 @@
+id: sample_takemitsu_seal_giant
+name: サンプルデッキ＿竹光巨神
+cards:
+  - id: seal_giant_head
+    count: 1
+  - id: seal_giant_right_arm
+    count: 1
+  - id: seal_giant_left_arm
+    count: 1
+  - id: seal_giant_right_leg
+    count: 1
+  - id: seal_giant_left_leg
+    count: 1
+  - id: sealed_coffer
+    count: 3
+  - id: chipped_takemitsu
+    count: 4
+  - id: gilded_takemitsu
+    count: 4
+  - id: eerie_takemitsu
+    count: 4
+  - id: takemitsu_ronin
+    count: 4
+  - id: takemitsu_reforge
+    count: 4
+  - id: mon_crystal_looters_001
+    count: 4
+  - id: spl_typhoon
+    count: 4
+  - id: simple_draw_001
+    count: 4

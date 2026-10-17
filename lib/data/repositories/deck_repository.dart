@@ -21,6 +21,7 @@ class DeckRepository {
     'assets/decks/library_seal_giant.yaml',
     'assets/decks/stargazer_seal_giant.yaml',
     'assets/decks/dragon_seal_giant.yaml',
+    'assets/decks/takemitsu_seal_giant.yaml',
   ];
 
   /// [sampleDeckAssetPaths] のサンプルデッキ（読み取り専用）をすべて読み込む。

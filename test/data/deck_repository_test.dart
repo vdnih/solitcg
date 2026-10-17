@@ -31,6 +31,7 @@ void main() {
       'sample_library_seal_giant',
       'sample_stargazer_seal_giant',
       'sample_dragon_seal_giant',
+      'sample_takemitsu_seal_giant',
     ]);
 
     for (final deck in decks) {

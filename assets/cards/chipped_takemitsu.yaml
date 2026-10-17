@@ -1,0 +1,13 @@
+id: chipped_takemitsu
+name: 欠けた竹光
+type: artifact
+tags: [takemitsu, takemitsu_sword]
+text: 自分の場にモンスターがいる場合のみ出せる。効果を持たない。
+version: 1
+
+abilities:
+  # 装備カードの代わりに「場にモンスターがいること」を出す条件にする
+  - when: on_play
+    pre:
+      - "count(type:'monster', zone:'board:self') >= 1"
+    effect: []
