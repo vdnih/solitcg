@@ -1,0 +1,13 @@
+id: grimoire_of_wisdom
+name: 叡智の魔導書
+type: spell
+tags: [grimoire]
+text: 手札の「grimoire」タグのカードを1枚選んで捨てる。その後、カードを2枚引く。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      # 捨てられる grimoire が手札に無ければ discard が失敗し、ドローも行われない
+      - { op: discard, from: hand, count: 1, filter: { tag: "grimoire" } }
+      - { op: draw, count: 2 }

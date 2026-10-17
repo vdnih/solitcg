@@ -1,0 +1,18 @@
+id: stargazer_aqua
+name: 星詠みの少女アクア
+type: monster
+tags: [stargazer, spellcaster]
+text: このカードを召喚したとき、自分の場にこのカード以外の「stargazer」タグのモンスターがいれば、カードを2枚引く。
+version: 1
+stats:
+  atk: 1200
+  def: 1000
+  hp: 1000
+
+abilities:
+  # 条件を満たさなくても召喚自体はできるよう、pre ではなく require で判定する。
+  # 解決時点ではこのカード自身も場にいるため、2体以上で「自分以外に1体以上」になる
+  - when: on_play
+    effect:
+      - { op: require, expr: "count(tag:'stargazer', zone:'board:self') >= 2" }
+      - { op: draw, count: 2 }

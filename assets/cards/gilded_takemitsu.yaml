@@ -1,0 +1,13 @@
+id: gilded_takemitsu
+name: 金箔の竹光
+type: spell
+tags: [takemitsu]
+text: 自分の場に「takemitsu_sword」タグのアーティファクトがある場合のみ発動できる。カードを2枚引く。
+version: 1
+
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'takemitsu_sword', zone:'board:self') >= 1"
+    effect:
+      - { op: draw, count: 2 }

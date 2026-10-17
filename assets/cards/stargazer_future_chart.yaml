@@ -1,0 +1,15 @@
+id: stargazer_future_chart
+name: 星の未来図
+type: spell
+tags: [stargazer_support]
+text: 自分の墓地に「stargazer」タグのモンスターがいる場合のみ発動できる。そのモンスターを1体選んでデッキの一番下に戻し、カードを2枚引く。
+version: 1
+
+abilities:
+  # このカード自身は stargazer タグを持たないため、墓地に置かれても条件を満たさない
+  - when: on_play
+    pre:
+      - "count(tag:'stargazer', zone:'grave:self') >= 1"
+    effect:
+      - { op: move, from: grave, to: deck, filter: { tag: "stargazer", type: "monster" }, count: 1 }
+      - { op: draw, count: 2 }

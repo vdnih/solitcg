@@ -1,0 +1,11 @@
+id: silver_eyes_dragon
+name: 銀眼の白竜
+type: monster
+tags: [dragon, high_level, vanilla]
+text: 効果を持たない。
+version: 1
+stats:
+  atk: 3000
+  def: 2500
+  hp: 3000
+abilities: []

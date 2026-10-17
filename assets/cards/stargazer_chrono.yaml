@@ -1,0 +1,15 @@
+id: stargazer_chrono
+name: 星詠みの少女クロノ
+type: monster
+tags: [stargazer, spellcaster]
+text: このカードが手札から捨てられたとき、自分の墓地から「stargazer」タグのモンスターを1体選んで場に出す（このカード自身も選べる。場に出したモンスターの召喚時の効果は発動しない）。
+version: 1
+stats:
+  atk: 600
+  def: 600
+  hp: 800
+
+abilities:
+  - when: on_discard
+    effect:
+      - { op: move, from: grave, to: board, filter: { tag: "stargazer", type: "monster" }, count: 1 }

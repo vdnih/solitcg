@@ -1,0 +1,14 @@
+id: takemitsu_reforge
+name: 竹光の打ち直し
+type: spell
+tags: [takemitsu]
+text: 自分の墓地に「takemitsu_sword」タグのアーティファクトがある場合のみ発動できる。そのアーティファクトを1枚選んで場に戻す（召喚時の効果は発動しない）。
+version: 1
+
+abilities:
+  # このカード自身は takemitsu_sword タグを持たないため、墓地に置かれても条件を満たさない
+  - when: on_play
+    pre:
+      - "count(tag:'takemitsu_sword', zone:'grave:self') >= 1"
+    effect:
+      - { op: move, from: grave, to: board, filter: { tag: "takemitsu_sword" }, count: 1 }

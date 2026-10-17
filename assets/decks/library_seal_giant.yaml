@@ -1,0 +1,31 @@
+id: sample_library_seal_giant
+name: サンプルデッキ＿魔導書庫巨神
+cards:
+  - id: seal_giant_head
+    count: 1
+  - id: seal_giant_right_arm
+    count: 1
+  - id: seal_giant_left_arm
+    count: 1
+  - id: seal_giant_right_leg
+    count: 1
+  - id: seal_giant_left_leg
+    count: 1
+  - id: sealed_coffer
+    count: 3
+  - id: royal_grimoire_library
+    count: 4
+  - id: grimoire_scholar
+    count: 4
+  - id: grimoire_of_secrets
+    count: 4
+  - id: grimoire_of_wisdom
+    count: 4
+  - id: sorting_pot
+    count: 4
+  - id: mass_production_workshop
+    count: 4
+  - id: simple_draw_001
+    count: 4
+  - id: spl_typhoon
+    count: 4

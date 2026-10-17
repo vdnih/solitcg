@@ -1,0 +1,13 @@
+id: mass_production_workshop
+name: 量産工房
+type: spell
+tags: []
+text: 自分の墓地に「vanilla」タグのモンスターが2体以上いる場合のみ発動できる。墓地からそのモンスターを2体選んで手札に加える。
+version: 1
+
+abilities:
+  - when: on_play
+    pre:
+      - "count(tag:'vanilla', zone:'grave:self') >= 2"
+    effect:
+      - { op: move, from: grave, to: hand, filter: { tag: "vanilla", type: "monster" }, count: 2 }

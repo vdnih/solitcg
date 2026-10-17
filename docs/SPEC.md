@@ -84,7 +84,7 @@ ADR-006 により、カードタイプは4種に統合する。旧 `ritual` / `a
 | `on_destroy` | hp ≤ 0 または `destroy` op により破壊された直後 | 全タイプ |
 | `on_discard` | 手札から捨て札に置かれた直後 | 全タイプ |
 | `activated` | プレイヤーが手動で発動（§3 の通り1ゲーム1度が正しい仕様） | 場にあるカード |
-| `on_spell_played` | spell がプレイされるたび（ドメインカードが購読） | domain |
+| `on_spell_played` | spell がプレイされるたび。domain → board（場に出た順）の順にキューへ積む | domain / 場にあるカード |
 
 > MVP スコープ外: `on_enter` / `static` / `on_draw` / `on_domain_set`
 

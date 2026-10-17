@@ -1,0 +1,25 @@
+id: royal_grimoire_library
+name: 王立魔導書庫
+type: monster
+tags: [library, spellcaster]
+text: スペルがプレイされるたびに、このカードに魔力カウンターを1つ置く。魔力カウンターが3つになったら、カウンターを全て取り除き、カードを1枚引く。
+version: 1
+stats:
+  atk: 0
+  def: 2000
+  hp: 2000
+
+abilities:
+  - when: on_spell_played
+    once_per_turn: false
+    effect:
+      - { op: add_counter, key: magic, amount: 1 }
+
+  # FIFO 解決により上のアビリティ（add_counter）が先に解決される
+  - when: on_spell_played
+    once_per_turn: false
+    pre:
+      - "self.counter('magic') >= 3"
+    effect:
+      - { op: remove_counter, key: magic }
+      - { op: draw, count: 1 }

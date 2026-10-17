@@ -1,0 +1,13 @@
+id: high_level_trade
+name: 上級交換
+type: spell
+tags: [dragon_support]
+text: 手札の「high_level」タグのモンスターを1体選んで捨てる。その後、カードを2枚引く。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      # 捨てられる high_level が手札に無ければ discard が失敗し、ドローも行われない
+      - { op: discard, from: hand, count: 1, filter: { tag: "high_level" } }
+      - { op: draw, count: 2 }

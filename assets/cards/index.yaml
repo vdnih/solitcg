@@ -15,3 +15,34 @@ cards:
   - dmn_suiryoku_001.yaml
   - dmn_mahou_001.yaml
   - spl_construction_plan_001.yaml
+  # 封印されし巨神（エクゾディア型の勝利条件。各テーマ共通）
+  - seal_giant_head.yaml
+  - seal_giant_right_arm.yaml
+  - seal_giant_left_arm.yaml
+  - seal_giant_right_leg.yaml
+  - seal_giant_left_leg.yaml
+  - sealed_coffer.yaml
+  - mass_production_workshop.yaml
+  # 王立魔導書庫（スペル連打でドローするテーマ）
+  - royal_grimoire_library.yaml
+  - grimoire_scholar.yaml
+  - grimoire_of_secrets.yaml
+  - grimoire_of_wisdom.yaml
+  - sorting_pot.yaml
+  # 星詠み（場の枚数を条件にドローするテーマ）
+  - stargazer_aqua.yaml
+  - stargazer_lumina.yaml
+  - stargazer_chrono.yaml
+  - wheel_of_fortune.yaml
+  - stargazer_future_chart.yaml
+  # 銀眼の白竜（上級モンスターを手札コストにしてドローするテーマ）
+  - silver_eyes_dragon.yaml
+  - white_legend_stone.yaml
+  - high_level_trade.yaml
+  - dragon_calling_melody.yaml
+  # 竹光（場の竹光を条件にドローし、破壊されてサーチし直すテーマ）
+  - chipped_takemitsu.yaml
+  - gilded_takemitsu.yaml
+  - eerie_takemitsu.yaml
+  - takemitsu_ronin.yaml
+  - takemitsu_reforge.yaml

@@ -1,0 +1,16 @@
+id: eerie_takemitsu
+name: 妖しの竹光
+type: artifact
+tags: [takemitsu, takemitsu_sword]
+text: 自分の場にモンスターがいる場合のみ出せる。このカードが破壊されたとき、デッキから「takemitsu」タグのカードを1枚選んで手札に加える。
+version: 1
+
+abilities:
+  - when: on_play
+    pre:
+      - "count(type:'monster', zone:'board:self') >= 1"
+    effect: []
+
+  - when: on_destroy
+    effect:
+      - { op: move, from: deck, to: hand, filter: { tag: "takemitsu" }, count: 1 }

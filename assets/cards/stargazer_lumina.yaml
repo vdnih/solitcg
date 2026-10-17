@@ -1,0 +1,15 @@
+id: stargazer_lumina
+name: 星詠みの少女ルミナ
+type: monster
+tags: [stargazer, spellcaster]
+text: このカードが破壊されたとき、デッキから「stargazer」タグのモンスターを1体選んで場に出す（場に出したモンスターの召喚時の効果は発動しない）。
+version: 1
+stats:
+  atk: 800
+  def: 1200
+  hp: 1000
+
+abilities:
+  - when: on_destroy
+    effect:
+      - { op: move, from: deck, to: board, filter: { tag: "stargazer", type: "monster" }, count: 1 }

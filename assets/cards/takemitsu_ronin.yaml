@@ -1,0 +1,15 @@
+id: takemitsu_ronin
+name: 竹光の浪人
+type: monster
+tags: [warrior]
+text: このカードを召喚したとき、デッキから「takemitsu_sword」タグのアーティファクトを1枚選んで手札に加える。
+version: 1
+stats:
+  atk: 800
+  def: 600
+  hp: 800
+
+abilities:
+  - when: on_play
+    effect:
+      - { op: move, from: deck, to: hand, filter: { tag: "takemitsu_sword" }, count: 1 }

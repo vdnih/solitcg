@@ -1,0 +1,13 @@
+id: sealed_coffer
+name: 封印の宝櫃
+type: spell
+tags: [seal_giant_support]
+text: 手札を1枚選んで捨てる。その後、デッキから「seal_giant」タグのカードを1枚選んで手札に加える。
+version: 1
+
+abilities:
+  - when: on_play
+    effect:
+      # 捨てる手札が無ければ discard が失敗し、サーチも行われない
+      - { op: discard, from: hand, count: 1, selection: choose }
+      - { op: move, from: deck, to: hand, filter: { tag: "seal_giant" }, count: 1 }
