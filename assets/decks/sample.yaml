@@ -25,14 +25,6 @@ cards:
     count: 1
   - id: mon_warrior_001
     count: 1
-  - id: spl_haku
-    count: 1
-  - id: spl_hatsu
-    count: 1
-  - id: spl_chun
-    count: 1
-  - id: spl_daisangen
-    count: 1
   - id: atf_van_001
     count: 1
   - id: dmn_van_001
