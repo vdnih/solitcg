@@ -242,18 +242,18 @@ filter:
 ### タグによる勝利条件の例
 
 ```yaml
-id: spl_daisangen
-name: 大三元の魔法
+id: spl_trinity
+name: 三種の神器
 type: spell
-tags: [spl_daisangen]
-text: 「白の魔法」「發の魔法」「中の魔法」がそれぞれ3枚以上あること。効果：勝利する。
+tags: [spl_trinity]
+text: 手札に「sword」「mirror」「jewel」タグのカードがそれぞれ1枚以上あること。効果：勝利する。
 version: 1
 abilities:
   - when: on_play
     pre:
-      - "count(tag:'spl_haku', zone:'hand:self') >= 3"
-      - "count(tag:'spl_hatsu', zone:'hand:self') >= 3"
-      - "count(tag:'spl_chun', zone:'hand:self') >= 3"
+      - "count(tag:'sword', zone:'hand:self') >= 1"
+      - "count(tag:'mirror', zone:'hand:self') >= 1"
+      - "count(tag:'jewel', zone:'hand:self') >= 1"
     effect:
       - { op: win }
 ```
